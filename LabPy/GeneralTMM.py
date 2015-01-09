@@ -1,5 +1,11 @@
+"""This module contains classes for 4x4 TMM
+Hodgkinson, I. J., Kassam, S., & Wu, Q. H. (1997). 
+Journal of Computational Physics, 133(1) 75-83
+"""
+
 import numpy as np
 import math
+from Core import Norm
 
 def RotationSx(phi):
     res = np.array([[1.0, 0.0, 0.0], \
@@ -12,17 +18,6 @@ def RotationSz(phi):
                     [math.sin(phi), math.cos(phi), 0.0], \
                     [0.0, 0.0, 1.0]])
     return res
-
-def Norm(vector):
-    
-    if len(vector.shape) > 1:
-        if vector.shape[1] != 3:
-            raise Exception("Only vectors with length 3 supported.")
-        return np.sqrt(abs(vector[:, 0]) ** 2.0 + abs(vector[:, 1]) ** 2.0 +  abs(vector[:, 2]) ** 2.0, dtype = complex).real
-    else:        
-        if len(vector) != 3:
-            raise Exception("Only vectors with length 3 supported.")
-        return np.sqrt(abs(vector[0]) ** 2.0 + abs(vector[1]) ** 2.0 + abs(vector[2]) ** 2.0, dtype = complex).real
 
 class AnisotropicLayer():
     
@@ -218,6 +213,28 @@ class GeneralTmm():
                 
         for i in range(len(betas)):
             r, R = self.Solve(wl, betas[i])
+
+            if R[1, 1] > 1.0 + 1e-6 or R[1, 1] > 1.0 + 1e-6:
+                print R
+                raise Exception("Reflection/Transmission more than one")
+            
+            for j in range(4):
+                for k in range(4):
+                    res[self.namesr[j][k]][i] = r[j, k]
+                    res[self.namesR[j][k]][i] = R[j, k]
+
+        return res
+    
+    def SolveForXis(self, wl, beta, layerId, xis):
+        res = {}
+        for i in range(4):
+            for j in range(4):
+                res[self.namesr[i][j]] = np.zeros_like(xis, dtype = complex)
+                res[self.namesR[i][j]] = np.zeros_like(xis, dtype = float)
+                
+        for i in range(len(xis)):
+            self.layers[layerId].xi = xis[i]
+            r, R = self.Solve(wl, beta)
 
             if R[1, 1] > 1.0 + 1e-6 or R[1, 1] > 1.0 + 1e-6:
                 print R
