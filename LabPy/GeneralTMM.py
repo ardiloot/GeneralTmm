@@ -211,6 +211,7 @@ class GeneralTmm():
                 res[self.namesr[i][j]] = np.zeros_like(betas, dtype = complex)
                 res[self.namesR[i][j]] = np.zeros_like(betas, dtype = float)
                 
+                
         for i in range(len(betas)):
             r, R = self.Solve(wl, betas[i])
 
@@ -339,7 +340,7 @@ class GeneralTmm():
         E /= normCoef
         
         enh = Norm(E)
-        return enh
+        return enh, E
 
     def _CalcFieldCoefs(self, a1In, a2In):
         inputFields = np.array([a1In, a2In, 0.0, 0.0], dtype = complex)
