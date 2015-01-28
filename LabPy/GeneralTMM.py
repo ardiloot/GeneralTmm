@@ -291,20 +291,20 @@ class GeneralTmm():
 
         R[0, 0] = abs(r[0, 0]) ** 2.0 * abs(pBackward[0] / pForward[0])
         R[0, 1] = abs(r[0, 1]) ** 2.0 * abs(pBackward[0] / pForward[1])
-        R[0, 2] = abs(r[0, 2]) ** 2.0 * abs(pBackward[0] / pBackward[2])
-        R[0, 3] = abs(r[0, 3]) ** 2.0 * abs(pBackward[0] / pBackward[3])
+        R[0, 2] = np.NAN #abs(r[0, 2]) ** 2.0 * abs(pBackward[0] / pBackward[2])
+        R[0, 3] = np.NAN #abs(r[0, 3]) ** 2.0 * abs(pBackward[0] / pBackward[3])
         R[1, 0] = abs(r[1, 0]) ** 2.0 * abs(pBackward[1] / pForward[0])
         R[1, 1] = abs(r[1, 1]) ** 2.0 * abs(pBackward[1] / pForward[1])
-        R[1, 2] = abs(r[1, 2]) ** 2.0 * abs(pBackward[1] / pBackward[2])
-        R[1, 3] = abs(r[1, 3]) ** 2.0 * abs(pBackward[1] / pBackward[3])
+        R[1, 2] = np.NAN #abs(r[1, 2]) ** 2.0 * abs(pBackward[1] / pBackward[2])
+        R[1, 3] = np.NAN #abs(r[1, 3]) ** 2.0 * abs(pBackward[1] / pBackward[3])
         R[2, 0] = abs(r[2, 0]) ** 2.0 * abs(pForward[2] / pForward[0])
         R[2, 1] = abs(r[2, 1]) ** 2.0 * abs(pForward[2] / pForward[1])
-        R[2, 2] = abs(r[2, 2]) ** 2.0 * abs(pForward[2] / pBackward[2])
-        R[2, 3] = abs(r[2, 3]) ** 2.0 * abs(pForward[2] / pBackward[3])
+        R[2, 2] = np.NAN #abs(r[2, 2]) ** 2.0 * abs(pForward[2] / pBackward[2])
+        R[2, 3] = np.NAN #abs(r[2, 3]) ** 2.0 * abs(pForward[2] / pBackward[3])
         R[3, 0] = abs(r[3, 0]) ** 2.0 * abs(pForward[3] / pForward[0])
         R[3, 1] = abs(r[3, 1]) ** 2.0 * abs(pForward[3] / pForward[1])
-        R[3, 2] = abs(r[3, 2]) ** 2.0 * abs(pForward[3] / pBackward[2])
-        R[3, 3] = abs(r[3, 3]) ** 2.0 * abs(pForward[3] / pBackward[3])
+        R[3, 2] = np.NAN #abs(r[3, 2]) ** 2.0 * abs(pForward[3] / pBackward[2])
+        R[3, 3] = np.NAN #abs(r[3, 3]) ** 2.0 * abs(pForward[3] / pBackward[3])
  
         R = R.real
         self.R = R
