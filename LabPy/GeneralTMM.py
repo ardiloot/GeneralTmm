@@ -215,9 +215,9 @@ class GeneralTmm():
         for i in range(len(betas)):
             r, R = self.Solve(wl, betas[i])
 
-            if R[1, 1] > 1.0 + 1e-6 or R[1, 1] > 1.0 + 1e-6:
-                print R
-                raise Exception("Reflection/Transmission more than one")
+            #if R[1, 1] > 1.0 + 1e-6 or R[1, 1] > 1.0 + 1e-6:
+            #    print R
+            #    raise Exception("Reflection/Transmission more than one")
             
             for j in range(4):
                 for k in range(4):
@@ -334,6 +334,8 @@ class GeneralTmm():
     def CalcEnhAtInterface(self, a1In, a2In, interface = -1):
         if interface < 0:
             layerId = len(self.layers) - 1
+        else:
+            layerId = interface
 
         normCoef, coefsAll = self._CalcFieldCoefs(a1In, a2In)
         E, _ = self.layers[layerId].GetFields(0.0, coefsAll[layerId, :])
