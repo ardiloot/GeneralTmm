@@ -204,20 +204,27 @@ class GeneralTmm():
     def AddLayer(self, d, n1, n2, n3, psi, xi):
         self.layers.append(AnisotropicLayer(self, d, n1, n2, n3, psi, xi))
     
-    def SolveForBetas(self, wl, betas):
+    def SolveForBetas(self, wl, betas, enhInterface = None):
         res = {}
         for i in range(4):
             for j in range(4):
                 res[self.namesr[i][j]] = np.zeros_like(betas, dtype = complex)
                 res[self.namesR[i][j]] = np.zeros_like(betas, dtype = float)
                 
+        if enhInterface != None:
+            res["enh1"] = np.zeros_like(betas, dtype = float)
+            res["enh2"] = np.zeros_like(betas, dtype = float)
                 
         for i in range(len(betas)):
             r, R = self.Solve(wl, betas[i])
-
-            #if R[1, 1] > 1.0 + 1e-6 or R[1, 1] > 1.0 + 1e-6:
-            #    print R
-            #    raise Exception("Reflection/Transmission more than one")
+            
+            if enhInterface != None: 
+                res["enh1"][i], _ = self.CalcEnhAtInterface(1.0, 0.0, enhInterface)
+                res["enh2"][i], _ = self.CalcEnhAtInterface(0.0, 1.0, enhInterface)
+    
+            if R[1, 1] > 1.0 + 1e-6 or R[1, 1] > 1.0 + 1e-6:
+                print R
+                raise Exception("Reflection/Transmission more than one")
             
             for j in range(4):
                 for k in range(4):
@@ -226,16 +233,25 @@ class GeneralTmm():
 
         return res
     
-    def SolveForXis(self, wl, beta, layerId, xis):
+    def SolveForXis(self, wl, beta, layerId, xis, enhInterface = None):
         res = {}
         for i in range(4):
             for j in range(4):
                 res[self.namesr[i][j]] = np.zeros_like(xis, dtype = complex)
                 res[self.namesR[i][j]] = np.zeros_like(xis, dtype = float)
                 
+        if enhInterface != None:
+            res["enh1"] = np.zeros_like(xis, dtype = float)
+            res["enh2"] = np.zeros_like(xis, dtype = float)
+                                
+                
         for i in range(len(xis)):
             self.layers[layerId].xi = xis[i]
             r, R = self.Solve(wl, beta)
+            
+            if enhInterface != None: 
+                res["enh1"][i], _ = self.CalcEnhAtInterface(1.0, 0.0, enhInterface)
+                res["enh2"][i], _ = self.CalcEnhAtInterface(0.0, 1.0, enhInterface)
 
             if R[1, 1] > 1.0 + 1e-6 or R[1, 1] > 1.0 + 1e-6:
                 print R
