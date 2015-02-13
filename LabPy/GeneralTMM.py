@@ -62,6 +62,7 @@ class AnisotropicLayer():
             H[2] += mHz * phase
         
         return E, H
+    
         
     def Solve(self, beta):
         self._CalcEpsilonMatrix()
@@ -142,7 +143,7 @@ class AnisotropicLayer():
             
         if len(forward) != 2:
             print "ns", self.n1, self.n2, self.n3
-            print "beta", self.tmm.beta
+            print "beta", beta
             print "Values", values
             print "Poynting", poyntingX
             raise Exception("Wrong number of forward moving waves: %d" % len(forward))
@@ -215,6 +216,10 @@ class GeneralTmm():
             res["enh1"] = np.zeros_like(betas, dtype = float)
             res["enh2"] = np.zeros_like(betas, dtype = float)
                 
+        for i in range(len(self.layers)):
+            res["alphas_%d" % (i)] = np.zeros((len(betas), 4), dtype = complex)
+                
+                
         for i in range(len(betas)):
             r, R = self.Solve(wl, betas[i])
             
@@ -222,9 +227,15 @@ class GeneralTmm():
                 res["enh1"][i], _ = self.CalcEnhAtInterface(1.0, 0.0, enhInterface)
                 res["enh2"][i], _ = self.CalcEnhAtInterface(0.0, 1.0, enhInterface)
     
-            if R[1, 1] > 1.0 + 1e-6 or R[1, 1] > 1.0 + 1e-6:
-                print R
-                raise Exception("Reflection/Transmission more than one")
+                
+            for j in range(len(self.layers)):
+                res["alphas_%d" % (j)][i] = self.layers[j].alpha[:]
+    
+            #if R[0, 0] > 1.0 + 1e-6:
+                #print R
+                #raise Exception("Reflection/Transmission more than one")
+                
+                
             
             for j in range(4):
                 for k in range(4):
@@ -243,7 +254,9 @@ class GeneralTmm():
         if enhInterface != None:
             res["enh1"] = np.zeros_like(xis, dtype = float)
             res["enh2"] = np.zeros_like(xis, dtype = float)
-                                
+                        
+        for i in range(len(self.layers)):
+            res["alphas_%d" % (i)] = np.zeros((len(xis), 4), dtype = complex)
                 
         for i in range(len(xis)):
             self.layers[layerId].xi = xis[i]
@@ -252,9 +265,15 @@ class GeneralTmm():
             if enhInterface != None: 
                 res["enh1"][i], _ = self.CalcEnhAtInterface(1.0, 0.0, enhInterface)
                 res["enh2"][i], _ = self.CalcEnhAtInterface(0.0, 1.0, enhInterface)
+                
+            for j in range(len(self.layers)):
+                res["alphas_%d" % (j)][i] = self.layers[j].alpha[:]
 
-            if R[1, 1] > 1.0 + 1e-6 or R[1, 1] > 1.0 + 1e-6:
+
+            if R[0, 0] > 1.0 + 1e-6:
                 print R
+                print "alpha", self.layers[0].alpha
+                print "poyn", self.layers[0].poynting
                 raise Exception("Reflection/Transmission more than one")
             
             for j in range(4):
@@ -277,7 +296,7 @@ class GeneralTmm():
         for i in range(1, len(self.layers) - 1):
             self.A = np.dot(self.A, self.layers[i].M)
             
-      
+        
             
         self.A = np.dot(self.A, self.layers[-1].F)
 
@@ -365,7 +384,13 @@ class GeneralTmm():
         outputFields = np.dot(self.r, inputFields)
         
         Einc, _ = self.layers[0].GetFields(0.0, np.array([a1In, 0.0, a2In, 0.0]))
+        
         normCoef = np.sqrt(abs(Einc[0]) ** 2.0 + abs(Einc[1]) ** 2.0 + abs(Einc[2]) ** 2.0, dtype = complex)
+        n1 = np.sqrt(self.beta ** 2.0 + self.layers[0].alpha[0] ** 2.0)
+        n2 = np.sqrt(self.beta ** 2.0 + self.layers[0].alpha[2] ** 2.0)
+        nEff = (a1In * n1.real + a2In * n2.real) / (a1In + a2In) # Maybe not fully correct
+        #print "n1", n1, "n2", n2, "nEff", nEff
+        normCoef *= math.sqrt(nEff)
         
         coefsSubstrate = np.array([outputFields[2], 0.0, outputFields[3], 0.0])
         mat = self.layers[-1].F
