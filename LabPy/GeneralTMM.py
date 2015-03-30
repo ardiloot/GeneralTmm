@@ -5,6 +5,8 @@ Journal of Computational Physics, 133(1) 75-83
 
 import numpy as np
 import math
+import warnings
+from scipy import optimize
 from Core import Norm
 
 def RotationSx(phi):
@@ -29,6 +31,20 @@ class AnisotropicLayer():
         self.n3 = n3
         self.psi = psi
         self.xi = xi
+        
+    def GetConf(self):
+        if self.n1 == self.n2 and self.n1 == self.n3:
+            return ("iso", self.d, self.n1)
+        else:
+            return ("aniso", self.d, self.n1, self.n2, self.n3, self.psi, self.xi)
+        
+    def SetConf(self, **kwargs):
+        self.d = kwargs.pop("d", self.d)
+        self.n1 = kwargs.pop("n1", self.n1)
+        self.n2 = kwargs.pop("n2", self.n2)
+        self.n3 = kwargs.pop("n3", self.n3)
+        self.psi = kwargs.pop("psi", self.psi)
+        self.xi = kwargs.pop("xi", self.xi)
         
     def _GetTangentialFields(self, Ey, Hz, Ez, Hy):
         z0 = 119.9169832 * math.pi
@@ -146,6 +162,7 @@ class AnisotropicLayer():
             print "beta", beta
             print "Values", values
             print "Poynting", poyntingX
+            print "vectors", vectors
             raise Exception("Wrong number of forward moving waves: %d" % len(forward))
         
         if abs(values.real[forward[0]] - values.real[forward[1]]) < 1e-10:
@@ -188,6 +205,9 @@ class AnisotropicLayer():
 class GeneralTmm():
     
     def __init__(self):
+        self.wl = None
+        self.beta = None
+        self.polarization = None
         self.layers = []
         self.namesr = [["r11", "r12", "t13", "t14"], \
                        ["r21", "r22", "t23", "t24"], \
@@ -205,27 +225,64 @@ class GeneralTmm():
     def AddLayer(self, d, n1, n2, n3, psi, xi):
         self.layers.append(AnisotropicLayer(self, d, n1, n2, n3, psi, xi))
     
-    def SolveForBetas(self, wl, betas, enhInterface = None):
+    def GetConf(self):
+        layersConf = [layer.GetConf() for layer in self.layers]
+        res = {"wl": self.wl, "beta": self.beta, \
+               "polarization": self.polarization, "layers": layersConf}    
+        return res
+    
+    def SetConf(self, **kwargs):
+        self.wl = kwargs.pop("wl", self.wl)
+        self.beta = kwargs.pop("beta", self.beta)
+        self.polarization = kwargs.pop("polarization", self.polarization)
+        
+        # All layer params
+        layersConf = kwargs.pop("layers", None)
+        if layersConf != None:
+            self.layers = []
+            for lConf in layersConf:
+                if lConf[0] == "iso":
+                    _, d, n = lConf
+                    self.AddIsotropicLayer(d, n)
+                elif lConf[0] == "aniso":
+                    _, d, n1, n2, n3, psi, xi = lConf
+                    self.AddLayer(d, n1, n2, n3, psi, xi)
+                else:
+                    raise NotImplemented()
+        
+        # Layer individual params
+        for key, value in kwargs.items():
+            if key.find("_") == -1:
+                continue
+            kwargs.pop(key)
+            param, index = key.split("_")
+            index = int(index)
+            self.layers[index].SetConf(**{param: value})
+
+    
+    def SolveFor(self, param, values, polarization = None, enhInterface = None, enhDist = 0.0):
+        if polarization != None:
+            self.polarization = polarization
+            
         res = {}
         for i in range(4):
             for j in range(4):
-                res[self.namesr[i][j]] = np.zeros_like(betas, dtype = complex)
-                res[self.namesR[i][j]] = np.zeros_like(betas, dtype = float)
+                res[self.namesr[i][j]] = np.zeros_like(values, dtype = complex)
+                res[self.namesR[i][j]] = np.zeros_like(values, dtype = float)
                 
         if enhInterface != None:
-            res["enh1"] = np.zeros_like(betas, dtype = float)
-            res["enh2"] = np.zeros_like(betas, dtype = float)
+            res["enh"] = np.zeros_like(values, dtype = float)
                 
         for i in range(len(self.layers)):
-            res["alphas_%d" % (i)] = np.zeros((len(betas), 4), dtype = complex)
+            res["alphas_%d" % (i)] = np.zeros((len(values), 4), dtype = complex)
                 
                 
-        for i in range(len(betas)):
-            r, R = self.Solve(wl, betas[i])
+        for i in range(len(values)):
+            self.SetConf(**{param: values[i]})
+            r, R = self.Solve()
             
             if enhInterface != None: 
-                res["enh1"][i], _ = self.CalcEnhAtInterface(1.0, 0.0, enhInterface)
-                res["enh2"][i], _ = self.CalcEnhAtInterface(0.0, 1.0, enhInterface)
+                res["enh"][i], _ = self.CalcEnhAtInterface(None, enhInterface, enhDist = enhDist)
     
                 
             for j in range(len(self.layers)):
@@ -233,57 +290,17 @@ class GeneralTmm():
     
             #if R[0, 0] > 1.0 + 1e-6:
                 #print R
-                #raise Exception("Reflection/Transmission more than one")
-                
-                
-            
+
             for j in range(4):
                 for k in range(4):
                     res[self.namesr[j][k]][i] = r[j, k]
                     res[self.namesR[j][k]][i] = R[j, k]
 
         return res
-    
-    def SolveForXis(self, wl, beta, layerId, xis, enhInterface = None):
-        res = {}
-        for i in range(4):
-            for j in range(4):
-                res[self.namesr[i][j]] = np.zeros_like(xis, dtype = complex)
-                res[self.namesR[i][j]] = np.zeros_like(xis, dtype = float)
-                
-        if enhInterface != None:
-            res["enh1"] = np.zeros_like(xis, dtype = float)
-            res["enh2"] = np.zeros_like(xis, dtype = float)
-                        
-        for i in range(len(self.layers)):
-            res["alphas_%d" % (i)] = np.zeros((len(xis), 4), dtype = complex)
-                
-        for i in range(len(xis)):
-            self.layers[layerId].xi = xis[i]
-            r, R = self.Solve(wl, beta)
-            
-            if enhInterface != None: 
-                res["enh1"][i], _ = self.CalcEnhAtInterface(1.0, 0.0, enhInterface)
-                res["enh2"][i], _ = self.CalcEnhAtInterface(0.0, 1.0, enhInterface)
-                
-            for j in range(len(self.layers)):
-                res["alphas_%d" % (j)][i] = self.layers[j].alpha[:]
 
-
-            if R[0, 0] > 1.0 + 1e-6:
-                print R
-                print "alpha", self.layers[0].alpha
-                print "poyn", self.layers[0].poynting
-                raise Exception("Reflection/Transmission more than one")
-            
-            for j in range(4):
-                for k in range(4):
-                    res[self.namesr[j][k]][i] = r[j, k]
-                    res[self.namesR[j][k]][i] = R[j, k]
-
-        return res
-    
-    def Solve(self, wl, beta):
+    def Solve(self, wl = None, beta = None):
+        if wl == None: wl = self.wl
+        if beta == None: beta = self.beta
         self.wl = wl
         self.beta = beta
         self.k0 = 2.0 * math.pi / wl
@@ -324,30 +341,40 @@ class GeneralTmm():
  
         R = np.zeros_like(r, dtype = complex)
 
-        R[0, 0] = abs(r[0, 0]) ** 2.0 * abs(pBackward[0] / pForward[0])
-        R[0, 1] = abs(r[0, 1]) ** 2.0 * abs(pBackward[0] / pForward[1])
-        R[0, 2] = np.NAN #abs(r[0, 2]) ** 2.0 * abs(pBackward[0] / pBackward[2])
-        R[0, 3] = np.NAN #abs(r[0, 3]) ** 2.0 * abs(pBackward[0] / pBackward[3])
-        R[1, 0] = abs(r[1, 0]) ** 2.0 * abs(pBackward[1] / pForward[0])
-        R[1, 1] = abs(r[1, 1]) ** 2.0 * abs(pBackward[1] / pForward[1])
-        R[1, 2] = np.NAN #abs(r[1, 2]) ** 2.0 * abs(pBackward[1] / pBackward[2])
-        R[1, 3] = np.NAN #abs(r[1, 3]) ** 2.0 * abs(pBackward[1] / pBackward[3])
-        R[2, 0] = abs(r[2, 0]) ** 2.0 * abs(pForward[2] / pForward[0])
-        R[2, 1] = abs(r[2, 1]) ** 2.0 * abs(pForward[2] / pForward[1])
-        R[2, 2] = np.NAN #abs(r[2, 2]) ** 2.0 * abs(pForward[2] / pBackward[2])
-        R[2, 3] = np.NAN #abs(r[2, 3]) ** 2.0 * abs(pForward[2] / pBackward[3])
-        R[3, 0] = abs(r[3, 0]) ** 2.0 * abs(pForward[3] / pForward[0])
-        R[3, 1] = abs(r[3, 1]) ** 2.0 * abs(pForward[3] / pForward[1])
-        R[3, 2] = np.NAN #abs(r[3, 2]) ** 2.0 * abs(pForward[3] / pBackward[2])
-        R[3, 3] = np.NAN #abs(r[3, 3]) ** 2.0 * abs(pForward[3] / pBackward[3])
- 
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            
+            R[0, 0] = abs(r[0, 0]) ** 2.0 * abs(pBackward[0]) / abs(pForward[0])
+            R[0, 1] = abs(r[0, 1]) ** 2.0 * abs(pBackward[0]) / abs(pForward[1])
+            R[0, 2] = np.NAN #abs(r[0, 2]) ** 2.0 * abs(pBackward[0] / pBackward[2])
+            R[0, 3] = np.NAN #abs(r[0, 3]) ** 2.0 * abs(pBackward[0] / pBackward[3])
+            R[1, 0] = abs(r[1, 0]) ** 2.0 * abs(pBackward[1]) / abs(pForward[0])
+            R[1, 1] = abs(r[1, 1]) ** 2.0 * abs(pBackward[1]) / abs(pForward[1])
+            R[1, 2] = np.NAN #abs(r[1, 2]) ** 2.0 * abs(pBackward[1] / pBackward[2])
+            R[1, 3] = np.NAN #abs(r[1, 3]) ** 2.0 * abs(pBackward[1] / pBackward[3])
+            R[2, 0] = abs(r[2, 0]) ** 2.0 * abs(pForward[2]) / abs(pForward[0])
+            R[2, 1] = abs(r[2, 1]) ** 2.0 * abs(pForward[2]) / abs(pForward[1])
+            R[2, 2] = np.NAN #abs(r[2, 2]) ** 2.0 * abs(pForward[2] / pBackward[2])
+            R[2, 3] = np.NAN #abs(r[2, 3]) ** 2.0 * abs(pForward[2] / pBackward[3])
+            R[3, 0] = abs(r[3, 0]) ** 2.0 * abs(pForward[3]) / abs(pForward[0])
+            R[3, 1] = abs(r[3, 1]) ** 2.0 * abs(pForward[3]) / abs(pForward[1])
+            R[3, 2] = np.NAN #abs(r[3, 2]) ** 2.0 * abs(pForward[3] / pBackward[2])
+            R[3, 3] = np.NAN #abs(r[3, 3]) ** 2.0 * abs(pForward[3] / pBackward[3])
+            if len(w) > 0:
+                print "warning", w
+                print self.beta
+                print pBackward
+                print pForward
+     
         R = R.real
         self.R = R
         
         return r, R
     
-    def CalcFields1D(self, a1In, a2In, xs):
-        normCoef, coefsAll = self._CalcFieldCoefs(a1In, a2In)
+    def CalcFields1D(self, xs, polarization = None):
+        if polarization != None:
+            self.polarization = polarization
+        normCoef, coefsAll = self._CalcFieldCoefs()
         layerIndices, layerDs = self._LayerIndices(xs)
     
         resE = np.zeros((len(xs), 3), dtype = complex)
@@ -366,20 +393,48 @@ class GeneralTmm():
        
         return resE, resH
     
-    def CalcEnhAtInterface(self, a1In, a2In, interface = -1):
-        if interface < 0:
+    def CalcEnhAtInterface(self, polarization = None, enhInterface = -1, enhDist = 0.0):
+        if polarization != None:
+            self.polarization = polarization
+            
+        if enhInterface < 0:
             layerId = len(self.layers) - 1
         else:
-            layerId = interface
+            layerId = enhInterface
 
-        normCoef, coefsAll = self._CalcFieldCoefs(a1In, a2In)
-        E, _ = self.layers[layerId].GetFields(0.0, coefsAll[layerId, :])
+        normCoef, coefsAll = self._CalcFieldCoefs()
+        E, _ = self.layers[layerId].GetFields(enhDist, coefsAll[layerId, :])
         E /= normCoef
         
         enh = Norm(E)
         return enh, E
+    
+    def OptimizeForEnhancement(self, optParams, optInitial, polarization = None, enhInterface = -1, enhDist = 0.0):
+        def FitFunc(x):
+            
+            for i in range(len(x)):
+                self.SetConf(**{optParams[i]: x[i]})
+            self.Solve()
+            enh, _ = self.CalcEnhAtInterface(enhInterface = enhInterface, enhDist = enhDist)
+            #print x, enh
+            return -enh
+        
+        if polarization != None:
+            self.polarization = polarization
+        optValues, maxEnh, _, __, ___ = optimize.fmin(FitFunc, optInitial, disp = False, full_output = True)
+        maxEnh *= -1
+        #print "optValues", optValues
+        for i in range(len(optParams)):
+            self.SetConf(**{optParams[i]: optValues[i]})
+        
+        return optValues, maxEnh
 
-    def _CalcFieldCoefs(self, a1In, a2In):
+
+    def _CalcFieldCoefs(self, polarization = None):
+        if polarization != None:
+            self.polarization = polarization
+        a1In, a2In = self.polarization
+        
         inputFields = np.array([a1In, a2In, 0.0, 0.0], dtype = complex)
         outputFields = np.dot(self.r, inputFields)
         
