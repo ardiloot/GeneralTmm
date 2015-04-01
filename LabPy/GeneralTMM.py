@@ -186,6 +186,7 @@ class AnisotropicLayer():
         self.F = vectors[ :, order]
         self.poynting = poyntingX[order]
         self.invF = np.linalg.inv(self.F)
+   
 
         
     def _SolvePhaseMatrix(self):

@@ -1,0 +1,21 @@
+
+syntax: regexp
+^docs/_build$
+syntax: regexp
+^LabPy/Mie/bhcoat\.pyd$
+syntax: regexp
+^LabPy/Drivers/USMC\.pyd$
+syntax: regexp
+^LabPy/Tmm/CppTmm/CppTmm\.psess$
+syntax: regexp
+^LabPy/Tmm/CppTmm/CppTmm\.sdf$
+syntax: regexp
+^LabPy/Tmm/CppTmm/Debug$
+syntax: regexp
+^LabPy/Tmm/CppTmm/x64$
+syntax: regexp
+^LabPy/Tmm/CppTmm/CppTmm/Debug$
+syntax: regexp
+^LabPy/Tmm/CppTmm/CppTmm/x64$
+syntax: regexp
+^LabPy/Tmm/CppTmm/CppTmm\.opensdf$

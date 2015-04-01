@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="CppTmm.cpp" />
+    <ClCompile Include="Layer.cpp" />
+    <ClCompile Include="AdditionalClasses.cpp" />
+    <ClCompile Include="tmm.cpp" />
+    <ClCompile Include="eigen_numpy.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="tmm.h" />
+    <ClInclude Include="eigen_numpy.h" />
+  </ItemGroup>
+</Project>
