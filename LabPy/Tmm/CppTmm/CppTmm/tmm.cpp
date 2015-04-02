@@ -141,15 +141,16 @@ void Tmm::Solve(){
 
 ComplexVectorMap Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues){
 
-	Eigen::VectorXcd data_R[4][4];
-	Eigen::VectorXcd data_r[4][4];
+	ComplexVectorMap res;
+	ComplexVectorMap::iterator data_R[4][4];
+	ComplexVectorMap::iterator data_r[4][4];
 	for (int i = 0; i < 4; i++){
 		for (int j = 0; j < 2; j++){
-			data_R[i][j] = Eigen::VectorXcd(len(sweepValues));
-			data_r[i][j] = Eigen::VectorXcd(len(sweepValues));
+			data_R[i][j] = res.insert(make_pair(names_R[i][j], Eigen::RowVectorXcd(len(sweepValues)))).first;
+			data_r[i][j] = res.insert(make_pair(names_r[i][j], Eigen::RowVectorXcd(len(sweepValues)))).first;
+		
 		}
 	}
-
 
 	for (int i = 0; i < len(sweepValues); i++){
 		SetParam(sweepParam, sweepValues[i]);
@@ -157,18 +158,11 @@ ComplexVectorMap Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues){
 
 		for (int j = 0; j < 4; j++){
 			for (int k = 0; k < 2; k++){
-				data_R[j][k](i) = R(j, k);
-				data_r[j][k](i) = r(j, k);
+				data_R[j][k]->second(i) = R(j, k);
+				data_r[j][k]->second(i) = r(j, k);
 			}
 		}
 	}
 
-	ComplexVectorMap res;
-	for (int i = 0; i < 4; i++){
-		for (int j = 0; j < 2; j++){
-			res.insert(make_pair(names_R[i][j], data_R[i][j]));
-			res.insert(make_pair(names_r[i][j], data_r[i][j]));
-		}
-	}
 	return res;
 }

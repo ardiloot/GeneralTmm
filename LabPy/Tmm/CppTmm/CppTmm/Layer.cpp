@@ -100,7 +100,15 @@ void Layer::SolveLayer(double wl, double beta, bool calcInvF){
 
 	//InvF
 	if (calcInvF){
-		invF = F.inverse();	
+		if (isotropicLayer) {
+			invF << 0.5 / F(0, 0), 0.5, 0, 0,
+				0.5 / F(0, 1), 0.5, 0, 0,
+				0, 0, 0.5 / F(2, 2), 0.5,
+				0, 0, 0.5 / F(2, 3), 0.5;
+		}
+		else {
+			invF = F.inverse();
+		}
 	}
 
 	solved = true;
@@ -109,6 +117,7 @@ void Layer::SolveLayer(double wl, double beta, bool calcInvF){
 
 void Layer::Init(){
 	solved = false;
+	isotropicLayer = false;
 	epsilonRefractiveIndexChanged = true;
 	wlEpsilonCalc = 0.0;
 }
@@ -122,48 +131,72 @@ void Layer::SolveEpsilonMatrix(double wl){
 	epsTensorCrystal(0, 0) = sqr(GetNx(wl));
 	epsTensorCrystal(1, 1) = sqr(GetNy(wl));
 	epsTensorCrystal(2, 2) = sqr(GetNz(wl));
-	epsTensor = RotationSx(xi) * RotationSz(psi) * epsTensorCrystal * RotationSz(-psi) * RotationSx(-xi);
+
+	if (epsTensorCrystal(0, 0) == epsTensorCrystal(1, 1) && epsTensorCrystal(1, 1) == epsTensorCrystal(2, 2)){
+		isotropicLayer = true;
+		epsTensor = epsTensorCrystal;
+	}
+	else {
+		isotropicLayer = false;
+		epsTensor = RotationSx(xi) * RotationSz(psi) * epsTensorCrystal * RotationSz(-psi) * RotationSx(-xi);
+	}
 
 	wlEpsilonCalc = wl;
 	epsilonRefractiveIndexChanged = false;
 }
 
+
 void Layer::SolveEigenFunction(double beta){
 	double z0 = 119.9169832 * M_PI;
-	dcomplex epsXX = epsTensor(0, 0);
-	dcomplex epsYY = epsTensor(1, 1);
-	dcomplex epsZZ = epsTensor(2, 2);
-	dcomplex epsXY = epsTensor(0, 1);
-	dcomplex epsXZ = epsTensor(0, 2);
-	dcomplex epsYZ = epsTensor(1, 2);
+	
+	Eigen::ComplexEigenSolver<Eigen::Matrix4cd>::EigenvalueType eigenvalues;
+	Eigen::ComplexEigenSolver<Eigen::Matrix4cd>::EigenvectorType eigenvectors;
+	if (isotropicLayer)
+	{
+		dcomplex eps = epsTensor(0, 0);
+		dcomplex a = sqrt(eps - sqr(beta));
+		dcomplex p1 = z0 * a / eps, p2 = z0 / a;
+		eigenvalues << a, -a, a, -a;
+		eigenvectors << p1, -p1, 0, 0,
+			1, 1, 0, 0,
+			0, 0, -p2, p2,
+			0, 0, 1, 1;
+	}
+	else
+	{
+		dcomplex epsXX = epsTensor(0, 0);
+		dcomplex epsYY = epsTensor(1, 1);
+		dcomplex epsZZ = epsTensor(2, 2);
+		dcomplex epsXY = epsTensor(0, 1);
+		dcomplex epsXZ = epsTensor(0, 2);
+		dcomplex epsYZ = epsTensor(1, 2);
 
 
-	Eigen::Matrix4cd mBeta = Eigen::Matrix4cd::Zero();
-	mBeta(0, 0) = -beta * epsXY / epsXX;
-	mBeta(0, 1) = z0 - (z0 * sqr(beta)) / epsXX;
-	mBeta(0, 2) = -beta * epsXZ / epsXX;
-	//mBeta(0, 3) = 0.0;
-	mBeta(1, 0) = epsYY / z0 - (sqr(epsXY)) / (z0 * epsXX);
-	mBeta(1, 1) = (-beta * epsXY) / epsXX;
-	mBeta(1, 2) = epsYZ / z0 - (epsXY * epsXZ) / (z0 * epsXX);
-	//mBeta(1, 3) = 0.0;
-	//mBeta(2, 0) = 0.0;
-	//mBeta(2, 1) = 0.0;
-	//mBeta(2, 2) = 0.0;
-	mBeta(2, 3) = -z0;
-	mBeta(3, 0) = (-epsYZ / z0) + (epsXY * epsXZ) / (z0 * epsXX);
-	mBeta(3, 1) = beta * epsXZ / epsXX;
-	mBeta(3, 2) = (sqr(beta)) / z0 + (sqr(epsXZ)) / (z0 * epsXX) - epsZZ / z0;
-	//mBeta(3, 3) = 0.0;
+		Eigen::Matrix4cd mBeta = Eigen::Matrix4cd::Zero();
+		mBeta(0, 0) = -beta * epsXY / epsXX;
+		mBeta(0, 1) = z0 - (z0 * sqr(beta)) / epsXX;
+		mBeta(0, 2) = -beta * epsXZ / epsXX;
+		//mBeta(0, 3) = 0.0;
+		mBeta(1, 0) = epsYY / z0 - (sqr(epsXY)) / (z0 * epsXX);
+		mBeta(1, 1) = (-beta * epsXY) / epsXX;
+		mBeta(1, 2) = epsYZ / z0 - (epsXY * epsXZ) / (z0 * epsXX);
+		//mBeta(1, 3) = 0.0;
+		//mBeta(2, 0) = 0.0;
+		//mBeta(2, 1) = 0.0;
+		//mBeta(2, 2) = 0.0;
+		mBeta(2, 3) = -z0;
+		mBeta(3, 0) = (-epsYZ / z0) + (epsXY * epsXZ) / (z0 * epsXX);
+		mBeta(3, 1) = beta * epsXZ / epsXX;
+		mBeta(3, 2) = (sqr(beta)) / z0 + (sqr(epsXZ)) / (z0 * epsXX) - epsZZ / z0;
+		//mBeta(3, 3) = 0.0;
 
-	// Calc eigenvalues
-
-	ces.compute(mBeta, true, false);
-	Eigen::ComplexEigenSolver<Eigen::Matrix4cd>::EigenvalueType eigenvalues = ces.eigenvalues();
-	Eigen::ComplexEigenSolver<Eigen::Matrix4cd>::EigenvectorType eigenvectors = ces.eigenvectors();
+		// Calc eigenvalues
+		ces.compute(mBeta, true, false);
+		eigenvalues = ces.eigenvalues();
+		eigenvectors = ces.eigenvectors();
+	}
 
 	// Sort eigenvalues
-
 	Eigen::Vector4d poyntingXTmp;
 	int countF = 0, countB = 0;
 	int forward[4], backward[4];

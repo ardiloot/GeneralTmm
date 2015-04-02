@@ -103,6 +103,7 @@ public:
 
 private:
 	bool solved;
+	bool isotropicLayer;
 	bool epsilonRefractiveIndexChanged;
 	double wlEpsilonCalc;
 

@@ -19,3 +19,9 @@ syntax: regexp
 ^LabPy/Tmm/CppTmm/CppTmm/x64$
 syntax: regexp
 ^LabPy/Tmm/CppTmm/CppTmm\.opensdf$
+syntax: regexp
+^LabPy/Tmm/CppTmm/CppTmm/My Advisor XE Results - CppTmm$
+syntax: regexp
+^LabPy/Tmm/CppTmm/CppTmm/My Amplifier XE Results - CppTmm$
+syntax: regexp
+^LabPy/Tmm/CppTmm/CppTmm/My Inspector XE Results - CppTmm$

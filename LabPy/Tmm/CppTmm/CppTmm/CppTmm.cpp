@@ -1,5 +1,5 @@
-#define EIGEN_USE_MKL_ALL
-//#define PYTHON_WRAP
+//#define EIGEN_USE_MKL_ALL
+#define PYTHON_WRAP
 
 #ifdef PYTHON_WRAP
 #include <boost/python.hpp>
@@ -19,6 +19,10 @@ namespace np = boost::numpy;
 #ifndef PYTHON_WRAP
 
 int main(){
+	Eigen::setNbThreads(4);
+	//int n = Eigen::nbThreads();
+	//cout << "Will use " << n << " threads." << endl;
+
 	Tmm tmm;
 	tmm.SetParam(Param(WL), 500e-9);
 	tmm.AddIsotropicLayer(INFINITY, 1.5);
@@ -27,7 +31,7 @@ int main(){
 	tmm.AddIsotropicLayer(INFINITY, 1.0);
 
 	clock_t startTime = clock();
-	ComplexVectorMap rr = tmm.Sweep(Param(BETA), Eigen::VectorXd::LinSpaced(500000, 0.0, 1.4));
+	ComplexVectorMap rr = tmm.Sweep(Param(BETA), Eigen::VectorXd::LinSpaced(1000000, 0.0, 1.4));
 	//cout << rr["R22"] << endl;
 	//cout << double(clock() - startTime) / (double)CLOCKS_PER_SEC << " seconds." << endl;
 
