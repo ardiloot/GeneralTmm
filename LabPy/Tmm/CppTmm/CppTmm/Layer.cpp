@@ -85,31 +85,23 @@ dcomplex Layer::GetNz(double wl){
 	return nz.n(wl);
 }
 
-void Layer::SolveLayer(double wl, double beta, bool calcInvF, bool calcPhaseAndTransfer){
+void Layer::SolveLayer(double wl, double beta, bool calcInvF){
 	SolveEpsilonMatrix(wl);
 	SolveEigenFunction(beta);
 
-	//phaseMatrix = Matrix4cd::Identity();
-	//invF.fill(0);
-
-	if (calcPhaseAndTransfer){
-		// Phase matrix
-		if (d != INFINITY){
-			for (int i = 0; i < 4; i++){
-				dcomplex phi = 2.0 * M_PI / wl * alpha(i) * d;
-				phaseMatrix(i, i) = exp(dcomplex(0.0, -1.0) * phi);
-			}
+	// Phase matrix
+	phaseMatrix.setIdentity();
+	if (d != INFINITY){
+		dcomplex expParam = 2.0 * M_PI / wl *  d * dcomplex(0.0, -1.0);
+		for (int i = 0; i < 4; i++){
+			phaseMatrix(i, i) = exp(expParam * alpha(i));
 		}
 	}
 
-	if (calcInvF && calcPhaseAndTransfer){
-		invF = F.inverse();
-		M = F * phaseMatrix * invF;
+	//InvF
+	if (calcInvF){
+		invF = F.inverse();	
 	}
-	else if (calcInvF && !calcPhaseAndTransfer){
-		invF = F.inverse();
-	}
-
 
 	solved = true;
 }
@@ -126,7 +118,7 @@ void Layer::SolveEpsilonMatrix(double wl){
 		return;
 	}
 
-	Matrix3cd epsTensorCrystal = Matrix3cd::Zero();
+	Eigen::Matrix3cd epsTensorCrystal = Eigen::Matrix3cd::Zero();
 	epsTensorCrystal(0, 0) = sqr(GetNx(wl));
 	epsTensorCrystal(1, 1) = sqr(GetNy(wl));
 	epsTensorCrystal(2, 2) = sqr(GetNz(wl));
@@ -146,7 +138,7 @@ void Layer::SolveEigenFunction(double beta){
 	dcomplex epsYZ = epsTensor(1, 2);
 
 
-	Matrix4cd mBeta = Matrix4cd::Zero();
+	Eigen::Matrix4cd mBeta = Eigen::Matrix4cd::Zero();
 	mBeta(0, 0) = -beta * epsXY / epsXX;
 	mBeta(0, 1) = z0 - (z0 * sqr(beta)) / epsXX;
 	mBeta(0, 2) = -beta * epsXZ / epsXX;
@@ -167,12 +159,12 @@ void Layer::SolveEigenFunction(double beta){
 	// Calc eigenvalues
 
 	ces.compute(mBeta, true, false);
-	ComplexEigenSolver<Matrix4cd>::EigenvalueType eigenvalues = ces.eigenvalues();
-	ComplexEigenSolver<Matrix4cd>::EigenvectorType eigenvectors = ces.eigenvectors();
+	Eigen::ComplexEigenSolver<Eigen::Matrix4cd>::EigenvalueType eigenvalues = ces.eigenvalues();
+	Eigen::ComplexEigenSolver<Eigen::Matrix4cd>::EigenvectorType eigenvectors = ces.eigenvectors();
 
 	// Sort eigenvalues
 
-	Vector4d poyntingXTmp;
+	Eigen::Vector4d poyntingXTmp;
 	int countF = 0, countB = 0;
 	int forward[4], backward[4];
 
@@ -224,7 +216,7 @@ void Layer::SolveEigenFunction(double beta){
 	}
 
 	// Ordering
-	Vector4i order;
+	Eigen::Vector4i order;
 	order << forward[0], backward[0], forward[1], backward[1];
 
 	// Save result

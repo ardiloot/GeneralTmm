@@ -4,16 +4,16 @@
 // Functions
 //---------------------------------------------------------------------
 
-Matrix3cd RotationSx(double phi){
-	Matrix3cd res;
+Eigen::Matrix3cd RotationSx(double phi){
+	Eigen::Matrix3cd res;
 	res << 1.0, 0.0, 0.0,
 		0.0, cos(phi), -sin(phi),
 		0.0, sin(phi), cos(phi);
 	return res;
 }
 
-Matrix3cd RotationSz(double phi){
-	Matrix3cd res;
+Eigen::Matrix3cd RotationSz(double phi){
+	Eigen::Matrix3cd res;
 	res << cos(phi), -sin(phi), 0.0,
 		sin(phi), cos(phi), 0.0,
 		0.0, 0.0, 1.0;

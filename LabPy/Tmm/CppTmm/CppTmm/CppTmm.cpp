@@ -1,4 +1,5 @@
-#define PYTHON_WRAP
+#define EIGEN_USE_MKL_ALL
+//#define PYTHON_WRAP
 
 #ifdef PYTHON_WRAP
 #include <boost/python.hpp>
@@ -26,7 +27,7 @@ int main(){
 	tmm.AddIsotropicLayer(INFINITY, 1.0);
 
 	clock_t startTime = clock();
-	ComplexVectorMap rr = tmm.Sweep(Param(BETA), VectorXd::LinSpaced(500000, 0.0, 1.4));
+	ComplexVectorMap rr = tmm.Sweep(Param(BETA), Eigen::VectorXd::LinSpaced(500000, 0.0, 1.4));
 	//cout << rr["R22"] << endl;
 	//cout << double(clock() - startTime) / (double)CLOCKS_PER_SEC << " seconds." << endl;
 

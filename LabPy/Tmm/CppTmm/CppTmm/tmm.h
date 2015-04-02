@@ -1,5 +1,4 @@
 #pragma once
-
 #include <iostream>
 #include <complex>
 #include <exception>
@@ -9,16 +8,19 @@
 #include <ctime>
 #include <map>
 #include <Eigen/Dense>
-#include <Eigen/Eigenvalues> 
+#include <Eigen/Eigenvalues>
+#include <unsupported/Eigen/MatrixFunctions>
+
 
 using namespace std;
-using namespace Eigen;
+//using namespace Eigen;
+
+
 #define sqr(a) ((a) * (a))
 #define len(a) int((a).size())
 
-
-typedef map<string, RowVectorXcd> ComplexVectorMap;
 typedef complex<double> dcomplex;
+typedef map<string, Eigen::RowVectorXcd> ComplexVectorMap;
 
 //---------------------------------------------------------------------
 // Param Type
@@ -44,8 +46,8 @@ enum ParamType {
 // Fuctions
 //---------------------------------------------------------------------
 
-Matrix3cd RotationSx(double phi);
-Matrix3cd RotationSz(double phi);
+Eigen::Matrix3cd RotationSx(double phi);
+Eigen::Matrix3cd RotationSz(double phi);
 
 //---------------------------------------------------------------------
 // Param
@@ -97,7 +99,7 @@ public:
 	dcomplex GetNx(double wl);
 	dcomplex GetNy(double wl);
 	dcomplex GetNz(double wl);
-	void SolveLayer(double wl, double beta, bool calcInvF, bool calcPhaseAndTransfer);
+	void SolveLayer(double wl, double beta, bool calcInvF);
 
 private:
 	bool solved;
@@ -109,14 +111,13 @@ private:
 	double psi;
 	double xi;
 
-	ComplexEigenSolver<Matrix4cd> ces;
-	Matrix3cd epsTensor;
-	Vector4cd alpha;
-	Matrix4cd F;
-	Matrix4cd invF;
-	Vector4d poyntingX;
-	Matrix4cd phaseMatrix;
-	Matrix4cd M;
+	Eigen::ComplexEigenSolver<Eigen::Matrix4cd> ces;
+	Eigen::Matrix3cd epsTensor;
+	Eigen::Vector4cd alpha;
+	Eigen::Vector4d poyntingX;
+	Eigen::Matrix4cd F;
+	Eigen::Matrix4cd invF;
+	Eigen::Matrix4cd phaseMatrix;
 
 	void Init();
 	void SolveEpsilonMatrix(double wl);
@@ -136,10 +137,10 @@ public:
 	void SetParam(Param param, dcomplex value);
 	void AddIsotropicLayer(double d, dcomplex n);
 	void AddLayer(double d, dcomplex nx, dcomplex ny, dcomplex nz, double psi, double xi);
-	Matrix4d GetIntensityMatrix();
-	Matrix4cd GetAmplitudeMatrix();
+	Eigen::Matrix4d GetIntensityMatrix();
+	Eigen::Matrix4cd GetAmplitudeMatrix();
 	void Solve();
-	ComplexVectorMap Sweep(Param sweepParam, VectorXd sweepValues);
+	ComplexVectorMap Sweep(Param sweepParam, Eigen::VectorXd sweepValues);
 
 private:
 	double wl;
@@ -147,8 +148,8 @@ private:
 	vector<Layer> layers;
 	vector<vector<string> > names_R;
 	vector<vector<string> > names_r;
-	Matrix4cd A;
+	Eigen::Matrix4cd A;
 	bool solved;
-	Matrix4d R;
-	Matrix4cd r;
+	Eigen::Matrix4d R;
+	Eigen::Matrix4cd r;
 };
