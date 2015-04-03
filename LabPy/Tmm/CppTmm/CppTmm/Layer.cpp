@@ -85,7 +85,7 @@ dcomplex Layer::GetNz(double wl){
 	return nz.n(wl);
 }
 
-void Layer::SolveLayer(double wl, double beta, bool calcInvF){
+void Layer::SolveLayer(double wl, double beta){
 	SolveEpsilonMatrix(wl);
 	SolveEigenFunction(beta);
 
@@ -99,19 +99,50 @@ void Layer::SolveLayer(double wl, double beta, bool calcInvF){
 	}
 
 	//InvF
-	if (calcInvF){
-		if (isotropicLayer) {
-			invF << 0.5 / F(0, 0), 0.5, 0, 0,
-				0.5 / F(0, 1), 0.5, 0, 0,
-				0, 0, 0.5 / F(2, 2), 0.5,
-				0, 0, 0.5 / F(2, 3), 0.5;
-		}
-		else {
-			invF = F.inverse();
-		}
+	
+	if (isotropicLayer) {
+		invF << 0.5 / F(0, 0), 0.5, 0, 0,
+			0.5 / F(0, 1), 0.5, 0, 0,
+			0, 0, 0.5 / F(2, 2), 0.5,
+			0, 0, 0.5 / F(2, 3), 0.5;
+	}
+	else {
+		invF = F.inverse();
+	}
+	M = F * phaseMatrix * invF;
+	solved = true;
+}
+
+EMFields Layer::GetFields(double wl, double beta, double x, Eigen::Vector4cd coefs){
+	EMFields res;
+	res.E.setZero();
+	res.H.setZero();
+	double z0 = 119.9169832 * M_PI;
+	double k0 = 2.0 * M_PI / wl;
+
+	for (int mode = 0; mode < 4; mode++){
+		dcomplex a = alpha[mode];	
+		dcomplex epsXX = epsTensor(0, 0);
+		dcomplex epsXY = epsTensor(0, 1);
+		dcomplex epsXZ = epsTensor(0, 2);
+
+		dcomplex mEy = coefs[mode] * F(0, mode);
+		dcomplex mHz = coefs[mode] * F(1, mode);
+		dcomplex mEz = coefs[mode] * F(2, mode);
+		dcomplex mHy = coefs[mode] * F(3, mode);
+		dcomplex mEx = -(epsXY * mEy + epsXZ * mEz + beta * z0 * mHz) / epsXX;
+		dcomplex mHx = (beta / z0) * mEz;
+		dcomplex phase = exp(dcomplex(0.0, 1.0) * k0 * a * x);
+
+		res.E(0) += mEx * phase;
+		res.E(1) += mEy * phase;
+		res.E(2) += mEz * phase;
+		res.H(0) += mHx * phase;
+		res.H(1) += mHy * phase;
+		res.H(2) += mHz * phase;
 	}
 
-	solved = true;
+	return res;
 }
 
 

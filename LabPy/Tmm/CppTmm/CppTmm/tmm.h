@@ -83,6 +83,48 @@ private:
 };
 
 //---------------------------------------------------------------------
+// EMFields
+//---------------------------------------------------------------------
+
+struct EMFields {
+public:
+	Eigen::Vector3cd E;
+	Eigen::Vector3cd H;
+};
+
+//---------------------------------------------------------------------
+// EMFields
+//---------------------------------------------------------------------
+
+struct EMFieldsList {
+public:
+	Eigen::MatrixXcd E;
+	Eigen::MatrixXcd H;
+
+	EMFieldsList(int size) : E(size, 3), H(size, 3) {
+
+	}
+
+	Eigen::MatrixXcd GetE(){
+		return E;
+	}
+
+	Eigen::MatrixXcd GetH(){
+		return H;
+	}
+};
+
+//---------------------------------------------------------------------
+// LayerIndices
+//---------------------------------------------------------------------
+
+struct LayerIndices {
+public:
+	Eigen::VectorXi indices;
+	Eigen::VectorXd ds;
+};
+
+//---------------------------------------------------------------------
 // Layer
 //---------------------------------------------------------------------
 
@@ -99,7 +141,8 @@ public:
 	dcomplex GetNx(double wl);
 	dcomplex GetNy(double wl);
 	dcomplex GetNz(double wl);
-	void SolveLayer(double wl, double beta, bool calcInvF);
+	void SolveLayer(double wl, double beta);
+	EMFields GetFields(double wl, double beta, double x, Eigen::Vector4cd coefs);
 
 private:
 	bool solved;
@@ -119,6 +162,7 @@ private:
 	Eigen::Matrix4cd F;
 	Eigen::Matrix4cd invF;
 	Eigen::Matrix4cd phaseMatrix;
+	Eigen::Matrix4cd M;
 
 	void Init();
 	void SolveEpsilonMatrix(double wl);
@@ -142,6 +186,7 @@ public:
 	Eigen::Matrix4cd GetAmplitudeMatrix();
 	void Solve();
 	ComplexVectorMap Sweep(Param sweepParam, Eigen::VectorXd sweepValues);
+	EMFieldsList CalcFields1D(Eigen::VectorXd xs, Eigen::VectorXd polarization);
 
 private:
 	double wl;
@@ -151,6 +196,15 @@ private:
 	vector<vector<string> > names_r;
 	Eigen::Matrix4cd A;
 	bool solved;
+	bool needToSolve;
+	bool needToCalcFieldCoefs;
+	Eigen::Vector2d lastFieldCoefsPol;
 	Eigen::Matrix4d R;
 	Eigen::Matrix4cd r;
+
+	double normCoef;
+	Eigen::MatrixXcd fieldCoefs;
+
+	void CalcFieldCoefs(Eigen::Vector2d polarization);
+	LayerIndices CalcLayerIndices(Eigen::VectorXd &xs);
 };

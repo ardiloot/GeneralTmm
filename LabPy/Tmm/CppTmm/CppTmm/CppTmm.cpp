@@ -30,12 +30,23 @@ int main(){
 	tmm.AddIsotropicLayer(50e-9, 1.7);
 	tmm.AddIsotropicLayer(INFINITY, 1.0);
 
-	clock_t startTime = clock();
-	ComplexVectorMap rr = tmm.Sweep(Param(BETA), Eigen::VectorXd::LinSpaced(1000000, 0.0, 1.4));
+	//clock_t startTime = clock();
+	//ComplexVectorMap rr = tmm.Sweep(Param(BETA), Eigen::VectorXd::LinSpaced(1000000, 0.0, 1.4));
 	//cout << rr["R22"] << endl;
 	//cout << double(clock() - startTime) / (double)CLOCKS_PER_SEC << " seconds." << endl;
 
-	//system("pause");
+	tmm.SetParam(Param(BETA), 0.5);
+	tmm.Solve();
+
+	Eigen::Vector2d pol; pol << 1.0, 0.0;
+	Eigen::VectorXd xs = Eigen::VectorXd::LinSpaced(10, -1e-6, 1e-6);
+
+
+
+	EMFieldsList r = tmm.CalcFields1D(xs, pol);
+	cout << r.E << endl;
+
+	system("pause");
 	return 0;
 }
 
@@ -81,6 +92,15 @@ BOOST_PYTHON_MODULE(CppTmm)
 		;
 
 	//---------------------------------------------------------------
+	// EMFieldsList
+	//---------------------------------------------------------------
+
+	class_<EMFieldsList>("EMFieldsList", init<int>())
+		.add_property("E", &EMFieldsList::GetE)
+		.add_property("H", &EMFieldsList::GetH)
+		;
+
+	//---------------------------------------------------------------
 	// TMM
 	//---------------------------------------------------------------
 
@@ -97,6 +117,7 @@ BOOST_PYTHON_MODULE(CppTmm)
 		.def("GetIntensityMatrix", &Tmm::GetIntensityMatrix)
 		.def("GetAmplitudeMatrix", &Tmm::GetAmplitudeMatrix)
 		.def("Sweep", &Tmm::Sweep)
+		.def("CalcFields1D", &Tmm::CalcFields1D)
 		;
 
 }

@@ -149,6 +149,10 @@
       <AdditionalLibraryDirectories>C:\Libraries\Boost.NumPy_1_56_0_x64\build\lib\Release;C:\Python27\Lib\site-packages\numpy\core\lib;C:\Libraries\glog\x64\Release;C:\Python27\libs;C:\Boost\boost_1_56_0_x64\lib64-msvc-12.0;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>python27.lib;npymath.lib;boost_numpy.lib;libglog.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreLinkEvent>
+      <Command>
+      </Command>
+    </PreLinkEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

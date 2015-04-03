@@ -6,6 +6,8 @@
 
 Tmm::Tmm(){
 	solved = false;
+	needToSolve = true;
+	needToCalcFieldCoefs = true;
 	wl = 500e-9;
 	beta = 0.0;
 
@@ -29,7 +31,7 @@ Tmm::Tmm(){
 }
 
 void Tmm::SetParam(Param param, double value){
-	//cout << "SetParamDouble " << int(param.GetParamType()) << " " << value << endl;
+	needToSolve = true;
 	if (param.GetLayerID() < 0){
 		switch (param.GetParamType())
 		{
@@ -50,7 +52,7 @@ void Tmm::SetParam(Param param, double value){
 }
 
 void Tmm::SetParam(Param param, dcomplex value){
-	//cout << "SetParamComplex " << int(param.GetParamType()) << " " << value << endl;
+	needToSolve = true;
 	if (param.GetLayerID() < 0){
 		throw invalid_argument("Invalid param");
 	}
@@ -60,10 +62,12 @@ void Tmm::SetParam(Param param, dcomplex value){
 }
 
 void Tmm::AddIsotropicLayer(double d, dcomplex n){
+	needToSolve = true;
 	layers.push_back(Layer(d, n));
 }
 
 void Tmm::AddLayer(double d, dcomplex nx, dcomplex ny, dcomplex nz, double psi, double xi){
+	needToSolve = true;
 	layers.push_back(Layer(d, nx, ny, nz, psi, xi));
 }
 
@@ -82,18 +86,21 @@ Eigen::Matrix4cd Tmm::GetAmplitudeMatrix(){
 }
 
 void Tmm::Solve(){
+	if (!needToSolve){
+		return;
+	}
+	needToSolve = false;
+	needToCalcFieldCoefs = true;
 
 	for (int i = 0; i < len(layers); i++){
-		//bool first = (i == 0);
-		bool last = (i == len(layers) - 1);
-		layers[i].SolveLayer(wl, beta, !last);
+		layers[i].SolveLayer(wl, beta);
 	}
 
 	// System matrix
 	A = layers[0].invF;
 	for (int i = 1; i < len(layers) - 1; i++){
 		Layer &layer = layers[i];
-		A = A * layer.F * layer.phaseMatrix * layer.invF;
+		A = A * layer.M;
 	}
 	A = A * layers[len(layers) - 1].F;
 
@@ -164,5 +171,82 @@ ComplexVectorMap Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues){
 		}
 	}
 
+	return res;
+}
+
+
+EMFieldsList Tmm::CalcFields1D(Eigen::VectorXd xs, Eigen::VectorXd polarization){
+	Solve();
+
+	EMFieldsList res(len(xs));
+	CalcFieldCoefs(polarization);
+	LayerIndices layerP = CalcLayerIndices(xs);
+	for (int i = 0; i < len(xs); i++){
+		int layerId = layerP.indices(i);
+		EMFields f = layers[layerId].GetFields(wl, beta, layerP.ds(i), fieldCoefs.row(layerId));
+		res.E.row(i) = f.E / normCoef;
+		res.H.row(i) = f.H / normCoef;
+	}
+	return res;
+}
+
+
+void Tmm::CalcFieldCoefs(Eigen::Vector2d polarization){	
+	if (!needToCalcFieldCoefs && polarization == lastFieldCoefsPol){
+		return;
+	}
+	needToCalcFieldCoefs = false;
+	lastFieldCoefsPol = polarization;
+
+	//Calc normalization factor
+	Eigen::Vector4cd incCoefs;
+	incCoefs << polarization(0), 0.0, polarization(1), 0.0;
+	Eigen::Vector3cd Einc = layers[0].GetFields(wl, beta, 0.0, incCoefs).E;
+	
+	dcomplex n1 = sqrt(sqr(beta) + sqr(layers[0].alpha(0)));
+	dcomplex n2 = sqrt(sqr(beta) + sqr(layers[0].alpha(2)));
+	double nEff = (polarization(0) * real(n1) + polarization(1) * real(n2)) / (polarization(0) + polarization(1)); // Maybe not fully correct
+	normCoef = Einc.norm() * sqrt(nEff);
+		
+	//Calc output coefs
+	Eigen::Vector4cd inputFields;
+	inputFields << polarization(0), polarization(1), 0.0, 0.0;
+	Eigen::Vector4cd outputFields = r * inputFields;
+
+	//Calc coefs in all layers
+	Eigen::Vector4cd coefsSubstrate;
+	coefsSubstrate << outputFields(2), 0.0, outputFields(3), 0.0;
+
+	Eigen::Matrix4cd mat = layers[len(layers) - 1].F;
+	fieldCoefs.resize(len(layers), 4);
+	for (int i = len(layers) - 1; i >= 0; i--){
+		mat = layers[i].M * mat;
+		fieldCoefs.row(i) = layers[i].invF * mat * coefsSubstrate;
+	}
+	fieldCoefs(len(layers) - 1, 1) = fieldCoefs(len(layers) - 1, 3) = 0.0;
+}
+
+LayerIndices Tmm::CalcLayerIndices(Eigen::VectorXd &xs){
+	LayerIndices res;
+	res.indices.resize(len(xs));
+	res.ds.resize(len(xs));
+
+	int curLayer = 0;
+	double curDist = 0.0;
+	double prevDist = 0.0;
+
+	for (int i = 0; i < len(xs); i++){
+		while (xs[i] >= curDist){
+			curLayer++;
+			prevDist = curDist;
+			if (curLayer >= len(layers) - 1){
+				curDist = INFINITY;
+				curLayer = len(layers) - 1;
+			}
+			curDist += layers[curLayer].GetD();
+		}
+		res.indices(i) = curLayer;
+		res.ds(i) = xs(i) - prevDist;
+	}
 	return res;
 }

@@ -16,12 +16,14 @@ tmm2.AddIsotropicLayer(float("inf"), 1.0)
 start = clock()
 
 tmm = Tmm()
-tmm.SetParam(Param(ParamType.WL), 800e-9)
-tmm.SetParam(Param(ParamType.BETA), 0.0)
+
 tmm.AddIsotropicLayer(float("inf"), 1.5)
 tmm.AddIsotropicLayer(50e-9, 0.036759 + 5.5698j)
 tmm.AddIsotropicLayer(float("inf"), 1.0)
+tmm.SetParam(Param(ParamType.WL), 800e-9)
+tmm.SetParam(Param(ParamType.BETA), 0.5)
 
+"""
 timeCpp = np.zeros(5)
 timePython = np.zeros_like(timeCpp)
 for i in range(len(timeCpp)):
@@ -48,4 +50,31 @@ print "enh", balance * np.mean(timePython) / np.mean(timeCpp)
 plt.figure()
 plt.plot(betas2, aa["R11"][0].real, "-")
 plt.plot(betas, rr["R11"], "x")
+
+
+"""
+
+xs = np.linspace(-1e-6, 1e-6, 200)
+pol = np.linspace(1.0, 0.0, 2)
+pol2 = np.linspace(1.0, 0.0, 2)
+
+print pol.shape
+
+tmm.Solve();
+fields = tmm.CalcFields1D(xs, pol)
+fields = tmm.CalcFields1D(xs, pol2)
+
+tmm2.Solve(800e-9, 0.5)
+EPython, HPython = tmm2.CalcFields1D(xs, (1.0, 0.0))
+
+plt.figure()
+for i in range(3):
+    plt.plot(1e6 * xs, abs(EPython[:, i]), label = "py,%d" % (i))
+    plt.plot(1e6 * xs, abs(fields.E[:, i]), "x", label = "cpp,%d" % (i))
+plt.figure()
+for i in range(3):
+    plt.plot(1e6 * xs, abs(HPython[:, i]), label = "py,%d" % (i))
+    plt.plot(1e6 * xs, abs(fields.H[:, i]), "x", label = "cpp,%d" % (i))
+
+    
 plt.show()
