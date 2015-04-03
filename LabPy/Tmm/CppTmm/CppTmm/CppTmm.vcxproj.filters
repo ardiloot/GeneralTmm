@@ -13,5 +13,6 @@
   <ItemGroup>
     <ClInclude Include="tmm.h" />
     <ClInclude Include="eigen_numpy.h" />
+    <ClInclude Include="std_map_indexing_suite.hpp" />
   </ItemGroup>
 </Project>

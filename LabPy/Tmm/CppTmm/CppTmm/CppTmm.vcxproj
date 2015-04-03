@@ -166,6 +166,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="eigen_numpy.h" />
+    <ClInclude Include="std_map_indexing_suite.hpp" />
     <ClInclude Include="tmm.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

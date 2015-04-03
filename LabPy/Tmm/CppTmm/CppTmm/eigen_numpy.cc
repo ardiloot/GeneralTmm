@@ -250,7 +250,8 @@ void SetupEigenConverters() {
   EIGEN_MATRIX_CONVERTER(Vector2d);
   EIGEN_MATRIX_CONVERTER(Vector3d);
   EIGEN_MATRIX_CONVERTER(Vector4d);
-
+  EIGEN_MATRIX_CONVERTER(RowVector2d);
+  
   MAT_CONV(2, 3, double);
   MAT_CONV(X, 3, double);
   MAT_CONV(X, X, double);

@@ -1,80 +1,95 @@
 import numpy as np
-import pylab as plt
-from CppTmm import Tmm, Param, ParamType  # @UnresolvedImport
-from LabPy import GeneralTmm
-from time import clock
+import CppTmm
 
-balance = 300
-betas = np.linspace(0.0, 1.4, 3000)
-betas2 = np.linspace(0.0, 1.4, len(betas) * balance)
+def ToCppParam(param):
+    layerNr = -1
+    if param.count("_") == 1:
+        layerNr = int(param.split("_")[-1])
+    elif param.count('a') > 1:
+        raise ValueError("Unknown param %s" % (param))
 
-tmm2 = GeneralTmm()
-tmm2.SetConf(wl = 800e-9)
-tmm2.AddIsotropicLayer(float("inf"), 1.5)
-tmm2.AddIsotropicLayer(50e-9, 0.036759 + 5.5698j)
-tmm2.AddIsotropicLayer(float("inf"), 1.0)
-start = clock()
+    if param == "wl":
+        return CppTmm.Param(CppTmm.ParamType.WL)
+    elif param == "beta":
+        return CppTmm.Param(CppTmm.ParamType.BETA)
+    elif param.startswith("d_"):
+        return CppTmm.Param(CppTmm.ParamType.LAYER_D, layerNr)
+    elif param.startswith("n_"):
+        return CppTmm.Param(CppTmm.ParamType.LAYER_N, layerNr)
+    elif param.startswith("nx_"):
+        return CppTmm.Param(CppTmm.ParamType.LAYER_NX, layerNr)
+    elif param.startswith("ny_"):
+        return CppTmm.Param(CppTmm.ParamType.LAYER_NY, layerNr)
+    elif param.startswith("nz_"):
+        return CppTmm.Param(CppTmm.ParamType.LAYER_NZ, layerNr)
+    elif param.startswith("psi_"):
+        return CppTmm.Param(CppTmm.ParamType.LAYER_PSI, layerNr)
+    elif param.startswith("xi_"):
+        return CppTmm.Param(CppTmm.ParamType.LAYER_XI, layerNr)
+    else:
+        raise NotImplementedError()
 
-tmm = Tmm()
+class Tmm(object):
 
-tmm.AddIsotropicLayer(float("inf"), 1.5)
-tmm.AddIsotropicLayer(50e-9, 0.036759 + 5.5698j)
-tmm.AddIsotropicLayer(float("inf"), 1.0)
-tmm.SetParam(Param(ParamType.WL), 800e-9)
-tmm.SetParam(Param(ParamType.BETA), 0.5)
+    def __init__(self):
+        self._tmm = CppTmm.Tmm()
+        self.AddIsotropicLayer = self._tmm.AddIsotropicLayer
+        self.AddLayer = self._tmm.AddLayer
+        self.GetIntensityMatrix = self._tmm.GetIntensityMatrix
+        self.GetAmplitudeMatrix = self._tmm.GetAmplitudeMatrix
 
-"""
-timeCpp = np.zeros(5)
-timePython = np.zeros_like(timeCpp)
-for i in range(len(timeCpp)):
-    print "Test", i
-    start = clock()
-    rr = tmm2.SolveFor("beta", betas)
-    timePython[i] = clock() - start
+    def SetParam(self, **kwargs):
+        for key, value in kwargs.iteritems():
+            p = ToCppParam(key)
+            self._tmm.SetParam(p, value)
+            
+    def SetLayerParam(self, layerId, **kwargs):
+        for key, value in kwargs.iteritems():
+            self._tmm.SetParam("%s_%d" % (ToCppParam(key), layerId), value)
     
-    start = clock()
-    aa = tmm.Sweep(Param(ParamType.BETA), betas2)
-    timeTmm = clock() - start
-    timeCpp[i] = clock() - start
+    def Sweep(self, sweepParam, sweepValues, enhPos = None):
+        if enhPos == None:
+            r = self._tmm.Sweep(ToCppParam(sweepParam), sweepValues)
+        else:
+            pos = CppTmm.PositionSettings(np.array(enhPos[0]), enhPos[1], enhPos[2])  # @UndefinedVariable
+            r = self._tmm.Sweep(ToCppParam(sweepParam), sweepValues, pos)
+        
+        res = {}
+        for k, v in r.resDouble.iteritems():
+            res[k] = v[0]
+        for k, v in r.resComplex.iteritems():
+            res[k] = v[0]
+        return res
 
-print "Python"
-print timePython
-print "mean", np.mean(timePython), "std", np.std(timePython)
+    def CalcFields1D(self, xs, pol):
+        res = self._tmm.CalcFields1D(xs, np.array(pol))
+        return res.E, res.H
 
-print "Cpp"
-print timeCpp
-print "mean", np.mean(timeCpp), "std", np.std(timeCpp)
-
-print "enh", balance * np.mean(timePython) / np.mean(timeCpp)
-
-plt.figure()
-plt.plot(betas2, aa["R11"][0].real, "-")
-plt.plot(betas, rr["R11"], "x")
+    def CalcFieldsAtInterface(self, (pol, interface, dist)):
+        pos = CppTmm.PositionSettings(np.array(pol), interface, dist)  # @UndefinedVariable
+        res = self._tmm.CalcFieldsAtInterface(pos)
+        return res.E[0], res.H[0]
 
 
-"""
-
-xs = np.linspace(-1e-6, 1e-6, 200)
-pol = np.linspace(1.0, 0.0, 2)
-pol2 = np.linspace(1.0, 0.0, 2)
-
-print pol.shape
-
-tmm.Solve();
-fields = tmm.CalcFields1D(xs, pol)
-fields = tmm.CalcFields1D(xs, pol2)
-
-tmm2.Solve(800e-9, 0.5)
-EPython, HPython = tmm2.CalcFields1D(xs, (1.0, 0.0))
-
-plt.figure()
-for i in range(3):
-    plt.plot(1e6 * xs, abs(EPython[:, i]), label = "py,%d" % (i))
-    plt.plot(1e6 * xs, abs(fields.E[:, i]), "x", label = "cpp,%d" % (i))
-plt.figure()
-for i in range(3):
-    plt.plot(1e6 * xs, abs(HPython[:, i]), label = "py,%d" % (i))
-    plt.plot(1e6 * xs, abs(fields.H[:, i]), "x", label = "cpp,%d" % (i))
-
+if __name__ == "__main__":
+    import pylab as plt
+    betas = np.linspace(0.0, 1.4, 100)
+    tmm = Tmm()
+    tmm.SetParam(wl = 800e-9)
+    tmm.AddIsotropicLayer(float("inf"), 1.5)
+    tmm.AddIsotropicLayer(float("inf"), 1.0)
     
-plt.show()
+    r = tmm.Sweep("beta", betas, ((1.0, 0.0), -1, 0.0))
+    tmm.SetParam(n_1 = complex(1.5))
+    
+    
+    plt.figure()
+    plt.subplot(211)
+    plt.plot(betas, r["R11"])
+    plt.plot(betas, r["R22"])
+    plt.subplot(212)
+    plt.plot(betas, r["enh"])
+    plt.show()
+    
+    
+    

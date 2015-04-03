@@ -11,16 +11,15 @@
 #include <Eigen/Eigenvalues>
 #include <unsupported/Eigen/MatrixFunctions>
 
-
 using namespace std;
 //using namespace Eigen;
-
 
 #define sqr(a) ((a) * (a))
 #define len(a) int((a).size())
 
 typedef complex<double> dcomplex;
 typedef map<string, Eigen::RowVectorXcd> ComplexVectorMap;
+typedef map<string, Eigen::RowVectorXd> DoubleVectorMap;
 
 //---------------------------------------------------------------------
 // Param Type
@@ -88,8 +87,20 @@ private:
 
 struct EMFields {
 public:
-	Eigen::Vector3cd E;
-	Eigen::Vector3cd H;
+	Eigen::RowVectorXcd E;
+	Eigen::RowVectorXcd H;
+
+	EMFields() : E(3), H(3) {
+
+	}
+
+	Eigen::RowVectorXcd GetE(){
+		return E;
+	}
+
+	Eigen::RowVectorXcd GetH(){
+		return H;
+	}
 };
 
 //---------------------------------------------------------------------
@@ -122,6 +133,68 @@ struct LayerIndices {
 public:
 	Eigen::VectorXi indices;
 	Eigen::VectorXd ds;
+};
+
+//---------------------------------------------------------------------
+// SweepRes
+//---------------------------------------------------------------------
+
+struct SweepRes {
+public:
+	ComplexVectorMap mapComplex;
+	DoubleVectorMap mapDouble;
+
+	ComplexVectorMap GetComplexMap(){
+		return mapComplex;
+	}
+
+	DoubleVectorMap GetDoubleMap(){
+		return mapDouble;
+	}
+};
+
+//---------------------------------------------------------------------
+// PositionSettings
+//---------------------------------------------------------------------
+
+struct PositionSettings {
+//	friend class Tmm;
+public:
+	PositionSettings(Eigen::RowVector2d polarization_, int interfaceId_, double distFromInterface_){
+		polarization = polarization_;
+		interfaceId = interfaceId_;
+		distFromInterface = distFromInterface_;
+		enabled = true;
+	}
+
+	PositionSettings(){
+		polarization.setZero();
+		interfaceId = -1;
+		distFromInterface = 0.0;
+		enabled = false;
+	}
+
+	Eigen::RowVector2d GetPolarization(){
+		return polarization;
+	}
+
+	int GetInterfaceId(){
+		return interfaceId;
+	}
+
+	double GetDistFromInterface(){
+		return distFromInterface;
+	}
+
+	bool IsEnabled(){
+		return enabled;
+	}
+
+private:
+	bool enabled;
+	Eigen::RowVector2d polarization;
+	int interfaceId;
+	double distFromInterface;
 };
 
 //---------------------------------------------------------------------
@@ -184,9 +257,10 @@ public:
 	void AddLayer(double d, dcomplex nx, dcomplex ny, dcomplex nz, double psi, double xi);
 	Eigen::Matrix4d GetIntensityMatrix();
 	Eigen::Matrix4cd GetAmplitudeMatrix();
-	void Solve();
-	ComplexVectorMap Sweep(Param sweepParam, Eigen::VectorXd sweepValues);
+	SweepRes Sweep(Param sweepParam, Eigen::VectorXd sweepValues, PositionSettings enhpos);
+	SweepRes Sweep(Param sweepParam, Eigen::VectorXd sweepValues);
 	EMFieldsList CalcFields1D(Eigen::VectorXd xs, Eigen::VectorXd polarization);
+	EMFields CalcFieldsAtInterface(PositionSettings pos);
 
 private:
 	double wl;
@@ -205,6 +279,7 @@ private:
 	double normCoef;
 	Eigen::MatrixXcd fieldCoefs;
 
+	void Solve();
 	void CalcFieldCoefs(Eigen::Vector2d polarization);
 	LayerIndices CalcLayerIndices(Eigen::VectorXd &xs);
 };

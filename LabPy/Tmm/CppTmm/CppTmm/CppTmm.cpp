@@ -4,7 +4,8 @@
 #ifdef PYTHON_WRAP
 #include <boost/python.hpp>
 #include <boost/numpy.hpp>
-#include <boost/python/suite/indexing/map_indexing_suite.hpp>
+//#include <boost/python/suite/indexing/map_indexing_suite.hpp>
+#include "std_map_indexing_suite.hpp"
 #include "eigen_numpy.h"
 using namespace boost::python;
 namespace np = boost::numpy;
@@ -23,6 +24,9 @@ int main(){
 	//int n = Eigen::nbThreads();
 	//cout << "Will use " << n << " threads." << endl;
 
+	Eigen::Vector2d pol; pol << 1.0, 0.0;
+	PositionSettings ps(pol, -1, 0.0);
+
 	Tmm tmm;
 	tmm.SetParam(Param(WL), 500e-9);
 	tmm.AddIsotropicLayer(INFINITY, 1.5);
@@ -31,22 +35,17 @@ int main(){
 	tmm.AddIsotropicLayer(INFINITY, 1.0);
 
 	//clock_t startTime = clock();
-	//ComplexVectorMap rr = tmm.Sweep(Param(BETA), Eigen::VectorXd::LinSpaced(1000000, 0.0, 1.4));
+	tmm.Sweep(Param(BETA), Eigen::VectorXd::LinSpaced(1000000, 0.0, 1.4), ps);
 	//cout << rr["R22"] << endl;
 	//cout << double(clock() - startTime) / (double)CLOCKS_PER_SEC << " seconds." << endl;
 
-	tmm.SetParam(Param(BETA), 0.5);
-	tmm.Solve();
+	//tmm.SetParam(Param(BETA), 0.5);
+	
+	//Eigen::VectorXd xs = Eigen::VectorXd::LinSpaced(1000000, -1e-6, 1e-6);
+	//EMFieldsList r = tmm.CalcFields1D(xs, pol);
+	//tmm.CalcFieldsAtInterface(ps);
 
-	Eigen::Vector2d pol; pol << 1.0, 0.0;
-	Eigen::VectorXd xs = Eigen::VectorXd::LinSpaced(10, -1e-6, 1e-6);
-
-
-
-	EMFieldsList r = tmm.CalcFields1D(xs, pol);
-	cout << r.E << endl;
-
-	system("pause");
+	//system("pause");
 	return 0;
 }
 
@@ -58,8 +57,13 @@ BOOST_PYTHON_MODULE(CppTmm)
 	SetupEigenConverters();
 
 	class_<ComplexVectorMap >("ComplexVectorMap")
-		.def(map_indexing_suite<ComplexVectorMap, true>())
+		.def(std_map_indexing_suite<ComplexVectorMap, true>())
 	;
+
+	class_<DoubleVectorMap >("DoubleVectorMap")
+		.def(std_map_indexing_suite<DoubleVectorMap, true>())
+		;
+
 
 	//---------------------------------------------------------------
 	// Param Type
@@ -92,6 +96,36 @@ BOOST_PYTHON_MODULE(CppTmm)
 		;
 
 	//---------------------------------------------------------------
+	// SweepRes
+	//---------------------------------------------------------------
+
+	class_<SweepRes>("SweepRes")
+		.add_property("resComplex", &SweepRes::GetComplexMap)
+		.add_property("resDouble", &SweepRes::GetDoubleMap)
+		;
+
+	//---------------------------------------------------------------
+	// PositionSettings
+	//---------------------------------------------------------------
+
+	class_<PositionSettings>("PositionSettings", init<Eigen::Vector2d, int, double>())
+		.def(init<>())
+		.add_property("polarization", &PositionSettings::GetPolarization)
+		.add_property("interfaceId", &PositionSettings::GetInterfaceId)
+		.add_property("distFromInterface", &PositionSettings::GetDistFromInterface)
+		.add_property("enabled", &PositionSettings::IsEnabled)
+		;
+
+	//---------------------------------------------------------------
+	// EMFields
+	//---------------------------------------------------------------
+
+	class_<EMFields>("EMFields")
+		.add_property("E", &EMFields::GetE)
+		.add_property("H", &EMFields::GetH)
+		;
+
+	//---------------------------------------------------------------
 	// EMFieldsList
 	//---------------------------------------------------------------
 
@@ -106,6 +140,9 @@ BOOST_PYTHON_MODULE(CppTmm)
 
 	void (Tmm::*BoostSetParamsDouble)(Param, double) = &Tmm::SetParam;
 	void (Tmm::*BoostSetParamsComplex)(Param, dcomplex) = &Tmm::SetParam;
+	SweepRes(Tmm::*BoostSweep1)(Param, Eigen::VectorXd) = &Tmm::Sweep;
+	SweepRes(Tmm::*BoostSweep2)(Param, Eigen::VectorXd, PositionSettings) = &Tmm::Sweep;
+	
 
 	//def("F", (void (C::*)(int))&C::F)  
 	class_<Tmm>("Tmm")
@@ -113,11 +150,12 @@ BOOST_PYTHON_MODULE(CppTmm)
 		.def("SetParam", (BoostSetParamsDouble))
 		.def("AddIsotropicLayer", &Tmm::AddIsotropicLayer)
 		.def("AddLayer", &Tmm::AddLayer)
-		.def("Solve", &Tmm::Solve)
 		.def("GetIntensityMatrix", &Tmm::GetIntensityMatrix)
 		.def("GetAmplitudeMatrix", &Tmm::GetAmplitudeMatrix)
-		.def("Sweep", &Tmm::Sweep)
+		.def("Sweep", (BoostSweep1))
+		.def("Sweep", (BoostSweep2))
 		.def("CalcFields1D", &Tmm::CalcFields1D)
+		.def("CalcFieldsAtInterface", &Tmm::CalcFieldsAtInterface)
 		;
 
 }

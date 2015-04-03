@@ -72,16 +72,12 @@ void Tmm::AddLayer(double d, dcomplex nx, dcomplex ny, dcomplex nz, double psi, 
 }
 
 Eigen::Matrix4d Tmm::GetIntensityMatrix(){
-	if (!solved){
-		throw runtime_error("TMM has to be solved before calling this function.");
-	}
+	Solve();
 	return R;
 }
 
 Eigen::Matrix4cd Tmm::GetAmplitudeMatrix(){
-	if (!solved){
-		throw runtime_error("TMM has to be solved before calling this function.");
-	}
+	Solve();
 	return r;
 }
 
@@ -146,16 +142,28 @@ void Tmm::Solve(){
 	solved = true;
 }
 
-ComplexVectorMap Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues){
-
-	ComplexVectorMap res;
-	ComplexVectorMap::iterator data_R[4][4];
+SweepRes Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues, PositionSettings enhpos){
+	SweepRes res;
+	ComplexVectorMap &resComplex = res.mapComplex;
+	DoubleVectorMap &resDouble = res.mapDouble;
+	DoubleVectorMap::iterator data_R[4][4];
 	ComplexVectorMap::iterator data_r[4][4];
+	
+	DoubleVectorMap::iterator enhs;
+	ComplexVectorMap::iterator enhExs;
+	ComplexVectorMap::iterator enhEys;
+	ComplexVectorMap::iterator enhEzs;
+	if (enhpos.IsEnabled()){
+		enhs = resDouble.insert(make_pair("enh", Eigen::RowVectorXd(len(sweepValues)))).first;
+		enhExs = resComplex.insert(make_pair("enhEx", Eigen::RowVectorXcd(len(sweepValues)))).first;
+		enhEys = resComplex.insert(make_pair("enhEy", Eigen::RowVectorXcd(len(sweepValues)))).first;
+		enhEzs = resComplex.insert(make_pair("enhEz", Eigen::RowVectorXcd(len(sweepValues)))).first;
+	}
+
 	for (int i = 0; i < 4; i++){
 		for (int j = 0; j < 2; j++){
-			data_R[i][j] = res.insert(make_pair(names_R[i][j], Eigen::RowVectorXcd(len(sweepValues)))).first;
-			data_r[i][j] = res.insert(make_pair(names_r[i][j], Eigen::RowVectorXcd(len(sweepValues)))).first;
-		
+			data_R[i][j] = resDouble.insert(make_pair(names_R[i][j], Eigen::RowVectorXd(len(sweepValues)))).first;
+			data_r[i][j] = resComplex.insert(make_pair(names_r[i][j], Eigen::RowVectorXcd(len(sweepValues)))).first;
 		}
 	}
 
@@ -169,17 +177,29 @@ ComplexVectorMap Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues){
 				data_r[j][k]->second(i) = r(j, k);
 			}
 		}
+
+		if (enhpos.IsEnabled()){
+			EMFields fields = CalcFieldsAtInterface(enhpos);
+			enhs->second(i) = fields.E.norm();
+			enhExs->second(i) = fields.E(0);
+			enhEys->second(i) = fields.E(1);
+			enhEzs->second(i) = fields.E(2);
+		}
 	}
 
 	return res;
 }
 
+SweepRes Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues){
+	PositionSettings enhpos;
+	return Sweep(sweepParam, sweepValues, enhpos);
+}
 
 EMFieldsList Tmm::CalcFields1D(Eigen::VectorXd xs, Eigen::VectorXd polarization){
 	Solve();
+	CalcFieldCoefs(polarization);
 
 	EMFieldsList res(len(xs));
-	CalcFieldCoefs(polarization);
 	LayerIndices layerP = CalcLayerIndices(xs);
 	for (int i = 0; i < len(xs); i++){
 		int layerId = layerP.indices(i);
@@ -187,6 +207,27 @@ EMFieldsList Tmm::CalcFields1D(Eigen::VectorXd xs, Eigen::VectorXd polarization)
 		res.E.row(i) = f.E / normCoef;
 		res.H.row(i) = f.H / normCoef;
 	}
+	return res;
+}
+
+EMFields Tmm::CalcFieldsAtInterface(PositionSettings pos){
+	if (!pos.IsEnabled()){
+		throw invalid_argument("Position settings must be enabled.");
+	}
+	
+	int layerId;
+	if (pos.GetInterfaceId() < 0){
+		layerId = len(layers) + pos.GetInterfaceId();
+	}
+	else{
+		layerId = pos.GetInterfaceId();
+	}
+
+	Solve();
+	CalcFieldCoefs(pos.GetPolarization());
+	EMFields res = layers[layerId].GetFields(wl, beta, pos.GetDistFromInterface(), fieldCoefs.row(layerId));
+	res.E /= normCoef;
+	res.H /= normCoef;
 	return res;
 }
 
