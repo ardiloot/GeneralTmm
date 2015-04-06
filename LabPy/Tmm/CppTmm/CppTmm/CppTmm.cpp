@@ -5,6 +5,7 @@
 #include <boost/python.hpp>
 #include <boost/numpy.hpp>
 //#include <boost/python/suite/indexing/map_indexing_suite.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "std_map_indexing_suite.hpp"
 #include "eigen_numpy.h"
 using namespace boost::python;
@@ -29,13 +30,18 @@ int main(){
 
 	Tmm tmm;
 	tmm.SetParam(Param(WL), 500e-9);
-	tmm.AddIsotropicLayer(INFINITY, 1.5);
-	tmm.AddIsotropicLayer(50e-9, 1.6);
-	tmm.AddIsotropicLayer(50e-9, 1.7);
+	tmm.AddIsotropicLayer(INFINITY, 1.7);
 	tmm.AddIsotropicLayer(INFINITY, 1.0);
 
+	vector<Param> optParams;
+	optParams.push_back(Param(BETA));
+	Eigen::VectorXd optInitial(len(optParams));
+	optInitial << 0.5;
+
+	tmm.OptimizeEnhancement(optParams, optInitial, ps);
+
 	//clock_t startTime = clock();
-	tmm.Sweep(Param(BETA), Eigen::VectorXd::LinSpaced(1000000, 0.0, 1.4), ps);
+	//tmm.Sweep(Param(BETA), Eigen::VectorXd::LinSpaced(1000000, 0.0, 1.4), ps);
 	//cout << rr["R22"] << endl;
 	//cout << double(clock() - startTime) / (double)CLOCKS_PER_SEC << " seconds." << endl;
 
@@ -45,7 +51,7 @@ int main(){
 	//EMFieldsList r = tmm.CalcFields1D(xs, pol);
 	//tmm.CalcFieldsAtInterface(ps);
 
-	//system("pause");
+	system("pause");
 	return 0;
 }
 
@@ -64,6 +70,9 @@ BOOST_PYTHON_MODULE(CppTmm)
 		.def(std_map_indexing_suite<DoubleVectorMap, true>())
 		;
 
+	class_<vector<Param> >("ParamList")
+		.def(vector_indexing_suite<vector<Param> >());
+
 
 	//---------------------------------------------------------------
 	// Param Type
@@ -72,6 +81,9 @@ BOOST_PYTHON_MODULE(CppTmm)
 	enum_<ParamType>("ParamType")
 		.value("WL", WL)
 		.value("BETA", BETA)
+		.value("ENH_OPT_REL", ENH_OPT_REL)
+		.value("ENH_OPT_MAX_ITERS", ENH_OPT_MAX_ITERS)
+		.value("ENH_INITIAL_STEP", ENH_INITIAL_STEP)
 		.value("LAYER_D", LAYER_D)
 		.value("LAYER_N", LAYER_N)
 		.value("LAYER_NX", LAYER_NX)
@@ -138,6 +150,7 @@ BOOST_PYTHON_MODULE(CppTmm)
 	// TMM
 	//---------------------------------------------------------------
 
+	void (Tmm::*BoostSetParamsInt)(Param, int) = &Tmm::SetParam;
 	void (Tmm::*BoostSetParamsDouble)(Param, double) = &Tmm::SetParam;
 	void (Tmm::*BoostSetParamsComplex)(Param, dcomplex) = &Tmm::SetParam;
 	SweepRes(Tmm::*BoostSweep1)(Param, Eigen::VectorXd) = &Tmm::Sweep;
@@ -148,6 +161,7 @@ BOOST_PYTHON_MODULE(CppTmm)
 	class_<Tmm>("Tmm")
 		.def("SetParam", (BoostSetParamsComplex))
 		.def("SetParam", (BoostSetParamsDouble))
+		.def("SetParam", (BoostSetParamsInt))
 		.def("AddIsotropicLayer", &Tmm::AddIsotropicLayer)
 		.def("AddLayer", &Tmm::AddLayer)
 		.def("GetIntensityMatrix", &Tmm::GetIntensityMatrix)
@@ -156,6 +170,7 @@ BOOST_PYTHON_MODULE(CppTmm)
 		.def("Sweep", (BoostSweep2))
 		.def("CalcFields1D", &Tmm::CalcFields1D)
 		.def("CalcFieldsAtInterface", &Tmm::CalcFieldsAtInterface)
+		.def("OptimizeEnhancement", &Tmm::OptimizeEnhancementPython)
 		;
 
 }

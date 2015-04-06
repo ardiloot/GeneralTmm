@@ -1,4 +1,5 @@
 #pragma once
+#define PYTHON_WRAP
 #include <iostream>
 #include <complex>
 #include <exception>
@@ -10,6 +11,12 @@
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
 #include <unsupported/Eigen/MatrixFunctions>
+#include "simplex.h"
+#include "criteria.h"
+
+#ifdef PYTHON_WRAP
+#include <boost/python.hpp>
+#endif
 
 using namespace std;
 //using namespace Eigen;
@@ -28,6 +35,9 @@ typedef map<string, Eigen::RowVectorXd> DoubleVectorMap;
 enum ParamType {
 	WL,
 	BETA,
+	ENH_OPT_REL,
+	ENH_OPT_MAX_ITERS,
+	ENH_INITIAL_STEP,
 	LAYER_D,
 	LAYER_N,
 	LAYER_NX,
@@ -59,6 +69,11 @@ public:
 	Param(ParamType pType_, int layerId_);
 	ParamType GetParamType();
 	int GetLayerID();
+
+	bool operator == (const Param &p) const
+	{	
+		return (pType == p.pType && layerId == p.layerId);
+	}
 
 private:
 	ParamType pType;
@@ -208,6 +223,7 @@ public:
 
 	Layer(double d_, dcomplex n_);
 	Layer(double d_, dcomplex nx_, dcomplex ny_, dcomplex nz_, double psi_, double xi_);
+	void SetParam(Param param, int value);
 	void SetParam(Param param, double value);
 	void SetParam(Param param, dcomplex value);
 	double GetD();
@@ -243,6 +259,7 @@ private:
 
 };
 
+
 //---------------------------------------------------------------------
 // Tmm
 //---------------------------------------------------------------------
@@ -251,6 +268,7 @@ class Tmm {
 public:
 
 	Tmm();
+	void SetParam(Param param, int value);
 	void SetParam(Param param, double value);
 	void SetParam(Param param, dcomplex value);
 	void AddIsotropicLayer(double d, dcomplex n);
@@ -261,10 +279,18 @@ public:
 	SweepRes Sweep(Param sweepParam, Eigen::VectorXd sweepValues);
 	EMFieldsList CalcFields1D(Eigen::VectorXd xs, Eigen::VectorXd polarization);
 	EMFields CalcFieldsAtInterface(PositionSettings pos);
+	double OptimizeEnhancement(vector<Param> optParams, Eigen::VectorXd optInitial, PositionSettings pos);
+
+#ifdef PYTHON_WRAP
+	double OptimizeEnhancementPython(boost::python::list optParams, Eigen::VectorXd optInitial, PositionSettings pos);
+#endif
 
 private:
 	double wl;
 	double beta;
+	double enhOptMaxRelError;
+	double enhOptInitialStep;
+	int enhOptMaxIters;
 	vector<Layer> layers;
 	vector<vector<string> > names_R;
 	vector<vector<string> > names_r;
@@ -282,4 +308,42 @@ private:
 	void Solve();
 	void CalcFieldCoefs(Eigen::Vector2d polarization);
 	LayerIndices CalcLayerIndices(Eigen::VectorXd &xs);
+};
+
+//---------------------------------------------------------------------
+// EnhFitStuct
+//---------------------------------------------------------------------
+
+class EnhFitStuct{
+	friend Tmm;
+public:
+	typedef double DataType;
+	typedef Eigen::VectorXd ParameterType;
+
+	EnhFitStuct(Tmm *tmm_, vector<Param> optParams_, PositionSettings enhpos_){
+		tmm = tmm_;
+		optParams = optParams_;
+		enhPos = enhpos_;
+	}
+
+	DataType operator()(const ParameterType &params) const
+	{
+		//cout << "fit function call res " << params << endl;
+		SetParams(params);
+		EMFields r = tmm->CalcFieldsAtInterface(enhPos);
+		double res = -r.E.norm();
+		return res;
+	}
+private:
+	Tmm *tmm;
+	vector<Param> optParams;
+	PositionSettings enhPos;
+
+	void SetParams(const ParameterType &params) const
+	{
+		for (int i = 0; i < len(params); i++){
+			tmm->SetParam(optParams[i], params[i]);
+		}
+	}
+
 };

@@ -10,6 +10,9 @@ Tmm::Tmm(){
 	needToCalcFieldCoefs = true;
 	wl = 500e-9;
 	beta = 0.0;
+	enhOptMaxIters = 100;
+	enhOptMaxRelError = 1e-10;
+	enhOptInitialStep = 0.1;
 
 	names_R = vector<vector<string> >(4, vector<string>(4));
 	names_r = vector<vector<string> >(4, vector<string>(4));
@@ -30,6 +33,24 @@ Tmm::Tmm(){
 	}
 }
 
+void Tmm::SetParam(Param param, int value){
+	needToSolve = true;
+	if (param.GetLayerID() < 0){
+		switch (param.GetParamType())
+		{
+		case ENH_OPT_MAX_ITERS:
+			enhOptMaxIters = value;
+			break;
+		default:
+			throw invalid_argument("Invalid param int");
+			break;
+		}
+	}
+	else {
+		layers[param.GetLayerID()].SetParam(param, value);
+	}
+}
+
 void Tmm::SetParam(Param param, double value){
 	needToSolve = true;
 	if (param.GetLayerID() < 0){
@@ -41,8 +62,14 @@ void Tmm::SetParam(Param param, double value){
 		case BETA:
 			beta = value;
 			break;
+		case ENH_OPT_REL:
+			enhOptMaxRelError = value;
+			break;
+		case ENH_INITIAL_STEP:
+			enhOptInitialStep = value;
+			break;
 		default:
-			throw invalid_argument("Invalid param");
+			throw invalid_argument("Invalid param double");
 			break;
 		}
 	}
@@ -54,7 +81,7 @@ void Tmm::SetParam(Param param, double value){
 void Tmm::SetParam(Param param, dcomplex value){
 	needToSolve = true;
 	if (param.GetLayerID() < 0){
-		throw invalid_argument("Invalid param");
+		throw invalid_argument("Invalid param complex");
 	}
 	else {
 		layers[param.GetLayerID()].SetParam(param, value);
@@ -230,6 +257,32 @@ EMFields Tmm::CalcFieldsAtInterface(PositionSettings pos){
 	res.H /= normCoef;
 	return res;
 }
+
+double Tmm::OptimizeEnhancement(vector<Param> optParams, Eigen::VectorXd optInitial, PositionSettings pos){
+	EnhFitStuct fitFunc(this, optParams, pos);
+	auto criterion = Optimization::Local::make_and_criteria(Optimization::Local::IterationCriterion(enhOptMaxIters), Optimization::Local::RelativeValueCriterion<double>(enhOptMaxRelError));
+	auto optimizer = Optimization::Local::build_simplex(fitFunc, criterion);
+
+	optimizer.set_start_point(optInitial);
+	optimizer.set_delta(enhOptInitialStep);
+	optimizer.optimize(fitFunc);
+
+	fitFunc.SetParams(optimizer.get_best_parameters());
+	double res = -optimizer.get_best_value();
+	return res;
+}
+
+#ifdef PYTHON_WRAP
+double Tmm::OptimizeEnhancementPython(boost::python::list optParams, Eigen::VectorXd optInitial, PositionSettings pos){
+	vector<Param> optParamsVector;
+	ssize_t length = PyObject_Length(optParams.ptr());
+	for (int i = 0; i < length; ++i)
+	{
+		optParamsVector.push_back(boost::python::extract<Param>(optParams[i]));
+	}
+	Tmm::OptimizeEnhancement(optParamsVector, optInitial, pos);
+}
+#endif
 
 
 void Tmm::CalcFieldCoefs(Eigen::Vector2d polarization){	

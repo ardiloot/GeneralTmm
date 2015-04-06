@@ -24,6 +24,15 @@ Layer::Layer(double d_, dcomplex nx_, dcomplex ny_, dcomplex nz_, double psi_, d
 	xi = xi_;
 }
 
+void Layer::SetParam(Param param, int value){
+	switch (param.GetParamType())
+	{
+	default:
+		throw invalid_argument("Invalid layer param int");
+		break;
+	}
+}
+
 void Layer::SetParam(Param param, double value){
 	switch (param.GetParamType())
 	{
@@ -37,7 +46,7 @@ void Layer::SetParam(Param param, double value){
 		xi = value;
 		break;
 	default:
-		throw invalid_argument("Invalid param");
+		throw invalid_argument("Invalid layer param double");
 		break;
 	}
 }
@@ -64,7 +73,7 @@ void Layer::SetParam(Param param, dcomplex value){
 		epsilonRefractiveIndexChanged = true;
 		break;
 	default:
-		throw invalid_argument("Invalid param");
+		throw invalid_argument("Invalid layer param complex");
 		break;
 	}
 }
@@ -253,6 +262,10 @@ void Layer::SolveEigenFunction(double beta){
 	}
 
 	if (countF != 2){
+		cerr << "eigenvalues" << endl;
+		cerr << eigenvalues << endl;
+		cerr << "eigenvectors" << endl;
+		cerr << eigenvectors << endl;
 		cerr << "Wrong number of forward moving waves: " << endl;
 		throw runtime_error("wrong number of forward waves");
 	}

@@ -12,6 +12,12 @@ def ToCppParam(param):
         return CppTmm.Param(CppTmm.ParamType.WL)
     elif param == "beta":
         return CppTmm.Param(CppTmm.ParamType.BETA)
+    elif param == "enhOptRel":
+        return CppTmm.Param(CppTmm.ParamType.ENH_OPT_REL)
+    elif param == "enhOptMaxIters":
+        return CppTmm.Param(CppTmm.ParamType.ENH_OPT_MAX_ITERS)
+    elif param == "enhInitialStep":
+        return CppTmm.Param(CppTmm.ParamType.ENH_INITIAL_STEP)
     elif param.startswith("d_"):
         return CppTmm.Param(CppTmm.ParamType.LAYER_D, layerNr)
     elif param.startswith("n_"):
@@ -69,20 +75,32 @@ class Tmm(object):
         pos = CppTmm.PositionSettings(np.array(pol), interface, dist)  # @UndefinedVariable
         res = self._tmm.CalcFieldsAtInterface(pos)
         return res.E[0], res.H[0]
-
+    
+    def OptimizeEnhancement(self, optParams, optInitials, (pol, interface, dist)):
+        pos = CppTmm.PositionSettings(np.array(pol), interface, dist)  # @UndefinedVariable
+        params = [ToCppParam(p) for p in optParams]
+        res = tmm._tmm.OptimizeEnhancement(params, np.array(optInitials), pos)
+        return res
+    
 
 if __name__ == "__main__":
     import pylab as plt
-    betas = np.linspace(0.0, 1.4, 100)
+    betas = np.linspace(0.0, 1.4, 1000)
     tmm = Tmm()
     tmm.SetParam(wl = 800e-9)
     tmm.AddIsotropicLayer(float("inf"), 1.5)
+    tmm.AddIsotropicLayer(50e-9, 0.036759 + 5.5698j)
     tmm.AddIsotropicLayer(float("inf"), 1.0)
     
+    
+    tmm.SetParam(enhOptMaxIters = 100)
+    tmm.SetParam(enhOptRel = 1e-3)
+    tmm.SetParam(enhInitialStep = 0.001)
+    
+    optres = tmm.OptimizeEnhancement(["beta"], [1.015], ((1.0, 0.0), -1, 0.0))
+    print "optres", optres
     r = tmm.Sweep("beta", betas, ((1.0, 0.0), -1, 0.0))
-    tmm.SetParam(n_1 = complex(1.5))
-    
-    
+
     plt.figure()
     plt.subplot(211)
     plt.plot(betas, r["R11"])
