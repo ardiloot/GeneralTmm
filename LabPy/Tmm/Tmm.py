@@ -1,5 +1,6 @@
 import numpy as np
 import CppTmm
+import LabPy
 
 def ToCppParam(param):
     layerNr = -1
@@ -39,11 +40,22 @@ class Tmm(object):
 
     def __init__(self):
         self._tmm = CppTmm.Tmm()
-        self.AddIsotropicLayer = self._tmm.AddIsotropicLayer
-        self.AddLayer = self._tmm.AddLayer
         self.GetIntensityMatrix = self._tmm.GetIntensityMatrix
         self.GetAmplitudeMatrix = self._tmm.GetAmplitudeMatrix
 
+    def AddIsotropicLayer(self, d, n):
+        if type(n) == LabPy.Material:
+            self._tmm.AddIsotropicLayerMat(d, n)
+        else:
+            self._tmm.AddIsotropicLayer(d, n)
+
+    def AddLayer(self, d, nx, ny, nz, psi, xi):
+        if type(nx) == LabPy.Material and type(ny) == LabPy.Material and \
+        type(nz) == LabPy.Material:
+            self._tmm.AddLayerMat(d, nx, ny, nz, psi, xi)
+        else:
+            self._tmm.AddLayer(d, nx, ny, nz, psi, xi)
+            
     def SetParam(self, **kwargs):
         for key, value in kwargs.iteritems():
             p = ToCppParam(key)
@@ -85,19 +97,27 @@ class Tmm(object):
 
 if __name__ == "__main__":
     import pylab as plt
+    from LabPy import Material
+    
+    wl = 800e-9
+    metalN = Material(r"main/Ag/Johnson")
+    
     betas = np.linspace(0.0, 1.4, 1000)
     tmm = Tmm()
     tmm.SetParam(wl = 800e-9)
     tmm.AddIsotropicLayer(float("inf"), 1.5)
-    tmm.AddIsotropicLayer(50e-9, 0.036759 + 5.5698j)
+    #tmm.AddIsotropicLayer(50e-9, 0.036759 + 5.5698j)
+    tmm._tmm.AddIsotropicLayerMat(50e-9, metalN)
     tmm.AddIsotropicLayer(float("inf"), 1.0)
     
     
     tmm.SetParam(enhOptMaxIters = 100)
-    tmm.SetParam(enhOptRel = 1e-3)
-    tmm.SetParam(enhInitialStep = 0.001)
+    tmm.SetParam(enhOptRel = 1e-5)
+    tmm.SetParam(enhInitialStep = 1e-9)
+    tmm.SetParam(beta = 1.015)
     
-    optres = tmm.OptimizeEnhancement(["beta"], [1.015], ((1.0, 0.0), -1, 0.0))
+    print "opt start"
+    optres = tmm.OptimizeEnhancement(["wl"], [800e-9], ((1.0, 0.0), -1, 0.0))
     print "optres", optres
     r = tmm.Sweep("beta", betas, ((1.0, 0.0), -1, 0.0))
 

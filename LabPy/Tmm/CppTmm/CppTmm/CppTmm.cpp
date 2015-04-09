@@ -4,12 +4,9 @@
 #ifdef PYTHON_WRAP
 #include <boost/python.hpp>
 #include <boost/numpy.hpp>
-//#include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "std_map_indexing_suite.hpp"
 #include "eigen_numpy.h"
-using namespace boost::python;
-namespace np = boost::numpy;
 #endif
 
 #include "tmm.h"
@@ -17,10 +14,12 @@ namespace np = boost::numpy;
 // Main
 //---------------------------------------------------------------------
 
-
 #ifndef PYTHON_WRAP
 
 int main(){
+	using namespace std;
+	using namespace TmmModel;
+
 	Eigen::setNbThreads(4);
 	//int n = Eigen::nbThreads();
 	//cout << "Will use " << n << " threads." << endl;
@@ -59,7 +58,10 @@ int main(){
 
 BOOST_PYTHON_MODULE(CppTmm)
 {
-	np::initialize();
+	using namespace boost::python;
+	using namespace TmmModel;
+
+	boost::numpy::initialize();
 	SetupEigenConverters();
 
 	class_<ComplexVectorMap >("ComplexVectorMap")
@@ -155,15 +157,20 @@ BOOST_PYTHON_MODULE(CppTmm)
 	void (Tmm::*BoostSetParamsComplex)(Param, dcomplex) = &Tmm::SetParam;
 	SweepRes(Tmm::*BoostSweep1)(Param, Eigen::VectorXd) = &Tmm::Sweep;
 	SweepRes(Tmm::*BoostSweep2)(Param, Eigen::VectorXd, PositionSettings) = &Tmm::Sweep;
-	
+	void (Tmm::*AddIsotropicLayerComplex)(double, dcomplex) = &Tmm::AddIsotropicLayer;
+	void (Tmm::*AddIsotropicLayerMaterial)(double, object&) = &Tmm::AddIsotropicLayer;
+	void (Tmm::*AddLayerComplex)(double, dcomplex, dcomplex, dcomplex, double, double) = &Tmm::AddLayer;
+	void (Tmm::*AddLayerMaterial)(double, object&, object&, object&, double, double) = &Tmm::AddLayer;
 
 	//def("F", (void (C::*)(int))&C::F)  
 	class_<Tmm>("Tmm")
 		.def("SetParam", (BoostSetParamsComplex))
 		.def("SetParam", (BoostSetParamsDouble))
 		.def("SetParam", (BoostSetParamsInt))
-		.def("AddIsotropicLayer", &Tmm::AddIsotropicLayer)
-		.def("AddLayer", &Tmm::AddLayer)
+		.def("AddIsotropicLayer", AddIsotropicLayerComplex)
+		.def("AddIsotropicLayerMat", AddIsotropicLayerMaterial)
+		.def("AddLayer", AddLayerComplex)
+		.def("AddLayerMat", AddLayerMaterial)
 		.def("GetIntensityMatrix", &Tmm::GetIntensityMatrix)
 		.def("GetAmplitudeMatrix", &Tmm::GetAmplitudeMatrix)
 		.def("Sweep", (BoostSweep1))

@@ -1,346 +1,359 @@
 #include "tmm.h"
 
+
 //---------------------------------------------------------------------
 // Tmm
 //---------------------------------------------------------------------
+namespace TmmModel {
+	Tmm::Tmm(){
+		solved = false;
+		needToSolve = true;
+		needToCalcFieldCoefs = true;
+		wl = 500e-9;
+		beta = 0.0;
+		enhOptMaxIters = 100;
+		enhOptMaxRelError = 1e-10;
+		enhOptInitialStep = 0.1;
 
-Tmm::Tmm(){
-	solved = false;
-	needToSolve = true;
-	needToCalcFieldCoefs = true;
-	wl = 500e-9;
-	beta = 0.0;
-	enhOptMaxIters = 100;
-	enhOptMaxRelError = 1e-10;
-	enhOptInitialStep = 0.1;
-
-	names_R = vector<vector<string> >(4, vector<string>(4));
-	names_r = vector<vector<string> >(4, vector<string>(4));
-	for (int i = 0; i < 4; i++){
-		for (int j = 0; j < 4; j++){
-			ostringstream ss;
-			ss << i + 1 << j + 1;
-			string numbers = ss.str();
-			if ((i < 2 && j < 2) || (i >= 2 && j >= 2)){
-				names_R[i][j] = "R" + numbers;
-				names_r[i][j] = "r" + numbers;
+		names_R = vector<vector<string> >(4, vector<string>(4));
+		names_r = vector<vector<string> >(4, vector<string>(4));
+		for (int i = 0; i < 4; i++){
+			for (int j = 0; j < 4; j++){
+				ostringstream ss;
+				ss << i + 1 << j + 1;
+				string numbers = ss.str();
+				if ((i < 2 && j < 2) || (i >= 2 && j >= 2)){
+					names_R[i][j] = "R" + numbers;
+					names_r[i][j] = "r" + numbers;
+				}
+				else {
+					names_R[i][j] = "T" + numbers;
+					names_r[i][j] = "t" + numbers;
+				}
 			}
-			else {
-				names_R[i][j] = "T" + numbers;
-				names_r[i][j] = "t" + numbers;
+		}
+	}
+
+	void Tmm::SetParam(Param param, int value){
+		needToSolve = true;
+		if (param.GetLayerID() < 0){
+			switch (param.GetParamType())
+			{
+			case ENH_OPT_MAX_ITERS:
+				enhOptMaxIters = value;
+				break;
+			default:
+				throw invalid_argument("Invalid param int");
+				break;
 			}
 		}
-	}
-}
-
-void Tmm::SetParam(Param param, int value){
-	needToSolve = true;
-	if (param.GetLayerID() < 0){
-		switch (param.GetParamType())
-		{
-		case ENH_OPT_MAX_ITERS:
-			enhOptMaxIters = value;
-			break;
-		default:
-			throw invalid_argument("Invalid param int");
-			break;
-		}
-	}
-	else {
-		layers[param.GetLayerID()].SetParam(param, value);
-	}
-}
-
-void Tmm::SetParam(Param param, double value){
-	needToSolve = true;
-	if (param.GetLayerID() < 0){
-		switch (param.GetParamType())
-		{
-		case WL:
-			wl = value;
-			break;
-		case BETA:
-			beta = value;
-			break;
-		case ENH_OPT_REL:
-			enhOptMaxRelError = value;
-			break;
-		case ENH_INITIAL_STEP:
-			enhOptInitialStep = value;
-			break;
-		default:
-			throw invalid_argument("Invalid param double");
-			break;
-		}
-	}
-	else {
-		layers[param.GetLayerID()].SetParam(param, value);
-	}
-}
-
-void Tmm::SetParam(Param param, dcomplex value){
-	needToSolve = true;
-	if (param.GetLayerID() < 0){
-		throw invalid_argument("Invalid param complex");
-	}
-	else {
-		layers[param.GetLayerID()].SetParam(param, value);
-	}
-}
-
-void Tmm::AddIsotropicLayer(double d, dcomplex n){
-	needToSolve = true;
-	layers.push_back(Layer(d, n));
-}
-
-void Tmm::AddLayer(double d, dcomplex nx, dcomplex ny, dcomplex nz, double psi, double xi){
-	needToSolve = true;
-	layers.push_back(Layer(d, nx, ny, nz, psi, xi));
-}
-
-Eigen::Matrix4d Tmm::GetIntensityMatrix(){
-	Solve();
-	return R;
-}
-
-Eigen::Matrix4cd Tmm::GetAmplitudeMatrix(){
-	Solve();
-	return r;
-}
-
-void Tmm::Solve(){
-	if (!needToSolve){
-		return;
-	}
-	needToSolve = false;
-	needToCalcFieldCoefs = true;
-
-	for (int i = 0; i < len(layers); i++){
-		layers[i].SolveLayer(wl, beta);
-	}
-
-	// System matrix
-	A = layers[0].invF;
-	for (int i = 1; i < len(layers) - 1; i++){
-		Layer &layer = layers[i];
-		A = A * layer.M;
-	}
-	A = A * layers[len(layers) - 1].F;
-
-	//r - matrix
-	Eigen::Matrix4cd invr1;
-	dcomplex t = A(0, 0)*A(2, 2) - A(0, 2) * A(2, 0);
-	invr1 << -(A(1, 0) * A(2, 2) - A(1, 2) * A(2, 0)) / t, 1, -(A(0, 0) * A(1, 2) - A(0, 2) * A(1, 0)) / t, 0,
-		(A(2, 0) * A(3, 2) - A(2, 2) * A(3, 0)) / t, 0, -(A(0, 0) * A(3, 2) - A(0, 2) * A(3, 0)) / t, 1,
-		-A(2, 2) / t, 0, A(0, 2) / t, 0,
-		A(2, 0) / t, 0, -A(0, 0) / t, 0;
-
-	Eigen::Matrix4cd r2;
-	r2 << -1.0, 0.0, A(0, 1), A(0, 3),
-		0.0, 0.0, A(1, 1), A(1, 3),
-		0.0, -1.0, A(2, 1), A(2, 3),
-		0.0, 0.0, A(3, 1), A(3, 3);
-
-	r = invr1 * r2;
-
-	Eigen::Vector4d &poyningXF = layers[0].poyntingX;
-	Eigen::Vector4d &poyningXL = layers[len(layers) - 1].poyntingX;
-
-	Eigen::Vector4d pBackward, pForward;
-	pBackward << poyningXF(1), poyningXF(3), poyningXL(1), poyningXL(3);
-	pForward << poyningXF(0), poyningXF(2), poyningXL(0), poyningXL(2);
-
-	R(0, 0) = norm(r(0, 0)) * abs(pBackward(0) / pForward(0));
-	R(0, 1) = norm(r(0, 1)) * abs(pBackward(0) / pForward(1));
-	R(0, 2) = NAN;
-	R(0, 3) = NAN;
-	R(1, 0) = norm(r(1, 0)) * abs(pBackward(1) / pForward(0));
-	R(1, 1) = norm(r(1, 1)) * abs(pBackward(1) / pForward(1));
-	R(1, 2) = NAN;
-	R(1, 3) = NAN;
-	R(2, 0) = norm(r(2, 0)) * abs(pForward(2) / pForward(0));
-	R(2, 1) = norm(r(2, 1)) * abs(pForward(2) / pForward(1));
-	R(2, 2) = NAN;
-	R(2, 3) = NAN;
-	R(3, 0) = norm(r(3, 0)) * abs(pForward(3) / pForward(0));
-	R(3, 1) = norm(r(3, 1)) * abs(pForward(3) / pForward(1));
-	R(3, 2) = NAN;
-	R(3, 3) = NAN;
-	solved = true;
-}
-
-SweepRes Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues, PositionSettings enhpos){
-	SweepRes res;
-	ComplexVectorMap &resComplex = res.mapComplex;
-	DoubleVectorMap &resDouble = res.mapDouble;
-	DoubleVectorMap::iterator data_R[4][4];
-	ComplexVectorMap::iterator data_r[4][4];
-	
-	DoubleVectorMap::iterator enhs;
-	ComplexVectorMap::iterator enhExs;
-	ComplexVectorMap::iterator enhEys;
-	ComplexVectorMap::iterator enhEzs;
-	if (enhpos.IsEnabled()){
-		enhs = resDouble.insert(make_pair("enh", Eigen::RowVectorXd(len(sweepValues)))).first;
-		enhExs = resComplex.insert(make_pair("enhEx", Eigen::RowVectorXcd(len(sweepValues)))).first;
-		enhEys = resComplex.insert(make_pair("enhEy", Eigen::RowVectorXcd(len(sweepValues)))).first;
-		enhEzs = resComplex.insert(make_pair("enhEz", Eigen::RowVectorXcd(len(sweepValues)))).first;
-	}
-
-	for (int i = 0; i < 4; i++){
-		for (int j = 0; j < 2; j++){
-			data_R[i][j] = resDouble.insert(make_pair(names_R[i][j], Eigen::RowVectorXd(len(sweepValues)))).first;
-			data_r[i][j] = resComplex.insert(make_pair(names_r[i][j], Eigen::RowVectorXcd(len(sweepValues)))).first;
+		else {
+			layers[param.GetLayerID()].SetParam(param, value);
 		}
 	}
 
-	for (int i = 0; i < len(sweepValues); i++){
-		SetParam(sweepParam, sweepValues[i]);
+	void Tmm::SetParam(Param param, double value){
+		needToSolve = true;
+		if (param.GetLayerID() < 0){
+			switch (param.GetParamType())
+			{
+			case WL:
+				wl = value;
+				break;
+			case BETA:
+				beta = value;
+				break;
+			case ENH_OPT_REL:
+				enhOptMaxRelError = value;
+				break;
+			case ENH_INITIAL_STEP:
+				enhOptInitialStep = value;
+				break;
+			default:
+				throw invalid_argument("Invalid param double");
+				break;
+			}
+		}
+		else {
+			layers[param.GetLayerID()].SetParam(param, value);
+		}
+	}
+
+	void Tmm::SetParam(Param param, dcomplex value){
+		needToSolve = true;
+		if (param.GetLayerID() < 0){
+			throw invalid_argument("Invalid param complex");
+		}
+		else {
+			layers[param.GetLayerID()].SetParam(param, value);
+		}
+	}
+
+	void Tmm::AddIsotropicLayer(double d, dcomplex n){
+		needToSolve = true;
+		layers.push_back(Layer(d, Material(n)));
+	}
+
+	void Tmm::AddIsotropicLayer(double d, boost::python::object &materialClass){
+		needToSolve = true;
+		Material mat = Material(materialClass);
+		Layer layer = Layer(d, mat);
+		layers.push_back(layer);
+	}
+
+	void Tmm::AddLayer(double d, dcomplex nx, dcomplex ny, dcomplex nz, double psi, double xi){
+		needToSolve = true;
+		layers.push_back(Layer(d, Material(nx), Material(ny), Material(nz), psi, xi));
+	}
+
+	void Tmm::AddLayer(double d, boost::python::object &matX, boost::python::object &matY, boost::python::object &matZ, double psi, double xi){
+		needToSolve = true;
+		layers.push_back(Layer(d, Material(matX), Material(matY), Material(matZ), psi, xi));
+	}
+
+
+	Eigen::Matrix4d Tmm::GetIntensityMatrix(){
 		Solve();
+		return R;
+	}
 
-		for (int j = 0; j < 4; j++){
-			for (int k = 0; k < 2; k++){
-				data_R[j][k]->second(i) = R(j, k);
-				data_r[j][k]->second(i) = r(j, k);
-			}
+	Eigen::Matrix4cd Tmm::GetAmplitudeMatrix(){
+		Solve();
+		return r;
+	}
+
+	void Tmm::Solve(){
+		if (!needToSolve){
+			return;
+		}
+		needToSolve = false;
+		needToCalcFieldCoefs = true;
+
+		for (int i = 0; i < len(layers); i++){
+			layers[i].SolveLayer(wl, beta);
 		}
 
+		// System matrix
+		A = layers[0].invF;
+		for (int i = 1; i < len(layers) - 1; i++){
+			Layer &layer = layers[i];
+			A = A * layer.M;
+		}
+		A = A * layers[len(layers) - 1].F;
+
+		//r - matrix
+		Eigen::Matrix4cd invr1;
+		dcomplex t = A(0, 0)*A(2, 2) - A(0, 2) * A(2, 0);
+		invr1 << -(A(1, 0) * A(2, 2) - A(1, 2) * A(2, 0)) / t, 1, -(A(0, 0) * A(1, 2) - A(0, 2) * A(1, 0)) / t, 0,
+			(A(2, 0) * A(3, 2) - A(2, 2) * A(3, 0)) / t, 0, -(A(0, 0) * A(3, 2) - A(0, 2) * A(3, 0)) / t, 1,
+			-A(2, 2) / t, 0, A(0, 2) / t, 0,
+			A(2, 0) / t, 0, -A(0, 0) / t, 0;
+
+		Eigen::Matrix4cd r2;
+		r2 << -1.0, 0.0, A(0, 1), A(0, 3),
+			0.0, 0.0, A(1, 1), A(1, 3),
+			0.0, -1.0, A(2, 1), A(2, 3),
+			0.0, 0.0, A(3, 1), A(3, 3);
+
+		r = invr1 * r2;
+
+		Eigen::Vector4d &poyningXF = layers[0].poyntingX;
+		Eigen::Vector4d &poyningXL = layers[len(layers) - 1].poyntingX;
+
+		Eigen::Vector4d pBackward, pForward;
+		pBackward << poyningXF(1), poyningXF(3), poyningXL(1), poyningXL(3);
+		pForward << poyningXF(0), poyningXF(2), poyningXL(0), poyningXL(2);
+
+		R(0, 0) = norm(r(0, 0)) * abs(pBackward(0) / pForward(0));
+		R(0, 1) = norm(r(0, 1)) * abs(pBackward(0) / pForward(1));
+		R(0, 2) = NAN;
+		R(0, 3) = NAN;
+		R(1, 0) = norm(r(1, 0)) * abs(pBackward(1) / pForward(0));
+		R(1, 1) = norm(r(1, 1)) * abs(pBackward(1) / pForward(1));
+		R(1, 2) = NAN;
+		R(1, 3) = NAN;
+		R(2, 0) = norm(r(2, 0)) * abs(pForward(2) / pForward(0));
+		R(2, 1) = norm(r(2, 1)) * abs(pForward(2) / pForward(1));
+		R(2, 2) = NAN;
+		R(2, 3) = NAN;
+		R(3, 0) = norm(r(3, 0)) * abs(pForward(3) / pForward(0));
+		R(3, 1) = norm(r(3, 1)) * abs(pForward(3) / pForward(1));
+		R(3, 2) = NAN;
+		R(3, 3) = NAN;
+		solved = true;
+	}
+
+	SweepRes Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues, PositionSettings enhpos){
+		SweepRes res;
+		ComplexVectorMap &resComplex = res.mapComplex;
+		DoubleVectorMap &resDouble = res.mapDouble;
+		DoubleVectorMap::iterator data_R[4][4];
+		ComplexVectorMap::iterator data_r[4][4];
+	
+		DoubleVectorMap::iterator enhs;
+		ComplexVectorMap::iterator enhExs;
+		ComplexVectorMap::iterator enhEys;
+		ComplexVectorMap::iterator enhEzs;
 		if (enhpos.IsEnabled()){
-			EMFields fields = CalcFieldsAtInterface(enhpos);
-			enhs->second(i) = fields.E.norm();
-			enhExs->second(i) = fields.E(0);
-			enhEys->second(i) = fields.E(1);
-			enhEzs->second(i) = fields.E(2);
+			enhs = resDouble.insert(make_pair("enh", Eigen::RowVectorXd(len(sweepValues)))).first;
+			enhExs = resComplex.insert(make_pair("enhEx", Eigen::RowVectorXcd(len(sweepValues)))).first;
+			enhEys = resComplex.insert(make_pair("enhEy", Eigen::RowVectorXcd(len(sweepValues)))).first;
+			enhEzs = resComplex.insert(make_pair("enhEz", Eigen::RowVectorXcd(len(sweepValues)))).first;
 		}
-	}
 
-	return res;
-}
-
-SweepRes Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues){
-	PositionSettings enhpos;
-	return Sweep(sweepParam, sweepValues, enhpos);
-}
-
-EMFieldsList Tmm::CalcFields1D(Eigen::VectorXd xs, Eigen::VectorXd polarization){
-	Solve();
-	CalcFieldCoefs(polarization);
-
-	EMFieldsList res(len(xs));
-	LayerIndices layerP = CalcLayerIndices(xs);
-	for (int i = 0; i < len(xs); i++){
-		int layerId = layerP.indices(i);
-		EMFields f = layers[layerId].GetFields(wl, beta, layerP.ds(i), fieldCoefs.row(layerId));
-		res.E.row(i) = f.E / normCoef;
-		res.H.row(i) = f.H / normCoef;
-	}
-	return res;
-}
-
-EMFields Tmm::CalcFieldsAtInterface(PositionSettings pos){
-	if (!pos.IsEnabled()){
-		throw invalid_argument("Position settings must be enabled.");
-	}
-	
-	int layerId;
-	if (pos.GetInterfaceId() < 0){
-		layerId = len(layers) + pos.GetInterfaceId();
-	}
-	else{
-		layerId = pos.GetInterfaceId();
-	}
-
-	Solve();
-	CalcFieldCoefs(pos.GetPolarization());
-	EMFields res = layers[layerId].GetFields(wl, beta, pos.GetDistFromInterface(), fieldCoefs.row(layerId));
-	res.E /= normCoef;
-	res.H /= normCoef;
-	return res;
-}
-
-double Tmm::OptimizeEnhancement(vector<Param> optParams, Eigen::VectorXd optInitial, PositionSettings pos){
-	EnhFitStuct fitFunc(this, optParams, pos);
-	auto criterion = Optimization::Local::make_and_criteria(Optimization::Local::IterationCriterion(enhOptMaxIters), Optimization::Local::RelativeValueCriterion<double>(enhOptMaxRelError));
-	auto optimizer = Optimization::Local::build_simplex(fitFunc, criterion);
-
-	optimizer.set_start_point(optInitial);
-	optimizer.set_delta(enhOptInitialStep);
-	optimizer.optimize(fitFunc);
-
-	fitFunc.SetParams(optimizer.get_best_parameters());
-	double res = -optimizer.get_best_value();
-	return res;
-}
-
-#ifdef PYTHON_WRAP
-double Tmm::OptimizeEnhancementPython(boost::python::list optParams, Eigen::VectorXd optInitial, PositionSettings pos){
-	vector<Param> optParamsVector;
-	ssize_t length = PyObject_Length(optParams.ptr());
-	for (int i = 0; i < length; ++i)
-	{
-		optParamsVector.push_back(boost::python::extract<Param>(optParams[i]));
-	}
-	Tmm::OptimizeEnhancement(optParamsVector, optInitial, pos);
-}
-#endif
-
-
-void Tmm::CalcFieldCoefs(Eigen::Vector2d polarization){	
-	if (!needToCalcFieldCoefs && polarization == lastFieldCoefsPol){
-		return;
-	}
-	needToCalcFieldCoefs = false;
-	lastFieldCoefsPol = polarization;
-
-	//Calc normalization factor
-	Eigen::Vector4cd incCoefs;
-	incCoefs << polarization(0), 0.0, polarization(1), 0.0;
-	Eigen::Vector3cd Einc = layers[0].GetFields(wl, beta, 0.0, incCoefs).E;
-	
-	dcomplex n1 = sqrt(sqr(beta) + sqr(layers[0].alpha(0)));
-	dcomplex n2 = sqrt(sqr(beta) + sqr(layers[0].alpha(2)));
-	double nEff = (polarization(0) * real(n1) + polarization(1) * real(n2)) / (polarization(0) + polarization(1)); // Maybe not fully correct
-	normCoef = Einc.norm() * sqrt(nEff);
-		
-	//Calc output coefs
-	Eigen::Vector4cd inputFields;
-	inputFields << polarization(0), polarization(1), 0.0, 0.0;
-	Eigen::Vector4cd outputFields = r * inputFields;
-
-	//Calc coefs in all layers
-	Eigen::Vector4cd coefsSubstrate;
-	coefsSubstrate << outputFields(2), 0.0, outputFields(3), 0.0;
-
-	Eigen::Matrix4cd mat = layers[len(layers) - 1].F;
-	fieldCoefs.resize(len(layers), 4);
-	for (int i = len(layers) - 1; i >= 0; i--){
-		mat = layers[i].M * mat;
-		fieldCoefs.row(i) = layers[i].invF * mat * coefsSubstrate;
-	}
-	fieldCoefs(len(layers) - 1, 1) = fieldCoefs(len(layers) - 1, 3) = 0.0;
-}
-
-LayerIndices Tmm::CalcLayerIndices(Eigen::VectorXd &xs){
-	LayerIndices res;
-	res.indices.resize(len(xs));
-	res.ds.resize(len(xs));
-
-	int curLayer = 0;
-	double curDist = 0.0;
-	double prevDist = 0.0;
-
-	for (int i = 0; i < len(xs); i++){
-		while (xs[i] >= curDist){
-			curLayer++;
-			prevDist = curDist;
-			if (curLayer >= len(layers) - 1){
-				curDist = INFINITY;
-				curLayer = len(layers) - 1;
+		for (int i = 0; i < 4; i++){
+			for (int j = 0; j < 2; j++){
+				data_R[i][j] = resDouble.insert(make_pair(names_R[i][j], Eigen::RowVectorXd(len(sweepValues)))).first;
+				data_r[i][j] = resComplex.insert(make_pair(names_r[i][j], Eigen::RowVectorXcd(len(sweepValues)))).first;
 			}
-			curDist += layers[curLayer].GetD();
 		}
-		res.indices(i) = curLayer;
-		res.ds(i) = xs(i) - prevDist;
+
+		for (int i = 0; i < len(sweepValues); i++){
+			SetParam(sweepParam, sweepValues[i]);
+			Solve();
+
+			for (int j = 0; j < 4; j++){
+				for (int k = 0; k < 2; k++){
+					data_R[j][k]->second(i) = R(j, k);
+					data_r[j][k]->second(i) = r(j, k);
+				}
+			}
+
+			if (enhpos.IsEnabled()){
+				EMFields fields = CalcFieldsAtInterface(enhpos);
+				enhs->second(i) = fields.E.norm();
+				enhExs->second(i) = fields.E(0);
+				enhEys->second(i) = fields.E(1);
+				enhEzs->second(i) = fields.E(2);
+			}
+		}
+
+		return res;
 	}
-	return res;
-}
+
+	SweepRes Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues){
+		PositionSettings enhpos;
+		return Sweep(sweepParam, sweepValues, enhpos);
+	}
+
+	EMFieldsList Tmm::CalcFields1D(Eigen::VectorXd xs, Eigen::VectorXd polarization){
+		Solve();
+		CalcFieldCoefs(polarization);
+
+		EMFieldsList res(len(xs));
+		LayerIndices layerP = CalcLayerIndices(xs);
+		for (int i = 0; i < len(xs); i++){
+			int layerId = layerP.indices(i);
+			EMFields f = layers[layerId].GetFields(wl, beta, layerP.ds(i), fieldCoefs.row(layerId));
+			res.E.row(i) = f.E / normCoef;
+			res.H.row(i) = f.H / normCoef;
+		}
+		return res;
+	}
+
+	EMFields Tmm::CalcFieldsAtInterface(PositionSettings pos){
+		if (!pos.IsEnabled()){
+			throw invalid_argument("Position settings must be enabled.");
+		}
+	
+		int layerId;
+		if (pos.GetInterfaceId() < 0){
+			layerId = len(layers) + pos.GetInterfaceId();
+		}
+		else{
+			layerId = pos.GetInterfaceId();
+		}
+
+		Solve();
+		CalcFieldCoefs(pos.GetPolarization());
+		EMFields res = layers[layerId].GetFields(wl, beta, pos.GetDistFromInterface(), fieldCoefs.row(layerId));
+		res.E /= normCoef;
+		res.H /= normCoef;
+		return res;
+	}
+
+	double Tmm::OptimizeEnhancement(vector<Param> optParams, Eigen::VectorXd optInitial, PositionSettings pos){
+		EnhFitStuct fitFunc(this, optParams, pos);
+		auto criterion = Optimization::Local::make_and_criteria(Optimization::Local::IterationCriterion(enhOptMaxIters), Optimization::Local::RelativeValueCriterion<double>(enhOptMaxRelError));
+		auto optimizer = Optimization::Local::build_simplex(fitFunc, criterion);
+
+		optimizer.set_start_point(optInitial);
+		optimizer.set_delta(enhOptInitialStep);
+		optimizer.optimize(fitFunc);
+
+		fitFunc.SetParams(optimizer.get_best_parameters());
+		double res = -optimizer.get_best_value();
+		return res;
+	}
+
+	double Tmm::OptimizeEnhancementPython(boost::python::list optParams, Eigen::VectorXd optInitial, PositionSettings pos){
+		vector<Param> optParamsVector;
+		ssize_t length = PyObject_Length(optParams.ptr());
+		for (int i = 0; i < length; ++i)
+		{
+			optParamsVector.push_back(boost::python::extract<Param>(optParams[i]));
+		}
+		double res = Tmm::OptimizeEnhancement(optParamsVector, optInitial, pos);
+		return res;
+	}
+
+	void Tmm::CalcFieldCoefs(Eigen::Vector2d polarization){	
+		if (!needToCalcFieldCoefs && polarization == lastFieldCoefsPol){
+			return;
+		}
+		needToCalcFieldCoefs = false;
+		lastFieldCoefsPol = polarization;
+
+		//Calc normalization factor
+		Eigen::Vector4cd incCoefs;
+		incCoefs << polarization(0), 0.0, polarization(1), 0.0;
+		Eigen::Vector3cd Einc = layers[0].GetFields(wl, beta, 0.0, incCoefs).E;
+	
+		dcomplex n1 = sqrt(sqr(beta) + sqr(layers[0].alpha(0)));
+		dcomplex n2 = sqrt(sqr(beta) + sqr(layers[0].alpha(2)));
+		double nEff = (polarization(0) * real(n1) + polarization(1) * real(n2)) / (polarization(0) + polarization(1)); // Maybe not fully correct
+		normCoef = Einc.norm() * sqrt(nEff);
+		
+		//Calc output coefs
+		Eigen::Vector4cd inputFields;
+		inputFields << polarization(0), polarization(1), 0.0, 0.0;
+		Eigen::Vector4cd outputFields = r * inputFields;
+
+		//Calc coefs in all layers
+		Eigen::Vector4cd coefsSubstrate;
+		coefsSubstrate << outputFields(2), 0.0, outputFields(3), 0.0;
+
+		Eigen::Matrix4cd mat = layers[len(layers) - 1].F;
+		fieldCoefs.resize(len(layers), 4);
+		for (int i = len(layers) - 1; i >= 0; i--){
+			mat = layers[i].M * mat;
+			fieldCoefs.row(i) = layers[i].invF * mat * coefsSubstrate;
+		}
+		fieldCoefs(len(layers) - 1, 1) = fieldCoefs(len(layers) - 1, 3) = 0.0;
+	}
+
+	LayerIndices Tmm::CalcLayerIndices(Eigen::VectorXd &xs){
+		LayerIndices res;
+		res.indices.resize(len(xs));
+		res.ds.resize(len(xs));
+
+		int curLayer = 0;
+		double curDist = 0.0;
+		double prevDist = 0.0;
+
+		for (int i = 0; i < len(xs); i++){
+			while (xs[i] >= curDist){
+				curLayer++;
+				prevDist = curDist;
+				if (curLayer >= len(layers) - 1){
+					curDist = INFINITY;
+					curLayer = len(layers) - 1;
+				}
+				curDist += layers[curLayer].GetD();
+			}
+			res.indices(i) = curLayer;
+			res.ds(i) = xs(i) - prevDist;
+		}
+		return res;
+	}
+} // Namespace
