@@ -14,6 +14,7 @@ namespace TmmModel{
 		nz = n_;
 		psi = 0.0;
 		xi = 0.0;
+		isotropicLayer = true;
 	}
 
 	Layer::Layer(double d_, Material nx_, Material ny_, Material nz_, double psi_, double xi_){
@@ -24,6 +25,7 @@ namespace TmmModel{
 		nz = nz_;
 		psi = psi_;
 		xi = xi_;
+		isotropicLayer = false;
 	}
 
 	void Layer::SetParam(Param param, int value){
@@ -61,24 +63,93 @@ namespace TmmModel{
 			ny = Material(value);
 			nz = Material(value);
 			epsilonRefractiveIndexChanged = true;
+			isotropicLayer = true;
 			break;
 		case LAYER_NX:
 			nx = Material(value);
 			epsilonRefractiveIndexChanged = true;
+			isotropicLayer = false;
 			break;
 		case LAYER_NY:
 			ny = Material(value);
 			epsilonRefractiveIndexChanged = true;
+			isotropicLayer = false;
 			break;
 		case LAYER_NZ:
 			nz = Material(value);
 			epsilonRefractiveIndexChanged = true;
+			isotropicLayer = false;
 			break;
 		default:
 			throw invalid_argument("Invalid layer param complex");
 			break;
 		}
 	}
+
+	int Layer::GetParamInt(Param param){
+		switch (param.GetParamType())
+		{
+		default:
+			throw invalid_argument("Get invalid layer param int");
+			break;
+		}
+	}
+
+	double Layer::GetParamDouble(Param param){
+		switch (param.GetParamType())
+		{
+		case LAYER_D:
+			return d;
+			break;
+		case LAYER_PSI:
+			return psi;
+			break;
+		case LAYER_XI:
+			return xi;
+			break;
+		default:
+			throw invalid_argument("Get invalid layer param double");
+			break;
+		}
+	}
+
+	dcomplex Layer::GetParamComplex(Param param){
+		switch (param.GetParamType())
+		{
+		case LAYER_N:
+			if (!isotropicLayer){
+				throw runtime_error("To get LAYER_N, the layer must be isotropic");
+			}
+
+			if (!nx.IsStatic()){
+				throw runtime_error("To get LAYER_N, the material must be static");
+			}
+			return nx.n(0.0);
+			break;
+		case LAYER_NX:
+			if (!nx.IsStatic()){
+				throw runtime_error("To get LAYER_NX, the material must be static");
+			}
+			return nx.n(0.0);
+			break;
+		case LAYER_NY:
+			if (!ny.IsStatic()){
+				throw runtime_error("To get LAYER_NY, the material must be static");
+			}
+			return ny.n(0.0);
+			break;
+		case LAYER_NZ:
+			if (!nz.IsStatic()){
+				throw runtime_error("To get LAYER_NZ, the material must be static");
+			}
+			return nz.n(0.0);
+			break;
+		default:
+			throw invalid_argument("Invalid layer param complex");
+			break;
+		}
+	}
+
 
 	double Layer::GetD(){
 		return d;
@@ -159,7 +230,6 @@ namespace TmmModel{
 
 	void Layer::Init(){
 		solved = false;
-		isotropicLayer = false;
 		epsilonRefractiveIndexChanged = true;
 		wlEpsilonCalc = 0.0;
 	}

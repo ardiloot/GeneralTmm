@@ -43,10 +43,9 @@ namespace TmmModel
 		LAYER_NZ,
 		LAYER_PSI,
 		LAYER_XI,
-		LAYER_MAT_N,
 		LAYER_MAT_NX,
 		LAYER_MAT_NY,
-		LAYER_MAT_NZ,
+		LAYER_MAT_NZ
 	};
 
 	//---------------------------------------------------------------------
@@ -89,6 +88,7 @@ namespace TmmModel
 		Material(dcomplex staticN_);
 		Material(boost::python::object &materialClass);
 		dcomplex n(double wl);
+		bool IsStatic();
 
 	private:
 		bool isStatic;
@@ -226,6 +226,9 @@ namespace TmmModel
 		void SetParam(Param param, int value);
 		void SetParam(Param param, double value);
 		void SetParam(Param param, dcomplex value);
+		int GetParamInt(Param param);
+		double GetParamDouble(Param param);
+		dcomplex GetParamComplex(Param param);
 		double GetD();
 		dcomplex GetNx(double wl);
 		dcomplex GetNy(double wl);
@@ -271,10 +274,14 @@ namespace TmmModel
 		void SetParam(Param param, int value);
 		void SetParam(Param param, double value);
 		void SetParam(Param param, dcomplex value);
+		int GetParamInt(Param param);
+		double GetParamDouble(Param param); 
+		dcomplex GetParamComplex(Param param);
 		void AddIsotropicLayer(double d, dcomplex n);
 		void AddIsotropicLayer(double d, boost::python::object &materialClass);
 		void AddLayer(double d, dcomplex nx, dcomplex ny, dcomplex nz, double psi, double xi);
 		void AddLayer(double d, boost::python::object &matX, boost::python::object &matY, boost::python::object &matZ, double psi, double xi);
+		void ClearLayers();
 		Matrix4d GetIntensityMatrix();
 		Matrix4cd GetAmplitudeMatrix();
 		SweepRes Sweep(Param sweepParam, VectorXd sweepValues, PositionSettings enhpos);

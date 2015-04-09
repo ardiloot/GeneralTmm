@@ -76,4 +76,9 @@ namespace TmmModel{
 			return n;
 		}
 	}
+
+	bool Material::IsStatic(){
+		return isStatic;
+	}
+
 } // Namespace

@@ -10,29 +10,29 @@ def ToCppParam(param):
         raise ValueError("Unknown param %s" % (param))
 
     if param == "wl":
-        return CppTmm.Param(CppTmm.ParamType.WL)
+        return CppTmm.Param(CppTmm.ParamType.WL), "double"
     elif param == "beta":
-        return CppTmm.Param(CppTmm.ParamType.BETA)
+        return CppTmm.Param(CppTmm.ParamType.BETA), "double"
     elif param == "enhOptRel":
-        return CppTmm.Param(CppTmm.ParamType.ENH_OPT_REL)
+        return CppTmm.Param(CppTmm.ParamType.ENH_OPT_REL), "double"
     elif param == "enhOptMaxIters":
-        return CppTmm.Param(CppTmm.ParamType.ENH_OPT_MAX_ITERS)
+        return CppTmm.Param(CppTmm.ParamType.ENH_OPT_MAX_ITERS), "int"
     elif param == "enhInitialStep":
-        return CppTmm.Param(CppTmm.ParamType.ENH_INITIAL_STEP)
+        return CppTmm.Param(CppTmm.ParamType.ENH_INITIAL_STEP), "double"
     elif param.startswith("d_"):
-        return CppTmm.Param(CppTmm.ParamType.LAYER_D, layerNr)
+        return CppTmm.Param(CppTmm.ParamType.LAYER_D, layerNr), "double"
     elif param.startswith("n_"):
-        return CppTmm.Param(CppTmm.ParamType.LAYER_N, layerNr)
+        return CppTmm.Param(CppTmm.ParamType.LAYER_N, layerNr), "complex"
     elif param.startswith("nx_"):
-        return CppTmm.Param(CppTmm.ParamType.LAYER_NX, layerNr)
+        return CppTmm.Param(CppTmm.ParamType.LAYER_NX, layerNr), "complex"
     elif param.startswith("ny_"):
-        return CppTmm.Param(CppTmm.ParamType.LAYER_NY, layerNr)
+        return CppTmm.Param(CppTmm.ParamType.LAYER_NY, layerNr), "complex"
     elif param.startswith("nz_"):
-        return CppTmm.Param(CppTmm.ParamType.LAYER_NZ, layerNr)
+        return CppTmm.Param(CppTmm.ParamType.LAYER_NZ, layerNr), "complex"
     elif param.startswith("psi_"):
-        return CppTmm.Param(CppTmm.ParamType.LAYER_PSI, layerNr)
+        return CppTmm.Param(CppTmm.ParamType.LAYER_PSI, layerNr), "double"
     elif param.startswith("xi_"):
-        return CppTmm.Param(CppTmm.ParamType.LAYER_XI, layerNr)
+        return CppTmm.Param(CppTmm.ParamType.LAYER_XI, layerNr), "double"
     else:
         raise NotImplementedError()
 
@@ -42,6 +42,7 @@ class Tmm(object):
         self._tmm = CppTmm.Tmm()
         self.GetIntensityMatrix = self._tmm.GetIntensityMatrix
         self.GetAmplitudeMatrix = self._tmm.GetAmplitudeMatrix
+        self.ClearLayers = self._tmm.ClearLayers
 
     def AddIsotropicLayer(self, d, n):
         if type(n) == LabPy.Material:
@@ -58,19 +59,42 @@ class Tmm(object):
             
     def SetParam(self, **kwargs):
         for key, value in kwargs.iteritems():
-            p = ToCppParam(key)
+            p, _ = ToCppParam(key)
             self._tmm.SetParam(p, value)
             
     def SetLayerParam(self, layerId, **kwargs):
         for key, value in kwargs.iteritems():
-            self._tmm.SetParam("%s_%d" % (ToCppParam(key), layerId), value)
+            self._tmm.SetParam("%s_%d" % (ToCppParam(key)[0], layerId), value)
+            
+    def GetParam(self, paramName):
+        p, t = ToCppParam(paramName)
+        if t == "int":
+            return self._tmm.GetParamInt(p)
+        elif t == "double":
+            return self._tmm.GetParamDouble(p)
+        elif t == "complex":
+            return self._tmm.GetParamComplex(p)
+        else:
+            raise NotImplementedError()
+            
+    def LoadConf(self, conf):
+        self.SetParam(wl = conf["wl"], beta = conf["beta"])
+        self.ClearLayers()
+        for layer in conf["layers"]:
+            if layer[0] == "iso":
+                mat = LabPy.MaterialFromConf(layer[2])
+                self.AddIsotropicLayer(layer[1], mat)
+            elif layer[0] == "aniso":
+                raise NotImplementedError()
+            else:
+                raise ValueError("Unknown layer type.")
     
     def Sweep(self, sweepParam, sweepValues, enhPos = None):
         if enhPos == None:
-            r = self._tmm.Sweep(ToCppParam(sweepParam), sweepValues)
+            r = self._tmm.Sweep(ToCppParam(sweepParam)[0], sweepValues)
         else:
             pos = CppTmm.PositionSettings(np.array(enhPos[0]), enhPos[1], enhPos[2])  # @UndefinedVariable
-            r = self._tmm.Sweep(ToCppParam(sweepParam), sweepValues, pos)
+            r = self._tmm.Sweep(ToCppParam(sweepParam)[0], sweepValues, pos)
         
         res = {}
         for k, v in r.resDouble.iteritems():
@@ -90,8 +114,8 @@ class Tmm(object):
     
     def OptimizeEnhancement(self, optParams, optInitials, (pol, interface, dist)):
         pos = CppTmm.PositionSettings(np.array(pol), interface, dist)  # @UndefinedVariable
-        params = [ToCppParam(p) for p in optParams]
-        res = tmm._tmm.OptimizeEnhancement(params, np.array(optInitials), pos)
+        params = [ToCppParam(p)[0] for p in optParams]
+        res = self._tmm.OptimizeEnhancement(params, np.array(optInitials), pos)
         return res
     
 

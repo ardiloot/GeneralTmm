@@ -89,6 +89,58 @@ namespace TmmModel {
 		}
 	}
 
+	int Tmm::GetParamInt(Param param){
+		if (param.GetLayerID() < 0){
+			switch (param.GetParamType())
+			{
+			case ENH_OPT_MAX_ITERS:
+				return enhOptMaxIters;
+				break;
+			default:
+				throw invalid_argument("Get invalid param int");
+				break;
+			}
+		}
+		else {
+			return layers[param.GetLayerID()].GetParamInt(param);
+		}
+	}
+
+	double Tmm::GetParamDouble(Param param){
+		if (param.GetLayerID() < 0){
+			switch (param.GetParamType())
+			{
+			case WL:
+				return wl;
+				break;
+			case BETA:
+				return beta;
+				break;
+			case ENH_OPT_REL:
+				return enhOptMaxRelError;
+				break;
+			case ENH_INITIAL_STEP:
+				return enhOptInitialStep;
+				break;
+			default:
+				throw invalid_argument("Get invalid param double");
+				break;
+			}
+		}
+		else {
+			return layers[param.GetLayerID()].GetParamDouble(param);
+		}
+	}
+
+	dcomplex Tmm::GetParamComplex(Param param){
+		if (param.GetLayerID() < 0){
+			throw invalid_argument("Get invalid param complex");
+		}
+		else {
+			return layers[param.GetLayerID()].GetParamComplex(param);
+		}
+	}
+
 	void Tmm::AddIsotropicLayer(double d, dcomplex n){
 		needToSolve = true;
 		layers.push_back(Layer(d, Material(n)));
@@ -111,6 +163,9 @@ namespace TmmModel {
 		layers.push_back(Layer(d, Material(matX), Material(matY), Material(matZ), psi, xi));
 	}
 
+	void Tmm::ClearLayers(){
+		layers.clear();
+	}
 
 	Eigen::Matrix4d Tmm::GetIntensityMatrix(){
 		Solve();
@@ -278,11 +333,18 @@ namespace TmmModel {
 		auto optimizer = Optimization::Local::build_simplex(fitFunc, criterion);
 
 		optimizer.set_start_point(optInitial);
-		optimizer.set_delta(enhOptInitialStep);
+		optimizer.set_delta(enhOptInitialStep); // TODO, set deltas
 		optimizer.optimize(fitFunc);
 
+		
 		fitFunc.SetParams(optimizer.get_best_parameters());
 		double res = -optimizer.get_best_value();
+		int nIterations = optimizer.get_number_of_iterations();
+
+		if (nIterations >= enhOptMaxIters){
+			cerr << "Maximum number of iterations reached: " << nIterations << "/" << enhOptMaxIters << endl;
+		}
+
 		return res;
 	}
 
