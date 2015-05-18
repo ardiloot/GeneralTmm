@@ -45,9 +45,11 @@ namespace TmmModel{
 			break;
 		case LAYER_PSI:
 			psi = value;
+			epsilonRefractiveIndexChanged = true;
 			break;
 		case LAYER_XI:
 			xi = value;
+			epsilonRefractiveIndexChanged = true;
 			break;
 		default:
 			throw invalid_argument("Invalid layer param double");

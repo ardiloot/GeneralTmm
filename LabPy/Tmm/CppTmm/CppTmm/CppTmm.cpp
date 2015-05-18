@@ -155,7 +155,7 @@ BOOST_PYTHON_MODULE(CppTmm)
 	void (Tmm::*BoostSetParamsDouble)(Param, double) = &Tmm::SetParam;
 	void (Tmm::*BoostSetParamsComplex)(Param, dcomplex) = &Tmm::SetParam;
 	SweepRes(Tmm::*BoostSweep1)(Param, Eigen::VectorXd) = &Tmm::Sweep;
-	SweepRes(Tmm::*BoostSweep2)(Param, Eigen::VectorXd, PositionSettings) = &Tmm::Sweep;
+	SweepRes(Tmm::*BoostSweep2)(Param, Eigen::VectorXd, PositionSettings, int) = &Tmm::Sweep;
 	void (Tmm::*AddIsotropicLayerComplex)(double, dcomplex) = &Tmm::AddIsotropicLayer;
 	void (Tmm::*AddIsotropicLayerMaterial)(double, object&) = &Tmm::AddIsotropicLayer;
 	void (Tmm::*AddLayerComplex)(double, dcomplex, dcomplex, dcomplex, double, double) = &Tmm::AddLayer;

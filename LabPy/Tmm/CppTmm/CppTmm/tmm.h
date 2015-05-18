@@ -284,7 +284,7 @@ namespace TmmModel
 		void ClearLayers();
 		Matrix4d GetIntensityMatrix();
 		Matrix4cd GetAmplitudeMatrix();
-		SweepRes Sweep(Param sweepParam, VectorXd sweepValues, PositionSettings enhpos);
+		SweepRes Sweep(Param sweepParam, VectorXd sweepValues, PositionSettings enhpos, int alphasLayer);
 		SweepRes Sweep(Param sweepParam, VectorXd sweepValues);
 		EMFieldsList CalcFields1D(VectorXd xs, VectorXd polarization);
 		EMFields CalcFieldsAtInterface(PositionSettings pos);

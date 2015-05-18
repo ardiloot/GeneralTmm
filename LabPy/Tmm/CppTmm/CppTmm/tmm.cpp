@@ -238,22 +238,37 @@ namespace TmmModel {
 		solved = true;
 	}
 
-	SweepRes Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues, PositionSettings enhpos){
+	SweepRes Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues, PositionSettings enhpos, int alphasLayer){
 		SweepRes res;
 		ComplexVectorMap &resComplex = res.mapComplex;
 		DoubleVectorMap &resDouble = res.mapDouble;
 		DoubleVectorMap::iterator data_R[4][4];
 		ComplexVectorMap::iterator data_r[4][4];
 	
+		
+		ComplexVectorMap::iterator alphas0;
+		ComplexVectorMap::iterator alphas1;
+		ComplexVectorMap::iterator alphas2;
+		ComplexVectorMap::iterator alphas3;
+		bool alphasEnabled = bool(alphasLayer >= 0);
+		
+		if (alphasEnabled){
+			alphas0 = resComplex.insert(make_pair("alphas0", Eigen::RowVectorXcd(len(sweepValues)))).first;
+			alphas1 = resComplex.insert(make_pair("alphas1", Eigen::RowVectorXcd(len(sweepValues)))).first;
+			alphas2 = resComplex.insert(make_pair("alphas2", Eigen::RowVectorXcd(len(sweepValues)))).first;
+			alphas3 = resComplex.insert(make_pair("alphas3", Eigen::RowVectorXcd(len(sweepValues)))).first;
+		}
+
 		DoubleVectorMap::iterator enhs;
-		ComplexVectorMap::iterator enhExs;
-		ComplexVectorMap::iterator enhEys;
-		ComplexVectorMap::iterator enhEzs;
+		DoubleVectorMap::iterator enhExs;
+		DoubleVectorMap::iterator enhEys;
+		DoubleVectorMap::iterator enhEzs;
+
 		if (enhpos.IsEnabled()){
 			enhs = resDouble.insert(make_pair("enh", Eigen::RowVectorXd(len(sweepValues)))).first;
-			enhExs = resComplex.insert(make_pair("enhEx", Eigen::RowVectorXcd(len(sweepValues)))).first;
-			enhEys = resComplex.insert(make_pair("enhEy", Eigen::RowVectorXcd(len(sweepValues)))).first;
-			enhEzs = resComplex.insert(make_pair("enhEz", Eigen::RowVectorXcd(len(sweepValues)))).first;
+			enhExs = resDouble.insert(make_pair("enhEx", Eigen::RowVectorXd(len(sweepValues)))).first;
+			enhEys = resDouble.insert(make_pair("enhEy", Eigen::RowVectorXd(len(sweepValues)))).first;
+			enhEzs = resDouble.insert(make_pair("enhEz", Eigen::RowVectorXd(len(sweepValues)))).first;
 		}
 
 		for (int i = 0; i < 4; i++){
@@ -274,12 +289,19 @@ namespace TmmModel {
 				}
 			}
 
+			if (alphasEnabled){
+				alphas0->second(i) = layers[alphasLayer].alpha(0);
+				alphas1->second(i) = layers[alphasLayer].alpha(1);
+				alphas2->second(i) = layers[alphasLayer].alpha(2);
+				alphas3->second(i) = layers[alphasLayer].alpha(3);
+			}
+
 			if (enhpos.IsEnabled()){
 				EMFields fields = CalcFieldsAtInterface(enhpos);
 				enhs->second(i) = fields.E.norm();
-				enhExs->second(i) = fields.E(0);
-				enhEys->second(i) = fields.E(1);
-				enhEzs->second(i) = fields.E(2);
+				enhExs->second(i) = abs(fields.E(0));
+				enhEys->second(i) = abs(fields.E(1));
+				enhEzs->second(i) = abs(fields.E(2));
 			}
 		}
 
@@ -288,7 +310,7 @@ namespace TmmModel {
 
 	SweepRes Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues){
 		PositionSettings enhpos;
-		return Sweep(sweepParam, sweepValues, enhpos);
+		return Sweep(sweepParam, sweepValues, enhpos, -1);
 	}
 
 	EMFieldsList Tmm::CalcFields1D(Eigen::VectorXd xs, Eigen::VectorXd polarization){

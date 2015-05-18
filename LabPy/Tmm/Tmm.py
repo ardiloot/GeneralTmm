@@ -34,7 +34,7 @@ def ToCppParam(param):
     elif param.startswith("xi_"):
         return CppTmm.Param(CppTmm.ParamType.LAYER_XI, layerNr), "double"
     else:
-        raise NotImplementedError()
+        raise NotImplementedError(str(param))
 
 class Tmm(object):
 
@@ -64,7 +64,8 @@ class Tmm(object):
             
     def SetLayerParam(self, layerId, **kwargs):
         for key, value in kwargs.iteritems():
-            self._tmm.SetParam("%s_%d" % (ToCppParam(key)[0], layerId), value)
+            p, _ = ToCppParam("%s_%d" % (key, layerId))
+            self._tmm.SetParam(p, value)
             
     def GetParam(self, paramName):
         p, t = ToCppParam(paramName)
@@ -89,12 +90,12 @@ class Tmm(object):
             else:
                 raise ValueError("Unknown layer type.")
     
-    def Sweep(self, sweepParam, sweepValues, enhPos = None):
+    def Sweep(self, sweepParam, sweepValues, enhPos = None, alphasLayer = -1):
         if enhPos == None:
             r = self._tmm.Sweep(ToCppParam(sweepParam)[0], sweepValues)
         else:
             pos = CppTmm.PositionSettings(np.array(enhPos[0]), enhPos[1], enhPos[2])  # @UndefinedVariable
-            r = self._tmm.Sweep(ToCppParam(sweepParam)[0], sweepValues, pos)
+            r = self._tmm.Sweep(ToCppParam(sweepParam)[0], sweepValues, pos, alphasLayer)
         
         res = {}
         for k, v in r.resDouble.iteritems():
