@@ -107,6 +107,19 @@ class Tmm(object):
     def CalcFields1D(self, xs, pol):
         res = self._tmm.CalcFields1D(xs, np.array(pol))
         return res.E, res.H
+    
+    def CalcFields2D(self, xs, ys, pol):
+        ky = self.GetParam("beta") * 2.0 * np.pi / self.GetParam("wl")
+        phaseY = np.exp(1.0j * ky * ys)
+        E1D, H1D = self.CalcFields1D(xs, pol)
+        
+        E = np.zeros((len(xs), len(ys), 3), dtype = complex)
+        H = np.zeros((len(xs), len(ys), 3), dtype = complex)
+        for i in range(3):
+            E[:, :, i] = np.outer(E1D[:, i], phaseY)
+            H[:, :, i] = np.outer(H1D[:, i], phaseY)
+        
+        return E, H
 
     def CalcFieldsAtInterface(self, (pol, interface, dist)):
         pos = CppTmm.PositionSettings(np.array(pol), interface, dist)  # @UndefinedVariable
