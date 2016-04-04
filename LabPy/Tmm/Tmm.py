@@ -43,12 +43,14 @@ class Tmm(object):
         self.GetIntensityMatrix = self._tmm.GetIntensityMatrix
         self.GetAmplitudeMatrix = self._tmm.GetAmplitudeMatrix
         self.ClearLayers = self._tmm.ClearLayers
+        self._materialsCache = []
 
     def AddIsotropicLayer(self, d, n):
         if type(n) == LabPy.Material:
             self._tmm.AddIsotropicLayerMat(d, n)
         else:
             self._tmm.AddIsotropicLayer(d, n)
+        self._materialsCache.append((d, n))
 
     def AddLayer(self, d, nx, ny, nz, psi, xi):
         if type(nx) == LabPy.Material and type(ny) == LabPy.Material and \
@@ -56,6 +58,11 @@ class Tmm(object):
             self._tmm.AddLayerMat(d, nx, ny, nz, psi, xi)
         else:
             self._tmm.AddLayer(d, nx, ny, nz, psi, xi)
+        self._materialsCache.append((d, nx, ny, nz, psi, xi))
+          
+    def ClearLayers(self):
+        self._tmm.ClearLayers()
+        self._materialsCache.clear()
             
     def SetParam(self, **kwargs):
         for key, value in kwargs.iteritems():
