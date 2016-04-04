@@ -130,7 +130,7 @@ class Tmm(object):
     def CalcFields2D(self, xs, ys, pol, waveDirection = "both"):
         ky = self.GetParam("beta") * 2.0 * np.pi / self.GetParam("wl")
         phaseY = np.exp(1.0j * ky * ys)
-        E1D, H1D = self.CalcFields1D(xs, pol, ToCppWD(waveDirection))
+        E1D, H1D = self.CalcFields1D(xs, pol, waveDirection)
         
         E = np.zeros((len(xs), len(ys), 3), dtype = complex)
         H = np.zeros((len(xs), len(ys), 3), dtype = complex)
