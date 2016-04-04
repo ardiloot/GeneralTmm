@@ -91,6 +91,7 @@ class Tmm(object):
                 raise ValueError("Unknown layer type.")
     
     def Sweep(self, sweepParam, sweepValues, enhPos = None, alphasLayer = -1):
+        #enhpos = pol, enhInterface, enhDist
         if enhPos == None:
             r = self._tmm.Sweep(ToCppParam(sweepParam)[0], sweepValues)
         else:
