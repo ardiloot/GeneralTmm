@@ -99,6 +99,16 @@ BOOST_PYTHON_MODULE(CppTmm)
 		;
 
 	//---------------------------------------------------------------
+	// WaveDirection
+	//---------------------------------------------------------------
+
+	enum_<WaveDirection>("WaveDirection")
+		.value("WD_FORWARD", WD_FORWARD)
+		.value("WD_BACKWARD", WD_BACKWARD)
+		.value("WD_BOTH", WD_BOTH)
+		;
+
+	//---------------------------------------------------------------
 	// Param
 	//---------------------------------------------------------------
 
@@ -107,6 +117,7 @@ BOOST_PYTHON_MODULE(CppTmm)
 		.def("GetParamType", &Param::GetParamType)
 		.def("GetLayerID", &Param::GetLayerID)
 		;
+
 
 	//---------------------------------------------------------------
 	// SweepRes

@@ -36,6 +36,17 @@ def ToCppParam(param):
     else:
         raise NotImplementedError(str(param))
 
+def ToCppWD(waveDirectionStr):
+    
+    if waveDirectionStr == "both":
+        return CppTmm.WaveDirection.WD_BOTH
+    elif waveDirectionStr == "forward":
+        return CppTmm.WaveDirection.WD_FORWARD
+    elif waveDirectionStr == "backward":
+        return CppTmm.WaveDirection.WD_BACKWARD
+    else:
+        raise ValueError("Unknown wave direction: %s" % (waveDirectionStr))
+
 class Tmm(object):
 
     def __init__(self):
@@ -112,14 +123,14 @@ class Tmm(object):
             res[k] = v[0]
         return res
 
-    def CalcFields1D(self, xs, pol):
-        res = self._tmm.CalcFields1D(xs, np.array(pol))
+    def CalcFields1D(self, xs, pol, waveDirection = "both"):
+        res = self._tmm.CalcFields1D(xs, np.array(pol), ToCppWD(waveDirection))
         return res.E, res.H
     
-    def CalcFields2D(self, xs, ys, pol):
+    def CalcFields2D(self, xs, ys, pol, waveDirection = "both"):
         ky = self.GetParam("beta") * 2.0 * np.pi / self.GetParam("wl")
         phaseY = np.exp(1.0j * ky * ys)
-        E1D, H1D = self.CalcFields1D(xs, pol)
+        E1D, H1D = self.CalcFields1D(xs, pol, ToCppWD(waveDirection))
         
         E = np.zeros((len(xs), len(ys), 3), dtype = complex)
         H = np.zeros((len(xs), len(ys), 3), dtype = complex)
@@ -129,9 +140,9 @@ class Tmm(object):
         
         return E, H
 
-    def CalcFieldsAtInterface(self, (pol, interface, dist)):
+    def CalcFieldsAtInterface(self, (pol, interface, dist), waveDirection = "both"):
         pos = CppTmm.PositionSettings(np.array(pol), interface, dist)  # @UndefinedVariable
-        res = self._tmm.CalcFieldsAtInterface(pos)
+        res = self._tmm.CalcFieldsAtInterface(pos, ToCppWD(waveDirection))
         return res.E[0], res.H[0]
     
     def OptimizeEnhancement(self, optParams, optInitials, (pol, interface, dist)):

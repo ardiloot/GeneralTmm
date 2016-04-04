@@ -49,6 +49,16 @@ namespace TmmModel
 	};
 
 	//---------------------------------------------------------------------
+	// WaveDirection
+	//---------------------------------------------------------------------
+
+	enum WaveDirection {
+		WD_FORWARD,
+		WD_BACKWARD,
+		WD_BOTH
+	};
+
+	//---------------------------------------------------------------------
 	// Fuctions
 	//---------------------------------------------------------------------
 
@@ -234,7 +244,7 @@ namespace TmmModel
 		dcomplex GetNy(double wl);
 		dcomplex GetNz(double wl);
 		void SolveLayer(double wl, double beta);
-		EMFields GetFields(double wl, double beta, double x, Vector4cd coefs);
+		EMFields GetFields(double wl, double beta, double x, Vector4cd coefs, WaveDirection waveDirection);
 
 	private:
 		bool solved;
@@ -286,8 +296,8 @@ namespace TmmModel
 		Matrix4cd GetAmplitudeMatrix();
 		SweepRes Sweep(Param sweepParam, VectorXd sweepValues, PositionSettings enhpos, int alphasLayer);
 		SweepRes Sweep(Param sweepParam, VectorXd sweepValues);
-		EMFieldsList CalcFields1D(VectorXd xs, VectorXd polarization);
-		EMFields CalcFieldsAtInterface(PositionSettings pos);
+		EMFieldsList CalcFields1D(VectorXd xs, VectorXd polarization, WaveDirection waveDirection);
+		EMFields CalcFieldsAtInterface(PositionSettings pos, WaveDirection waveDirection);
 		double OptimizeEnhancement(vector<Param> optParams, VectorXd optInitial, PositionSettings pos);
 		double OptimizeEnhancementPython(boost::python::list optParams, VectorXd optInitial, PositionSettings pos);
 
@@ -337,7 +347,7 @@ namespace TmmModel
 		{
 			//cout << "fit function call res " << params << endl;
 			SetParams(params);
-			EMFields r = tmm->CalcFieldsAtInterface(enhPos);
+			EMFields r = tmm->CalcFieldsAtInterface(enhPos, WD_BOTH);
 			double res = -r.E.norm();
 			return res;
 		}

@@ -197,7 +197,7 @@ namespace TmmModel{
 		solved = true;
 	}
 
-	EMFields Layer::GetFields(double wl, double beta, double x, Eigen::Vector4cd coefs){
+	EMFields Layer::GetFields(double wl, double beta, double x, Eigen::Vector4cd coefs, WaveDirection waveDirection){
 		EMFields res;
 		res.E.setZero();
 		res.H.setZero();
@@ -205,6 +205,12 @@ namespace TmmModel{
 		double k0 = 2.0 * M_PI / wl;
 
 		for (int mode = 0; mode < 4; mode++){
+			if (waveDirection == WD_BACKWARD && (mode == 0 || mode == 2)) {
+				continue;
+			} else if (waveDirection == WD_FORWARD && (mode == 1 || mode == 3)) {
+				continue;
+			}
+
 			dcomplex a = alpha[mode];
 			dcomplex epsXX = epsTensor(0, 0);
 			dcomplex epsXY = epsTensor(0, 1);

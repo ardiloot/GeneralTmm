@@ -297,7 +297,7 @@ namespace TmmModel {
 			}
 
 			if (enhpos.IsEnabled()){
-				EMFields fields = CalcFieldsAtInterface(enhpos);
+				EMFields fields = CalcFieldsAtInterface(enhpos, WD_BOTH);
 				enhs->second(i) = fields.E.norm();
 				enhExs->second(i) = abs(fields.E(0));
 				enhEys->second(i) = abs(fields.E(1));
@@ -313,7 +313,7 @@ namespace TmmModel {
 		return Sweep(sweepParam, sweepValues, enhpos, -1);
 	}
 
-	EMFieldsList Tmm::CalcFields1D(Eigen::VectorXd xs, Eigen::VectorXd polarization){
+	EMFieldsList Tmm::CalcFields1D(Eigen::VectorXd xs, Eigen::VectorXd polarization, WaveDirection waveDirection){
 		Solve();
 		CalcFieldCoefs(polarization);
 
@@ -321,14 +321,14 @@ namespace TmmModel {
 		LayerIndices layerP = CalcLayerIndices(xs);
 		for (int i = 0; i < len(xs); i++){
 			int layerId = layerP.indices(i);
-			EMFields f = layers[layerId].GetFields(wl, beta, layerP.ds(i), fieldCoefs.row(layerId));
+			EMFields f = layers[layerId].GetFields(wl, beta, layerP.ds(i), fieldCoefs.row(layerId), waveDirection);
 			res.E.row(i) = f.E / normCoef;
 			res.H.row(i) = f.H / normCoef;
 		}
 		return res;
 	}
 
-	EMFields Tmm::CalcFieldsAtInterface(PositionSettings pos){
+	EMFields Tmm::CalcFieldsAtInterface(PositionSettings pos, WaveDirection waveDirection){
 		if (!pos.IsEnabled()){
 			throw invalid_argument("Position settings must be enabled.");
 		}
@@ -343,7 +343,7 @@ namespace TmmModel {
 
 		Solve();
 		CalcFieldCoefs(pos.GetPolarization());
-		EMFields res = layers[layerId].GetFields(wl, beta, pos.GetDistFromInterface(), fieldCoefs.row(layerId));
+		EMFields res = layers[layerId].GetFields(wl, beta, pos.GetDistFromInterface(), fieldCoefs.row(layerId), waveDirection);
 		res.E /= normCoef;
 		res.H /= normCoef;
 		return res;
@@ -391,7 +391,7 @@ namespace TmmModel {
 		//Calc normalization factor
 		Eigen::Vector4cd incCoefs;
 		incCoefs << polarization(0), 0.0, polarization(1), 0.0;
-		Eigen::Vector3cd Einc = layers[0].GetFields(wl, beta, 0.0, incCoefs).E;
+		Eigen::Vector3cd Einc = layers[0].GetFields(wl, beta, 0.0, incCoefs, WD_BOTH).E;
 	
 		dcomplex n1 = sqrt(sqr(beta) + sqr(layers[0].alpha(0)));
 		dcomplex n2 = sqrt(sqr(beta) + sqr(layers[0].alpha(2)));

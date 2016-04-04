@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 from LabPy.Tmm.Tmm import Tmm
-from LabPy.Old.GeneralTMM import GeneralTmm  # @UnresolvedImport
+from LabPy.old.GeneralTMM import GeneralTmm  # @UnresolvedImport
 from LabPy import Material
 
 class TmmTest(unittest.TestCase):

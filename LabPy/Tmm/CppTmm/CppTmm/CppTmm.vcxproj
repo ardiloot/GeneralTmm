@@ -139,8 +139,9 @@
       <OpenMPSupport>false</OpenMPSupport>
       <Parallelization>false</Parallelization>
       <OpenMP>None</OpenMP>
-      <Optimization>Full</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
