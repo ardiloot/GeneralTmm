@@ -3,10 +3,11 @@
 
 #ifdef PYTHON_WRAP
 #include <boost/python.hpp>
-#include <boost/numpy.hpp>
+#include <boost/python/numpy.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "std_map_indexing_suite.hpp"
 #include "eigen_numpy.h"
+#include <numpy/arrayobject.h>
 #endif
 
 #include "tmm.h"
@@ -60,8 +61,7 @@ BOOST_PYTHON_MODULE(CppTmm)
 {
 	using namespace boost::python;
 	using namespace TmmModel;
-
-	boost::numpy::initialize();
+	boost::python::numpy::initialize();
 	SetupEigenConverters();
 
 	class_<ComplexVectorMap >("ComplexVectorMap")

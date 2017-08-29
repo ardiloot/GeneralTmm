@@ -7,7 +7,6 @@ import numpy as np
 import math
 import warnings
 from scipy import optimize
-from Core import Norm
 
 def RotationSx(phi):
     res = np.array([[1.0, 0.0, 0.0], \
@@ -21,7 +20,18 @@ def RotationSz(phi):
                     [0.0, 0.0, 1.0]])
     return res
 
-class AnisotropicLayer():
+def Norm(vector):
+    if len(vector.shape) > 1:
+        if vector.shape[1] != 3:
+            raise Exception("Only vectors with length 3 supported.")
+        return np.sqrt(abs(vector[:, 0]) ** 2.0 + abs(vector[:, 1]) ** 2.0 +  abs(vector[:, 2]) ** 2.0, dtype = complex).real
+    else:        
+        if len(vector) != 3:
+            raise Exception("Only vectors with length 3 supported.")
+        return np.sqrt(abs(vector[0]) ** 2.0 + abs(vector[1]) ** 2.0 + abs(vector[2]) ** 2.0, dtype = complex).real
+
+
+class _AnisotropicLayer():
     
     def __init__(self, tmm, d, n1, n2, n3, psi, xi):
         self.tmm = tmm
@@ -203,7 +213,7 @@ class AnisotropicLayer():
         self.M = np.dot(self.F, np.dot(self.phaseMatrix, self.invF))
         
     
-class GeneralTmm():
+class TmmPy():
     
     def __init__(self):
         self.wl = None
@@ -221,10 +231,10 @@ class GeneralTmm():
                        ["T41", "T42", "R43", "R44"]]
         
     def AddIsotropicLayer(self, d, n):
-        self.layers.append(AnisotropicLayer(self, d, n, n, n, 0.0, 0.0))
+        self.layers.append(_AnisotropicLayer(self, d, n, n, n, 0.0, 0.0))
         
     def AddLayer(self, d, n1, n2, n3, psi, xi):
-        self.layers.append(AnisotropicLayer(self, d, n1, n2, n3, psi, xi))
+        self.layers.append(_AnisotropicLayer(self, d, n1, n2, n3, psi, xi))
     
     def GetConf(self):
         layersConf = [layer.GetConf() for layer in self.layers]

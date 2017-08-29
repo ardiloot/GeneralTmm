@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>LabPy</name>
+	<name>GeneralTmm</name>
 	<comment></comment>
 	<projects>
+		<project>LabPy</project>
 	</projects>
 	<buildSpec>
+		<buildCommand>
+			<name>org.python.pydev.PyDevBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
 	</buildSpec>
 	<natures>
 		<nature>org.python.pydev.pythonNature</nature>

@@ -1,11 +1,11 @@
 #include <Eigen/Eigen>
-#include <boost/numpy.hpp>
-#include <glog/logging.h>
+#include <boost/python/numpy.hpp>
 #include <numpy/arrayobject.h>
 #include <complex>
+#include <iostream>
 
 namespace bp = boost::python;
-namespace np = boost::numpy;
+namespace np = boost::python::numpy;
 
 using namespace Eigen;
 typedef std::complex<double> stlComplex;
@@ -17,6 +17,15 @@ template <> struct NumpyEquivalentType<double> {enum { type_code = NPY_DOUBLE };
 template <> struct NumpyEquivalentType<int> {enum { type_code = NPY_INT };};
 template <> struct NumpyEquivalentType<float> {enum { type_code = NPY_FLOAT };};
 template <> struct NumpyEquivalentType<std::complex<double> > {enum { type_code = NPY_CDOUBLE };};
+
+void CHECK_EQ(int a, int b) {
+	assert(a == b);
+}
+
+void CHECK(bool a) {
+	assert(a);
+}
+
 
 template <typename SourceType, typename DestType >
 static void copy_array(const SourceType* source, DestType* dest,
@@ -87,24 +96,24 @@ struct EigenMatrixFromPython {
 
   static void* convertible(PyObject* obj_ptr) {
     if (!PyArray_Check(obj_ptr)) {
-      LOG(ERROR) << "PyArray_Check failed";
+      std::cerr << "PyArray_Check failed";
       return 0;
     }
     if (PyArray_NDIM(obj_ptr) > 2) {
-      LOG(ERROR) << "dim > 2";
+      std::cerr << "dim > 2";
       return 0;
     }
     if (PyArray_ObjectType(obj_ptr, 0) != NumpyEquivalentType<typename MatType::Scalar>::type_code) {
-      LOG(ERROR) << "types not compatible";
+      std::cerr << "types not compatible";
       return 0;
     }
     int flags = PyArray_FLAGS(obj_ptr);
     if (!(flags & NPY_ARRAY_C_CONTIGUOUS)) {
-      LOG(ERROR) << "Contiguous C array required";
+      std::cerr << "Contiguous C array required";
       return 0;
     }
     if (!(flags & NPY_ARRAY_ALIGNED)) {
-      LOG(ERROR) << "Aligned array required";
+      std::cerr << "Aligned array required";
       return 0;
     }
     return obj_ptr;
@@ -216,8 +225,13 @@ struct EigenMatrixFromPython {
 
 static const int X = Eigen::Dynamic;
 
+int ImportArray() {
+	import_array();
+	return 0;
+}
+
 void SetupEigenConverters() {
-  import_array();
+  ImportArray();
 
   EIGEN_MATRIX_CONVERTER(Matrix2cd);
   EIGEN_MATRIX_CONVERTER(Matrix3cd);

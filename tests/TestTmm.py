@@ -1,7 +1,6 @@
 import unittest
 import numpy as np
-from LabPy.Tmm.Tmm import Tmm
-from LabPy.old.GeneralTMM import GeneralTmm  # @UnresolvedImport
+from GeneralTmm import Tmm, TmmPy
 from LabPy import Material
 
 class TmmTest(unittest.TestCase):
@@ -19,7 +18,7 @@ class TmmTest(unittest.TestCase):
                 tmm.AddLayer(d, n1, n2, n3, psi, xi)
 
         # Old Tmm
-        oldTmm = GeneralTmm()
+        oldTmm = TmmPy()
         oldTmm.SetConf(wl = wl)
         for layer in layers:
             if layer[0] == "iso":
@@ -52,11 +51,11 @@ class TmmTest(unittest.TestCase):
         EOld, HOld = oldTmm.CalcFields1D(xs, pol)
 
         for i in range(3):
-            print "test E", "XYZ"[i]
+            print("test E", "XYZ"[i])
             np.testing.assert_allclose(abs(E[:, i]), abs(EOld[:, i]), rtol = 1e-7, atol = 1e-15)
             
         for i in range(3):
-            print "test H", "XYZ"[i]     
+            print("test H", "XYZ"[i])     
             np.testing.assert_allclose(abs(H[:, i]), abs(HOld[:, i]), rtol = 1e-7, atol = 1e-15)
 
             
@@ -65,7 +64,7 @@ class TmmTest(unittest.TestCase):
             for n1 in [1.2, 1.5]:
                 for n2 in [1.0, 2.0]:
                     for pol in [(1.0, 0.0), (0.0, 1.0)]:
-                        print "TIR test", wl, n1, n2, pol
+                        print("TIR test", wl, n1, n2, pol)
                         layers = [("iso", float("inf"), n1), \
                                   ("iso", float("inf"), n2)]
                         betas = np.linspace(0.0, n1 - 1e-3, 30)
@@ -75,7 +74,7 @@ class TmmTest(unittest.TestCase):
         silver = Material(r"main/Ag\Johnson")
         for wl in [400e-9, 500e-9, 800e-9]:
             for pol in [(1.0, 0.0), (0.0, 1.0)]:
-                print "SPP test", wl, pol
+                print("SPP test", wl, pol)
                 layers = [("iso", float("inf"), 1.5), \
                           ("iso", float("inf"), silver(wl)),
                           ("iso", float("inf"), 1.0)]
@@ -87,7 +86,7 @@ class TmmTest(unittest.TestCase):
         for pol in [(1.0, 0.0), (0.0, 1.0)]:
             for psi in np.linspace(0.0, 2 * np.pi, 5):
                 for xi in np.linspace(0.0, np.pi, 5):
-                    print "Aniso test", pol, psi, xi
+                    print("Aniso test", pol, psi, xi)
                     layers = [("iso", float("inf"), 1.5), \
                               ("aniso", float("inf"), 1.76, 1.8, 1.9, psi, xi)]
                     betas = np.linspace(0.0, 1.5 - 1e-3, 30)
@@ -98,7 +97,7 @@ class TmmTest(unittest.TestCase):
         for pol in [(1.0, 0.0), (0.0, 1.0)]:
             for psi in np.linspace(0.0, 2 * np.pi, 5):
                 for xi in np.linspace(0.0, np.pi, 5):
-                    print "Aniso test", pol, psi, xi
+                    print("Aniso test", pol, psi, xi)
                     layers = [("iso", float("inf"), 1.5), \
                               ("aniso", 200e-9, 1.76, 1.8, 1.9, psi, xi),
                               ("iso", float("inf"), 1.5)]
@@ -112,7 +111,7 @@ class TmmTest(unittest.TestCase):
         xs = np.linspace(-1e-6, 1e-6, 1000)
         for wl in [400e-9, 500e-9, 800e-9]:
             for pol in [(1.0, 0.0), (0.0, 1.0)]:
-                print "SPP test", wl, pol
+                print("SPP test", wl, pol)
                 layers = [("iso", float("inf"), 1.5), \
                           ("iso", float("inf"), silver(wl)),
                           ("iso", float("inf"), 1.0)]
@@ -125,7 +124,7 @@ class TmmTest(unittest.TestCase):
             for psi in np.linspace(0.0, 2 * np.pi, 5):
                 for xi in np.linspace(0.0, np.pi, 5):
                     for pol in [(1.0, 0.0), (0.0, 1.0)]:
-                        print wl, psi, xi, pol
+                        print(wl, psi, xi, pol)
                         layers = [("iso", float("inf"), 1.5), \
                                   ("aniso", float("inf"), 1.76, 1.8, 1.9, psi, xi)]
                         self._testFields(wl, beta, layers, xs, pol)

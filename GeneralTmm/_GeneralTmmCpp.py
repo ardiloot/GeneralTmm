@@ -1,6 +1,13 @@
+from __future__ import print_function
 import numpy as np
-import CppTmm
 import LabPy
+
+# Import Boost Python C++ code
+import sys
+from os import path
+sys.path.append(path.join(path.dirname(__file__), r"CppTmm\x64\Release"))
+import CppTmm  # @UnresolvedImport
+
 
 def ToCppParam(param):
     layerNr = -1
@@ -76,12 +83,12 @@ class Tmm(object):
         self._materialsCache.clear()
             
     def SetParam(self, **kwargs):
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             p, _ = ToCppParam(key)
             self._tmm.SetParam(p, value)
             
     def SetLayerParam(self, layerId, **kwargs):
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             p, _ = ToCppParam("%s_%d" % (key, layerId))
             self._tmm.SetParam(p, value)
             
@@ -117,9 +124,9 @@ class Tmm(object):
             r = self._tmm.Sweep(ToCppParam(sweepParam)[0], sweepValues, pos, alphasLayer)
         
         res = {}
-        for k, v in r.resDouble.iteritems():
+        for k, v in r.resDouble.items():
             res[k] = v[0]
-        for k, v in r.resComplex.iteritems():
+        for k, v in r.resComplex.items():
             res[k] = v[0]
         return res
 
@@ -140,12 +147,14 @@ class Tmm(object):
         
         return E, H
 
-    def CalcFieldsAtInterface(self, (pol, interface, dist), waveDirection = "both"):
+    def CalcFieldsAtInterface(self, enhpos, waveDirection = "both"):
+        (pol, interface, dist) = enhpos
         pos = CppTmm.PositionSettings(np.array(pol), interface, dist)  # @UndefinedVariable
         res = self._tmm.CalcFieldsAtInterface(pos, ToCppWD(waveDirection))
         return res.E[0], res.H[0]
     
-    def OptimizeEnhancement(self, optParams, optInitials, (pol, interface, dist)):
+    def OptimizeEnhancement(self, optParams, optInitials, enhpos):
+        (pol, interface, dist) = enhpos
         pos = CppTmm.PositionSettings(np.array(pol), interface, dist)  # @UndefinedVariable
         params = [ToCppParam(p)[0] for p in optParams]
         res = self._tmm.OptimizeEnhancement(params, np.array(optInitials), pos)
@@ -173,9 +182,9 @@ if __name__ == "__main__":
     tmm.SetParam(enhInitialStep = 1e-9)
     tmm.SetParam(beta = 1.015)
     
-    print "opt start"
+    print("opt start")
     optres = tmm.OptimizeEnhancement(["wl"], [800e-9], ((1.0, 0.0), -1, 0.0))
-    print "optres", optres
+    print("optres", optres)
     r = tmm.Sweep("beta", betas, ((1.0, 0.0), -1, 0.0))
 
     plt.figure()
