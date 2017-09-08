@@ -168,11 +168,11 @@ class _AnisotropicLayer():
                 backward.append(i)
             
         if len(forward) != 2:
-            print "ns", self.n1, self.n2, self.n3
-            print "beta", beta
-            print "Values", values
-            print "Poynting", poyntingX
-            print "vectors", vectors
+            print("ns", self.n1, self.n2, self.n3)
+            print("beta", beta)
+            print("Values", values)
+            print("Poynting", poyntingX)
+            print("vectors", vectors)
             raise Exception("Wrong number of forward moving waves: %d" % len(forward))
         
         if abs(values.real[forward[0]] - values.real[forward[1]]) < 1e-10:
@@ -262,7 +262,7 @@ class TmmPy():
                     raise NotImplemented()
         
         # Layer individual params
-        for key, value in kwargs.items():
+        for key, value in list(kwargs.items()):
             if key.find("_") == -1:
                 continue
             kwargs.pop(key)
@@ -372,10 +372,10 @@ class TmmPy():
             R[3, 2] = np.NAN #abs(r[3, 2]) ** 2.0 * abs(pForward[3] / pBackward[2])
             R[3, 3] = np.NAN #abs(r[3, 3]) ** 2.0 * abs(pForward[3] / pBackward[3])
             if len(w) > 0:
-                print "warning", w
-                print self.beta
-                print pBackward
-                print pForward
+                print("warning", w)
+                print(self.beta)
+                print(pBackward)
+                print(pForward)
      
         R = R.real
         self.R = R

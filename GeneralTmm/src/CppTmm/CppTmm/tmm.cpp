@@ -146,22 +146,26 @@ namespace TmmModel {
 		layers.push_back(Layer(d, Material(n)));
 	}
 
+	/*
 	void Tmm::AddIsotropicLayer(double d, boost::python::object &materialClass){
 		needToSolve = true;
 		Material mat = Material(materialClass);
 		Layer layer = Layer(d, mat);
 		layers.push_back(layer);
 	}
+	*/
 
 	void Tmm::AddLayer(double d, dcomplex nx, dcomplex ny, dcomplex nz, double psi, double xi){
 		needToSolve = true;
 		layers.push_back(Layer(d, Material(nx), Material(ny), Material(nz), psi, xi));
 	}
 
+	/*
 	void Tmm::AddLayer(double d, boost::python::object &matX, boost::python::object &matY, boost::python::object &matZ, double psi, double xi){
 		needToSolve = true;
 		layers.push_back(Layer(d, Material(matX), Material(matY), Material(matZ), psi, xi));
 	}
+	*/
 
 	void Tmm::ClearLayers(){
 		layers.clear();
@@ -370,6 +374,7 @@ namespace TmmModel {
 		return res;
 	}
 
+	/*
 	double Tmm::OptimizeEnhancementPython(boost::python::list optParams, Eigen::VectorXd optInitial, PositionSettings pos){
 		vector<Param> optParamsVector;
 		ssize_t length = PyObject_Length(optParams.ptr());
@@ -380,6 +385,7 @@ namespace TmmModel {
 		double res = Tmm::OptimizeEnhancement(optParamsVector, optInitial, pos);
 		return res;
 	}
+	*/
 
 	void Tmm::CalcFieldCoefs(Eigen::Vector2d polarization){	
 		if (!needToCalcFieldCoefs && polarization == lastFieldCoefsPol){

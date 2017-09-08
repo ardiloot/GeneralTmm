@@ -12,7 +12,7 @@
 #include <unsupported/Eigen/MatrixFunctions>
 #include "simplex.h"
 #include "criteria.h"
-#include <boost/python.hpp>
+//#include <boost/python.hpp>
 
 #define sqr(a) ((a) * (a))
 #define len(a) int((a).size())
@@ -45,7 +45,8 @@ namespace TmmModel
 		LAYER_XI,
 		LAYER_MAT_NX,
 		LAYER_MAT_NY,
-		LAYER_MAT_NZ
+		LAYER_MAT_NZ,
+		NOT_DEFINED
 	};
 
 	//---------------------------------------------------------------------
@@ -71,7 +72,7 @@ namespace TmmModel
 
 	class Param {
 	public:
-
+		Param() : Param(NOT_DEFINED) {}
 		Param(ParamType pType_);
 		Param(ParamType pType_, int layerId_);
 		ParamType GetParamType();
@@ -96,14 +97,14 @@ namespace TmmModel
 
 		Material();
 		Material(dcomplex staticN_);
-		Material(boost::python::object &materialClass);
+		//Material(boost::python::object &materialClass);
 		dcomplex n(double wl);
 		bool IsStatic();
 
 	private:
 		bool isStatic;
 		dcomplex staticN;
-		boost::python::object materialClass;
+		//boost::python::object materialClass;
 	};
 
 	//---------------------------------------------------------------------
@@ -288,9 +289,9 @@ namespace TmmModel
 		double GetParamDouble(Param param); 
 		dcomplex GetParamComplex(Param param);
 		void AddIsotropicLayer(double d, dcomplex n);
-		void AddIsotropicLayer(double d, boost::python::object &materialClass);
+		//void AddIsotropicLayer(double d, boost::python::object &materialClass);
 		void AddLayer(double d, dcomplex nx, dcomplex ny, dcomplex nz, double psi, double xi);
-		void AddLayer(double d, boost::python::object &matX, boost::python::object &matY, boost::python::object &matZ, double psi, double xi);
+		//void AddLayer(double d, boost::python::object &matX, boost::python::object &matY, boost::python::object &matZ, double psi, double xi);
 		void ClearLayers();
 		Matrix4d GetIntensityMatrix();
 		Matrix4cd GetAmplitudeMatrix();
@@ -299,7 +300,7 @@ namespace TmmModel
 		EMFieldsList CalcFields1D(VectorXd xs, VectorXd polarization, WaveDirection waveDirection);
 		EMFields CalcFieldsAtInterface(PositionSettings pos, WaveDirection waveDirection);
 		double OptimizeEnhancement(vector<Param> optParams, VectorXd optInitial, PositionSettings pos);
-		double OptimizeEnhancementPython(boost::python::list optParams, VectorXd optInitial, PositionSettings pos);
+		//double OptimizeEnhancementPython(boost::python::list optParams, VectorXd optInitial, PositionSettings pos);
 
 
 	private:

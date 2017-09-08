@@ -1,5 +1,5 @@
 //#define EIGEN_USE_MKL_ALL
-#define PYTHON_WRAP
+//#define PYTHON_WRAP
 
 #ifdef PYTHON_WRAP
 #include <boost/python.hpp>
@@ -33,17 +33,18 @@ int main(){
 	tmm.AddIsotropicLayer(INFINITY, 1.7);
 	tmm.AddIsotropicLayer(INFINITY, 1.0);
 
+	/*
 	vector<Param> optParams;
 	optParams.push_back(Param(BETA));
 	Eigen::VectorXd optInitial(len(optParams));
 	optInitial << 0.5;
 
 	tmm.OptimizeEnhancement(optParams, optInitial, ps);
-
-	//clock_t startTime = clock();
-	//tmm.Sweep(Param(BETA), Eigen::VectorXd::LinSpaced(1000000, 0.0, 1.4), ps);
-	//cout << rr["R22"] << endl;
-	//cout << double(clock() - startTime) / (double)CLOCKS_PER_SEC << " seconds." << endl;
+	*/
+	clock_t startTime = clock();
+	SweepRes rr = tmm.Sweep(Param(BETA), Eigen::VectorXd::LinSpaced(10, 0.0, 1.4));
+	cout << rr.mapDouble["R22"] << endl;
+	cout << double(clock() - startTime) / (double)CLOCKS_PER_SEC << " seconds." << endl;
 
 	//tmm.SetParam(Param(BETA), 0.5);
 	
