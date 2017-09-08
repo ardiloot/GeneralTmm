@@ -29,12 +29,14 @@ int main(){
 	PositionSettings ps(pol, -1, 0.0);
 
 	Tmm tmm;
+	Material mat0(1.7), mat1(1.0);
+
 	tmm.SetParam(Param(WL), 500e-9);
-	tmm.AddIsotropicLayer(INFINITY, 1.7);
-	tmm.AddIsotropicLayer(INFINITY, 1.0);
+	tmm.AddIsotropicLayer(INFINITY, &mat0);
+	tmm.AddIsotropicLayer(INFINITY, &mat1);
 
 	/*
-	vector<Param> optParams;
+	std::vector<Param> optParams;
 	optParams.push_back(Param(BETA));
 	Eigen::VectorXd optInitial(len(optParams));
 	optInitial << 0.5;
@@ -76,8 +78,8 @@ BOOST_PYTHON_MODULE(CppTmm)
 		.def(std_map_indexing_suite<DoubleVectorMap, true>())
 		;
 
-	class_<vector<Param> >("ParamList")
-		.def(vector_indexing_suite<vector<Param> >());
+	class_<std::vector<Param> >("ParamList")
+		.def(vector_indexing_suite<std::vector<Param> >());
 
 
 	//---------------------------------------------------------------

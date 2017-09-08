@@ -6,7 +6,7 @@ namespace TmmModel{
 	// Layer
 	//---------------------------------------------------------------------
 
-	Layer::Layer(double d_, Material n_){
+	Layer::Layer(double d_, Material *n_){
 		Init();
 		d = d_;
 		nx = n_;
@@ -17,7 +17,7 @@ namespace TmmModel{
 		isotropicLayer = true;
 	}
 
-	Layer::Layer(double d_, Material nx_, Material ny_, Material nz_, double psi_, double xi_){
+	Layer::Layer(double d_, Material *nx_, Material *ny_, Material *nz_, double psi_, double xi_){
 		Init();
 		d = d_;
 		nx = nx_;
@@ -32,7 +32,7 @@ namespace TmmModel{
 		switch (param.GetParamType())
 		{
 		default:
-			throw invalid_argument("Invalid layer param int");
+			throw std::invalid_argument("Invalid layer param int");
 			break;
 		}
 	}
@@ -52,7 +52,7 @@ namespace TmmModel{
 			epsilonRefractiveIndexChanged = true;
 			break;
 		default:
-			throw invalid_argument("Invalid layer param double");
+			throw std::invalid_argument("Invalid layer param double");
 			break;
 		}
 	}
@@ -61,29 +61,29 @@ namespace TmmModel{
 		switch (param.GetParamType())
 		{
 		case LAYER_N:
-			nx = Material(value);
-			ny = Material(value);
-			nz = Material(value);
+			nx->SetStatic(value);
+			ny->SetStatic(value);
+			nz->SetStatic(value);
 			epsilonRefractiveIndexChanged = true;
 			isotropicLayer = true;
 			break;
 		case LAYER_NX:
-			nx = Material(value);
+			nx->SetStatic(value);
 			epsilonRefractiveIndexChanged = true;
 			isotropicLayer = false;
 			break;
 		case LAYER_NY:
-			ny = Material(value);
+			ny->SetStatic(value);
 			epsilonRefractiveIndexChanged = true;
 			isotropicLayer = false;
 			break;
 		case LAYER_NZ:
-			nz = Material(value);
+			nz->SetStatic(value);
 			epsilonRefractiveIndexChanged = true;
 			isotropicLayer = false;
 			break;
 		default:
-			throw invalid_argument("Invalid layer param complex");
+			throw std::invalid_argument("Invalid layer param complex");
 			break;
 		}
 	}
@@ -92,7 +92,7 @@ namespace TmmModel{
 		switch (param.GetParamType())
 		{
 		default:
-			throw invalid_argument("Get invalid layer param int");
+			throw std::invalid_argument("Get invalid layer param int");
 			break;
 		}
 	}
@@ -110,7 +110,7 @@ namespace TmmModel{
 			return xi;
 			break;
 		default:
-			throw invalid_argument("Get invalid layer param double");
+			throw std::invalid_argument("Get invalid layer param double");
 			break;
 		}
 	}
@@ -120,34 +120,34 @@ namespace TmmModel{
 		{
 		case LAYER_N:
 			if (!isotropicLayer){
-				throw runtime_error("To get LAYER_N, the layer must be isotropic");
+				throw std::runtime_error("To get LAYER_N, the layer must be isotropic");
 			}
 
-			if (!nx.IsStatic()){
-				throw runtime_error("To get LAYER_N, the material must be static");
+			if (!nx->IsStatic()){
+				throw std::runtime_error("To get LAYER_N, the material must be static");
 			}
-			return nx.n(0.0);
+			return nx->n(0.0);
 			break;
 		case LAYER_NX:
-			if (!nx.IsStatic()){
-				throw runtime_error("To get LAYER_NX, the material must be static");
+			if (!nx->IsStatic()){
+				throw std::runtime_error("To get LAYER_NX, the material must be static");
 			}
-			return nx.n(0.0);
+			return nx->n(0.0);
 			break;
 		case LAYER_NY:
-			if (!ny.IsStatic()){
-				throw runtime_error("To get LAYER_NY, the material must be static");
+			if (!ny->IsStatic()){
+				throw std::runtime_error("To get LAYER_NY, the material must be static");
 			}
-			return ny.n(0.0);
+			return ny->n(0.0);
 			break;
 		case LAYER_NZ:
-			if (!nz.IsStatic()){
-				throw runtime_error("To get LAYER_NZ, the material must be static");
+			if (!nz->IsStatic()){
+				throw std::runtime_error("To get LAYER_NZ, the material must be static");
 			}
-			return nz.n(0.0);
+			return nz->n(0.0);
 			break;
 		default:
-			throw invalid_argument("Invalid layer param complex");
+			throw std::invalid_argument("Invalid layer param complex");
 			break;
 		}
 	}
@@ -158,15 +158,15 @@ namespace TmmModel{
 	}
 
 	dcomplex Layer::GetNx(double wl){
-		return nx.n(wl);
+		return nx->n(wl);
 	}
 
 	dcomplex Layer::GetNy(double wl){
-		return ny.n(wl);
+		return ny->n(wl);
 	}
 
 	dcomplex Layer::GetNz(double wl){
-		return nz.n(wl);
+		return nz->n(wl);
 	}
 
 	void Layer::SolveLayer(double wl, double beta){
@@ -351,29 +351,29 @@ namespace TmmModel{
 			cerr << "eigenvectors" << endl;
 			cerr << eigenvectors << endl;
 			cerr << "Wrong number of forward moving waves: " << endl;
-			throw runtime_error("wrong number of forward waves");
+			throw std::runtime_error("wrong number of forward waves");
 		}
 
 		if (abs(real(eigenvalues(forward[0])) - real(eigenvalues(forward[1]))) < 1e-10){
 			double normUp0 = eigenvectors.block(0, forward[0], 2, 1).norm();
 			double normUp1 = eigenvectors.block(0, forward[1], 2, 1).norm();
 			if (normUp1 > normUp0){
-				swap(forward[0], forward[1]);
+				std::swap(forward[0], forward[1]);
 			}
 		}
 		else if (real(eigenvalues(forward[0])) < real(eigenvalues(forward[1]))){
-			swap(forward[0], forward[1]);
+			std::swap(forward[0], forward[1]);
 		}
 
 		if (abs(real(eigenvalues(backward[0])) - real(eigenvalues(backward[1]))) < 1e-10){
 			double normUp0 = eigenvectors.block(0, backward[0], 2, 1).norm();
 			double normUp1 = eigenvectors.block(0, backward[1], 2, 1).norm();
 			if (normUp1 > normUp0){
-				swap(backward[0], backward[1]);
+				std::swap(backward[0], backward[1]);
 			}
 		}
 		else if (real(eigenvalues(backward[0])) > real(eigenvalues(backward[1]))){
-			swap(backward[0], backward[1]);
+			std::swap(backward[0], backward[1]);
 		}
 
 		// Ordering

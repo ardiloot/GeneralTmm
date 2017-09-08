@@ -15,13 +15,13 @@ namespace TmmModel {
 		enhOptMaxRelError = 1e-10;
 		enhOptInitialStep = 0.1;
 
-		names_R = vector<vector<string> >(4, vector<string>(4));
-		names_r = vector<vector<string> >(4, vector<string>(4));
+		names_R = std::vector<std::vector<std::string> >(4, std::vector<std::string>(4));
+		names_r = std::vector<std::vector<std::string> >(4, std::vector<std::string>(4));
 		for (int i = 0; i < 4; i++){
 			for (int j = 0; j < 4; j++){
-				ostringstream ss;
+				std::ostringstream ss;
 				ss << i + 1 << j + 1;
-				string numbers = ss.str();
+				std::string numbers = ss.str();
 				if ((i < 2 && j < 2) || (i >= 2 && j >= 2)){
 					names_R[i][j] = "R" + numbers;
 					names_r[i][j] = "r" + numbers;
@@ -43,7 +43,7 @@ namespace TmmModel {
 				enhOptMaxIters = value;
 				break;
 			default:
-				throw invalid_argument("Invalid param int");
+				throw std::invalid_argument("Invalid param int");
 				break;
 			}
 		}
@@ -70,7 +70,7 @@ namespace TmmModel {
 				enhOptInitialStep = value;
 				break;
 			default:
-				throw invalid_argument("Invalid param double");
+				throw std::invalid_argument("Invalid param double");
 				break;
 			}
 		}
@@ -82,7 +82,7 @@ namespace TmmModel {
 	void Tmm::SetParam(Param param, dcomplex value){
 		needToSolve = true;
 		if (param.GetLayerID() < 0){
-			throw invalid_argument("Invalid param complex");
+			throw std::invalid_argument("Invalid param complex");
 		}
 		else {
 			layers[param.GetLayerID()].SetParam(param, value);
@@ -97,7 +97,7 @@ namespace TmmModel {
 				return enhOptMaxIters;
 				break;
 			default:
-				throw invalid_argument("Get invalid param int");
+				throw std::invalid_argument("Get invalid param int");
 				break;
 			}
 		}
@@ -123,7 +123,7 @@ namespace TmmModel {
 				return enhOptInitialStep;
 				break;
 			default:
-				throw invalid_argument("Get invalid param double");
+				throw std::invalid_argument("Get invalid param double");
 				break;
 			}
 		}
@@ -134,30 +134,21 @@ namespace TmmModel {
 
 	dcomplex Tmm::GetParamComplex(Param param){
 		if (param.GetLayerID() < 0){
-			throw invalid_argument("Get invalid param complex");
+			throw std::invalid_argument("Get invalid param complex");
 		}
 		else {
 			return layers[param.GetLayerID()].GetParamComplex(param);
 		}
 	}
 
-	void Tmm::AddIsotropicLayer(double d, dcomplex n){
+	void Tmm::AddIsotropicLayer(double d, Material *mat){
 		needToSolve = true;
-		layers.push_back(Layer(d, Material(n)));
+		layers.push_back(Layer(d, mat));
 	}
 
-	/*
-	void Tmm::AddIsotropicLayer(double d, boost::python::object &materialClass){
+	void Tmm::AddLayer(double d, Material *matx, Material *maty, Material *matz, double psi, double xi){
 		needToSolve = true;
-		Material mat = Material(materialClass);
-		Layer layer = Layer(d, mat);
-		layers.push_back(layer);
-	}
-	*/
-
-	void Tmm::AddLayer(double d, dcomplex nx, dcomplex ny, dcomplex nz, double psi, double xi){
-		needToSolve = true;
-		layers.push_back(Layer(d, Material(nx), Material(ny), Material(nz), psi, xi));
+		layers.push_back(Layer(d, matx, maty, matz, psi, xi));
 	}
 
 	/*
@@ -257,10 +248,10 @@ namespace TmmModel {
 		bool alphasEnabled = bool(alphasLayer >= 0);
 		
 		if (alphasEnabled){
-			alphas0 = resComplex.insert(make_pair("alphas0", Eigen::RowVectorXcd(len(sweepValues)))).first;
-			alphas1 = resComplex.insert(make_pair("alphas1", Eigen::RowVectorXcd(len(sweepValues)))).first;
-			alphas2 = resComplex.insert(make_pair("alphas2", Eigen::RowVectorXcd(len(sweepValues)))).first;
-			alphas3 = resComplex.insert(make_pair("alphas3", Eigen::RowVectorXcd(len(sweepValues)))).first;
+			alphas0 = resComplex.insert(std::make_pair("alphas0", Eigen::RowVectorXcd(len(sweepValues)))).first;
+			alphas1 = resComplex.insert(std::make_pair("alphas1", Eigen::RowVectorXcd(len(sweepValues)))).first;
+			alphas2 = resComplex.insert(std::make_pair("alphas2", Eigen::RowVectorXcd(len(sweepValues)))).first;
+			alphas3 = resComplex.insert(std::make_pair("alphas3", Eigen::RowVectorXcd(len(sweepValues)))).first;
 		}
 
 		DoubleVectorMap::iterator enhs;
@@ -269,16 +260,16 @@ namespace TmmModel {
 		DoubleVectorMap::iterator enhEzs;
 
 		if (enhpos.IsEnabled()){
-			enhs = resDouble.insert(make_pair("enh", Eigen::RowVectorXd(len(sweepValues)))).first;
-			enhExs = resDouble.insert(make_pair("enhEx", Eigen::RowVectorXd(len(sweepValues)))).first;
-			enhEys = resDouble.insert(make_pair("enhEy", Eigen::RowVectorXd(len(sweepValues)))).first;
-			enhEzs = resDouble.insert(make_pair("enhEz", Eigen::RowVectorXd(len(sweepValues)))).first;
+			enhs = resDouble.insert(std::make_pair("enh", Eigen::RowVectorXd(len(sweepValues)))).first;
+			enhExs = resDouble.insert(std::make_pair("enhEx", Eigen::RowVectorXd(len(sweepValues)))).first;
+			enhEys = resDouble.insert(std::make_pair("enhEy", Eigen::RowVectorXd(len(sweepValues)))).first;
+			enhEzs = resDouble.insert(std::make_pair("enhEz", Eigen::RowVectorXd(len(sweepValues)))).first;
 		}
 
 		for (int i = 0; i < 4; i++){
 			for (int j = 0; j < 2; j++){
-				data_R[i][j] = resDouble.insert(make_pair(names_R[i][j], Eigen::RowVectorXd(len(sweepValues)))).first;
-				data_r[i][j] = resComplex.insert(make_pair(names_r[i][j], Eigen::RowVectorXcd(len(sweepValues)))).first;
+				data_R[i][j] = resDouble.insert(std::make_pair(names_R[i][j], Eigen::RowVectorXd(len(sweepValues)))).first;
+				data_r[i][j] = resComplex.insert(std::make_pair(names_r[i][j], Eigen::RowVectorXcd(len(sweepValues)))).first;
 			}
 		}
 
@@ -334,7 +325,7 @@ namespace TmmModel {
 
 	EMFields Tmm::CalcFieldsAtInterface(PositionSettings pos, WaveDirection waveDirection){
 		if (!pos.IsEnabled()){
-			throw invalid_argument("Position settings must be enabled.");
+			throw std::invalid_argument("Position settings must be enabled.");
 		}
 	
 		int layerId;
@@ -353,7 +344,7 @@ namespace TmmModel {
 		return res;
 	}
 
-	double Tmm::OptimizeEnhancement(vector<Param> optParams, Eigen::VectorXd optInitial, PositionSettings pos){
+	double Tmm::OptimizeEnhancement(std::vector<Param> optParams, Eigen::ArrayXd optInitial, PositionSettings pos){
 		EnhFitStuct fitFunc(this, optParams, pos);
 		auto criterion = Optimization::Local::make_and_criteria(Optimization::Local::IterationCriterion(enhOptMaxIters), Optimization::Local::RelativeValueCriterion<double>(enhOptMaxRelError));
 		auto optimizer = Optimization::Local::build_simplex(fitFunc, criterion);
@@ -376,7 +367,7 @@ namespace TmmModel {
 
 	/*
 	double Tmm::OptimizeEnhancementPython(boost::python::list optParams, Eigen::VectorXd optInitial, PositionSettings pos){
-		vector<Param> optParamsVector;
+		std::vector<Param> optParamsVector;
 		ssize_t length = PyObject_Length(optParams.ptr());
 		for (int i = 0; i < length; ++i)
 		{

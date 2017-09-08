@@ -162,11 +162,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AdditionalClasses.cpp" />
+    <ClCompile Include="Common.cpp" />
     <ClCompile Include="CppTmm.cpp" />
     <ClCompile Include="Layer.cpp" />
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="tmm.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="std_map_indexing_suite.hpp" />
     <ClInclude Include="tmm.h" />
   </ItemGroup>

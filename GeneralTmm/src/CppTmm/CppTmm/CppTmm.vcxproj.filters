@@ -8,9 +8,13 @@
     <ClCompile Include="Layer.cpp" />
     <ClCompile Include="AdditionalClasses.cpp" />
     <ClCompile Include="tmm.cpp" />
+    <ClCompile Include="Common.cpp" />
+    <ClCompile Include="Material.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tmm.h" />
     <ClInclude Include="std_map_indexing_suite.hpp" />
+    <ClInclude Include="Material.h" />
+    <ClInclude Include="Common.h" />
   </ItemGroup>
 </Project>

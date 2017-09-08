@@ -79,14 +79,80 @@ cdef class _SweepRes:
 
 
 #===============================================================================
+# Material
+#===============================================================================
+
+cdef class Material:
+    """Material(wls, ns)
+    
+    This class describes the optical parameters of nonlinear medium. Default
+    contructor takes arrays of wavelengths and complex refractive indices and
+    does linear interpolation. For shortcut __call__ is defined as GetN.
+    
+    Parameters
+    ----------
+    wls : ndarray of floats
+        Array of wavelengths (m)
+    ns : ndarray of complex floats
+        Corresponding complex refractive indices to the wls array.
+    
+    Attributes
+    ----------
+    chi2 : :class:`_Chi2Tensor`
+        Instance of the :class:`_Chi2Tensor` helper class to store second-order nonlinearity tensor.
+        
+    """
+    cdef MaterialCpp *_thisptr
+    cdef readonly object chi2
+
+    def __cinit__(self, np.ndarray[double, ndim = 1] wls, np.ndarray[double complex, ndim = 1] ns):
+        # Copy is made in c++
+        self._thisptr = new MaterialCpp(Map[ArrayXd](wls), Map[ArrayXcd](ns))
+                
+    def __dealloc__(self):
+        del self._thisptr
+        
+    def __call__(self, wl): # For compatibility
+        return self.GetN(wl)
+        
+    def GetN(self, wl):
+        """GetN(wl)
+        
+        Returns refractive index of material at specified wavelength.
+        
+        Parameters
+        ----------
+        wl : float
+            Wavelength in meters.
+        
+        Returns
+        -------
+        complex
+            Complex refractive index at wavelength wl.
+        
+        Examples
+        --------
+        >>> wls = np.array([400e-9, 600e-9, 800e-9], dtype = float)
+        >>> ns = np.array([1.5 + 0.3j, 1.7 + 0.2j, 1.8 + 0.1j], dtype = complex)
+        >>> mat = Material(wls, ns)
+        >>> mat(600e-9)
+        1.7 + 0.2j
+        
+        """
+        return self._thisptr.n(wl)
+
+
+#===============================================================================
 # Tmm
 #===============================================================================
 
 cdef class Tmm:
     cdef TmmCpp *_thisptr
+    cdef readonly list materialsCache
     
     def __cinit__(self):
         self._thisptr = new TmmCpp()
+        self.materialsCache = []
         
     def __dealloc__(self):
         if self._thisptr is not NULL:
@@ -105,13 +171,18 @@ cdef class Tmm:
             else:
                 raise ValueError("Unknown param datatype.")
         
-    def AddIsotropicLayer(self, double d, double complex n):
-        self._thisptr.AddIsotropicLayer(d, n)
+    def AddIsotropicLayer(self, double d, Material mat):
+        self._thisptr.AddIsotropicLayer(d, mat._thisptr)
+        self.materialsCache.append(mat) # Avoids dealloc
 
-    def AddLayer(self, double d, double complex nx, double complex ny, double complex nz, double psi, double xi):
-        self._thisptr.AddLayer(d, nx, ny, nz, psi, xi)
+    def AddLayer(self, double d, Material matx, Material maty, Material matz, double psi, double xi):
+        self._thisptr.AddLayer(d, matx._thisptr, maty._thisptr, matz._thisptr, psi, xi)
+        self.materialsCache.append(matx) # Avoids dealloc
+        self.materialsCache.append(maty) # Avoids dealloc
+        self.materialsCache.append(matz) # Avoids dealloc
 
     def ClearLayers(self):
+        self._materialsCache.clear()
         self._thisptr.ClearLayers()
 
     def GetIntensityMatrix(self):

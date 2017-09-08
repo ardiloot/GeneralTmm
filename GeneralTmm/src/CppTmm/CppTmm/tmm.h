@@ -12,6 +12,8 @@
 #include <unsupported/Eigen/MatrixFunctions>
 #include "simplex.h"
 #include "criteria.h"
+#include "Common.h"
+#include "Material.h"
 //#include <boost/python.hpp>
 
 #define sqr(a) ((a) * (a))
@@ -19,12 +21,9 @@
 
 namespace TmmModel
 {
-	using namespace std;
-	using namespace Eigen;
-
-	typedef complex<double> dcomplex;
-	typedef map<string, ArrayXcd> ComplexVectorMap;
-	typedef map<string, ArrayXd> DoubleVectorMap;
+	typedef std::map<std::string, ArrayXcd> ComplexVectorMap;
+	typedef std::map<std::string, ArrayXd> DoubleVectorMap;
+	
 
 	//---------------------------------------------------------------------
 	// Param Type
@@ -86,25 +85,6 @@ namespace TmmModel
 	private:
 		ParamType pType;
 		int layerId;
-	};
-
-	//---------------------------------------------------------------------
-	// Material
-	//---------------------------------------------------------------------
-
-	class Material {
-	public:
-
-		Material();
-		Material(dcomplex staticN_);
-		//Material(boost::python::object &materialClass);
-		dcomplex n(double wl);
-		bool IsStatic();
-
-	private:
-		bool isStatic;
-		dcomplex staticN;
-		//boost::python::object materialClass;
 	};
 
 	//---------------------------------------------------------------------
@@ -239,8 +219,8 @@ namespace TmmModel
 
 	public:
 
-		Layer(double d_, Material n_);
-		Layer(double d_, Material nx_, Material ny_, Material nz_, double psi_, double xi_);
+		Layer(double d_, Material *n_);
+		Layer(double d_, Material *nx_, Material *ny_, Material *nz_, double psi_, double xi_);
 		void SetParam(Param param, int value);
 		void SetParam(Param param, double value);
 		void SetParam(Param param, dcomplex value);
@@ -261,11 +241,11 @@ namespace TmmModel
 		double wlEpsilonCalc;
 
 		double d;
-		Material nx, ny, nz;
+		Material *nx, *ny, *nz;
 		double psi;
 		double xi;
 
-		ComplexEigenSolver<Matrix4cd> ces;
+		Eigen::ComplexEigenSolver<Matrix4cd> ces;
 		Matrix3cd epsTensor;
 		Vector4cd alpha;
 		Vector4d poyntingX;
@@ -295,10 +275,8 @@ namespace TmmModel
 		int GetParamInt(Param param);
 		double GetParamDouble(Param param); 
 		dcomplex GetParamComplex(Param param);
-		void AddIsotropicLayer(double d, dcomplex n);
-		//void AddIsotropicLayer(double d, boost::python::object &materialClass);
-		void AddLayer(double d, dcomplex nx, dcomplex ny, dcomplex nz, double psi, double xi);
-		//void AddLayer(double d, boost::python::object &matX, boost::python::object &matY, boost::python::object &matZ, double psi, double xi);
+		void AddIsotropicLayer(double d, Material *mat);
+		void AddLayer(double d, Material *matx, Material *maty, Material *matz, double psi, double xi);
 		void ClearLayers();
 		Matrix4d GetIntensityMatrix();
 		Matrix4cd GetAmplitudeMatrix();
@@ -306,7 +284,7 @@ namespace TmmModel
 		SweepRes Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd> &sweepValues);
 		EMFieldsList CalcFields1D(const Eigen::Map<Eigen::ArrayXd> &xs, const Eigen::Map<Eigen::Array2d> &polarization, WaveDirection waveDirection);
 		EMFields CalcFieldsAtInterface(PositionSettings pos, WaveDirection waveDirection);
-		double OptimizeEnhancement(vector<Param> optParams, VectorXd optInitial, PositionSettings pos);
+		double OptimizeEnhancement(std::vector<Param> optParams, ArrayXd optInitial, PositionSettings pos);
 		//double OptimizeEnhancementPython(boost::python::list optParams, VectorXd optInitial, PositionSettings pos);
 
 
@@ -316,9 +294,9 @@ namespace TmmModel
 		double enhOptMaxRelError;
 		double enhOptInitialStep;
 		int enhOptMaxIters;
-		vector<Layer> layers;
-		vector<vector<string> > names_R;
-		vector<vector<string> > names_r;
+		std::vector<Layer> layers;
+		std::vector<std::vector<std::string> > names_R;
+		std::vector<std::vector<std::string> > names_r;
 		Matrix4cd A;
 		bool solved;
 		bool needToSolve;
@@ -345,7 +323,7 @@ namespace TmmModel
 		typedef double DataType;
 		typedef VectorXd ParameterType;
 
-		EnhFitStuct(Tmm *tmm_, vector<Param> optParams_, PositionSettings enhpos_){
+		EnhFitStuct(Tmm *tmm_, std::vector<Param> optParams_, PositionSettings enhpos_){
 			tmm = tmm_;
 			optParams = optParams_;
 			enhPos = enhpos_;
@@ -361,7 +339,7 @@ namespace TmmModel
 		}
 	private:
 		Tmm *tmm;
-		vector<Param> optParams;
+		std::vector<Param> optParams;
 		PositionSettings enhPos;
 
 		void SetParams(const ParameterType &params) const

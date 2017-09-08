@@ -64,7 +64,14 @@ cdef extern from "tmm.h" namespace "TmmModel":
     cdef cppclass EMFieldsListCpp "TmmModel::EMFieldsList":
         MatrixXcd E
         MatrixXcd H
+        
+    #---------------------------------------------------------------------------
     
+    cdef cppclass MaterialCpp "TmmModel::Material":
+        MaterialCpp() except +
+        MaterialCpp(Map[ArrayXd] & wlsExp, Map[ArrayXcd] & nsExp) except +
+        double complex n(double wl) except +
+            
     #---------------------------------------------------------------------------
 
     cdef cppclass TmmCpp "TmmModel::Tmm":
@@ -78,10 +85,8 @@ cdef extern from "tmm.h" namespace "TmmModel":
         double GetParamDouble(ParamCpp ParamCpp) except + 
         double complex GetParamComplex(ParamCpp ParamCpp) except +
         
-        void AddIsotropicLayer(double d, double complex n) except +
-        #//void AddIsotropicLayer(double d, boost::python::object &materialClass) except +
-        void AddLayer(double d, double complex nx, double complex ny, double complex nz, double psi, double xi) except +
-        #//void AddLayer(double d, boost::python::object &matX, boost::python::object &matY, boost::python::object &matZ, double psi, double xi) except +
+        void AddIsotropicLayer(double d, MaterialCpp *mat) except +
+        void AddLayer(double d, MaterialCpp *matx, MaterialCpp *maty, MaterialCpp *matz, double psi, double xi) except +
         void ClearLayers() except +
         
         Matrix4d GetIntensityMatrix() except +

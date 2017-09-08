@@ -45,44 +45,4 @@ namespace TmmModel{
 		return layerId;
 	}
 
-
-	//---------------------------------------------------------------------
-	// Material
-	//---------------------------------------------------------------------
-
-
-	Material::Material(){
-		isStatic = true;
-		staticN = 1.0;
-	}
-
-	Material::Material(dcomplex staticN_){
-		isStatic = true;
-		staticN = staticN_;
-	}
-
-	/*
-	Material::Material(boost::python::object &materialClass_){
-		isStatic = false;
-		staticN = 1.0;
-		materialClass = materialClass_;
-	}
-	*/
-
-	dcomplex Material::n(double wl){
-		if (isStatic){
-			return staticN;
-		}
-		else {
-			throw std::runtime_error("Material not supported");
-			//dcomplex n = boost::python::extract<dcomplex>(materialClass(wl));
-			//return n;
-		}
-	}
-	
-
-	bool Material::IsStatic(){
-		return isStatic;
-	}
-
 } // Namespace
