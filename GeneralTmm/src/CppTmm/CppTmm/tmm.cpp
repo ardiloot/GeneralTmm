@@ -302,7 +302,7 @@ namespace TmmModel {
 
 			if (enhpos.IsEnabled()){
 				EMFields fields = CalcFieldsAtInterface(enhpos, WD_BOTH);
-				enhs->second(i) = fields.E.norm();
+				enhs->second(i) = fields.E.matrix().norm();
 				enhExs->second(i) = abs(fields.E(0));
 				enhEys->second(i) = abs(fields.E(1));
 				enhEzs->second(i) = abs(fields.E(2));
@@ -317,7 +317,7 @@ namespace TmmModel {
 		return Sweep(sweepParam, sweepValues, enhpos, -1);
 	}
 
-	EMFieldsList Tmm::CalcFields1D(Eigen::VectorXd xs, Eigen::VectorXd polarization, WaveDirection waveDirection){
+	EMFieldsList Tmm::CalcFields1D(const Eigen::Map<Eigen::ArrayXd> &xs, const Eigen::Map<Eigen::Array2d> &polarization, WaveDirection waveDirection){
 		Solve();
 		CalcFieldCoefs(polarization);
 
@@ -422,7 +422,7 @@ namespace TmmModel {
 		fieldCoefs(len(layers) - 1, 1) = fieldCoefs(len(layers) - 1, 3) = 0.0;
 	}
 
-	LayerIndices Tmm::CalcLayerIndices(Eigen::VectorXd &xs){
+	LayerIndices Tmm::CalcLayerIndices(const Eigen::Map<Eigen::ArrayXd> &xs){
 		LayerIndices res;
 		res.indices.resize(len(xs));
 		res.ds.resize(len(xs));

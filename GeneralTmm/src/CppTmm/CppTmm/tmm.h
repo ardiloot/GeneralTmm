@@ -113,18 +113,18 @@ namespace TmmModel
 
 	struct EMFields {
 	public:
-		RowVectorXcd E;
-		RowVectorXcd H;
+		ArrayXcd E;
+		ArrayXcd H;
 
 		EMFields() : E(3), H(3) {
 
 		}
 
-		RowVectorXcd GetE(){
+		ArrayXcd GetE(){
 			return E;
 		}
 
-		RowVectorXcd GetH(){
+		ArrayXcd GetH(){
 			return H;
 		}
 	};
@@ -138,7 +138,7 @@ namespace TmmModel
 		MatrixXcd E;
 		MatrixXcd H;
 
-		EMFieldsList(int size) : E(size, 3), H(size, 3) {
+		EMFieldsList(int size = 0) : E(size, 3), H(size, 3) {
 
 		}
 
@@ -304,7 +304,7 @@ namespace TmmModel
 		Matrix4cd GetAmplitudeMatrix();
 		SweepRes Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd> &sweepValues, PositionSettings enhpos, int alphasLayer);
 		SweepRes Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd> &sweepValues);
-		EMFieldsList CalcFields1D(VectorXd xs, VectorXd polarization, WaveDirection waveDirection);
+		EMFieldsList CalcFields1D(const Eigen::Map<Eigen::ArrayXd> &xs, const Eigen::Map<Eigen::Array2d> &polarization, WaveDirection waveDirection);
 		EMFields CalcFieldsAtInterface(PositionSettings pos, WaveDirection waveDirection);
 		double OptimizeEnhancement(vector<Param> optParams, VectorXd optInitial, PositionSettings pos);
 		//double OptimizeEnhancementPython(boost::python::list optParams, VectorXd optInitial, PositionSettings pos);
@@ -332,7 +332,7 @@ namespace TmmModel
 
 		void Solve();
 		void CalcFieldCoefs(Vector2d polarization);
-		LayerIndices CalcLayerIndices(VectorXd &xs);
+		LayerIndices CalcLayerIndices(const Eigen::Map<Eigen::ArrayXd> &xs);
 	};
 
 	//---------------------------------------------------------------------
@@ -356,7 +356,7 @@ namespace TmmModel
 			//cout << "fit function call res " << params << endl;
 			SetParams(params);
 			EMFields r = tmm->CalcFieldsAtInterface(enhPos, WD_BOTH);
-			double res = -r.E.norm();
+			double res = -r.E.matrix().norm();
 			return res;
 		}
 	private:

@@ -45,6 +45,16 @@ cdef pair[ParamCpp, ParamDatatype] ToCppParam(str param) except +:
     else:
         raise ValueError("Unknown param: %s" % (param))
 
+cdef WaveDirectionCpp WaveDirectionFromStr(str waveStr) except +:
+    if waveStr == "forward":
+        return WD_FORWARD
+    elif waveStr == "backward":
+        return WD_BACKWARD
+    elif waveStr == "both":
+        return WD_BOTH
+    else:
+        raise NotImplementedError()
+
 
 cdef class _SweepRes:
     cdef dict _res;
@@ -58,8 +68,8 @@ cdef class _SweepRes:
         
         for kvPair in mapComplex:
             self._res[kvPair.first.decode()] = ndarray_copy(kvPair.second).squeeze()
-        for kvPair in mapDouble:
-            self._res[kvPair.first.decode()] = ndarray_copy(kvPair.second).squeeze() 
+        for kvPair2 in mapDouble:
+            self._res[kvPair2.first.decode()] = ndarray_copy(kvPair2.second).squeeze() 
 
     def __getitem__(self, index):
         return self._res[index]
@@ -122,6 +132,41 @@ cdef class Tmm:
         res = _SweepRes()
         res._Init(resCpp)
         return res
+    
+    def CalcFields1D(self, np.ndarray[double, ndim = 1] xs, np.ndarray[double, ndim = 1] polarization, str waveDirectionStr = "both"):
+        cdef WaveDirectionCpp waveDirection = WaveDirectionFromStr(waveDirectionStr) 
+        cdef EMFieldsListCpp resCpp        
+        resCpp = self._thisptr.CalcFields1D(Map[ArrayXd](xs), Map[Array2d](polarization), waveDirection)
+
+        E = ndarray_copy(resCpp.E)
+        H = ndarray_copy(resCpp.H)
+        return E, H
+    
+    def CalcFields2D(self, np.ndarray[double, ndim = 1] xs, np.ndarray[double, ndim = 1] ys, np.ndarray[double, ndim = 1] pol, str waveDirectionStr = "both"):
+        ky = self.beta * 2.0 * np.pi / self.wl
+        phaseY = np.exp(1.0j * ky * ys)
+        E1D, H1D = self.CalcFields1D(xs, pol, waveDirectionStr)
+        
+        E = np.zeros((len(xs), len(ys), 3), dtype = complex)
+        H = np.zeros((len(xs), len(ys), 3), dtype = complex)
+        for i in range(3):
+            E[:, :, i] = np.outer(E1D[:, i], phaseY)
+            H[:, :, i] = np.outer(H1D[:, i], phaseY)
+        
+        return E, H
+        
+    def CalcFieldsAtInterface(self, enhPos, str waveDirectionStr = "both"):
+        cdef WaveDirectionCpp waveDirection = WaveDirectionFromStr(waveDirectionStr)
+        cdef PositionSettingsCpp enhPosCpp
+        cdef EMFieldsCpp resCpp
+
+        enhPosCpp = PositionSettingsCpp(enhPos[0][0], enhPos[0][1], enhPos[1], enhPos[2])
+        resCpp = self._thisptr.CalcFieldsAtInterface(enhPosCpp, waveDirection)
+        
+        E = ndarray_copy(resCpp.E).squeeze()
+        H = ndarray_copy(resCpp.H).squeeze()
+        return E, H
+        
         
     # Getters
     #--------------------------------------------------------------------------- 

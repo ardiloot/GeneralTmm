@@ -28,6 +28,13 @@ cdef extern from "tmm.h" namespace "TmmModel":
         NOT_DEFINED
     
     #---------------------------------------------------------------------------
+        
+    cdef enum WaveDirectionCpp "TmmModel::WaveDirection":
+        WD_FORWARD,
+        WD_BACKWARD,
+        WD_BOTH
+    
+    #---------------------------------------------------------------------------
     
     cdef cppclass ParamCpp "TmmModel::Param":
             ParamCpp() except +
@@ -45,6 +52,18 @@ cdef extern from "tmm.h" namespace "TmmModel":
     cdef cppclass SweepResCpp "TmmModel::SweepRes":
         map[string, ArrayXcd] GetComplexMap() except +
         map[string, ArrayXd] GetDoubleMap() except +
+    
+    #---------------------------------------------------------------------------
+    
+    cdef cppclass EMFieldsCpp "TmmModel::EMFields":
+        ArrayXcd E
+        ArrayXcd H
+    
+    #---------------------------------------------------------------------------
+    
+    cdef cppclass EMFieldsListCpp "TmmModel::EMFieldsList":
+        MatrixXcd E
+        MatrixXcd H
     
     #---------------------------------------------------------------------------
 
@@ -68,8 +87,9 @@ cdef extern from "tmm.h" namespace "TmmModel":
         Matrix4d GetIntensityMatrix() except +
         Matrix4cd GetAmplitudeMatrix() except +
         SweepResCpp Sweep(ParamCpp sweepParamCpp, Map[ArrayXd] sweepValues, PositionSettingsCpp enhpos, int alphasLayer) except +
-        #SweepRes Sweep(ParamCpp sweepParamCpp, VectorXd sweepValues) except +
-        #EMFieldsList CalcFields1D(VectorXd xs, VectorXd polarization, WaveDirection waveDirection) except +
-        #EMFields CalcFieldsAtInterface(PositionSettings pos, WaveDirection waveDirection) except +
+        
+        EMFieldsListCpp CalcFields1D(Map[ArrayXd] xs, Map[Array2d] polarization, WaveDirectionCpp waveDirection) except +
+        EMFieldsCpp CalcFieldsAtInterface(PositionSettingsCpp pos, WaveDirectionCpp waveDirection) except +
         #double OptimizeEnhancement(vector<ParamCpp> optParamCpps, VectorXd optInitial, PositionSettings pos) except +
         #//double OptimizeEnhancementPython(boost::python::list optParams, VectorXd optInitial, PositionSettings pos) except +
+
