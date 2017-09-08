@@ -1,4 +1,4 @@
-#include "tmm.h"
+#include "Layer.h"
 
 namespace TmmModel{
 
@@ -197,7 +197,7 @@ namespace TmmModel{
 		solved = true;
 	}
 
-	EMFields Layer::GetFields(double wl, double beta, double x, Eigen::Vector4cd coefs, WaveDirection waveDirection){
+	EMFields Layer::GetFields(double wl, double beta, double x, Vector4cd coefs, WaveDirection waveDirection){
 		EMFields res;
 		res.E.setZero();
 		res.H.setZero();
@@ -248,7 +248,7 @@ namespace TmmModel{
 		}
 		//cout << "SolveEpsilonMatrix " << wl << " " << wlEpsilonCalc << " " << epsilonRefractiveIndexChanged << endl;
 
-		Eigen::Matrix3cd epsTensorCrystal = Eigen::Matrix3cd::Zero();
+		Matrix3cd epsTensorCrystal = Matrix3cd::Zero();
 		dcomplex nxTmp = GetNx(wl);
 		dcomplex nyTmp = GetNy(wl);
 		dcomplex nzTmp = GetNz(wl);
@@ -296,7 +296,7 @@ namespace TmmModel{
 			dcomplex epsYZ = epsTensor(1, 2);
 
 
-			Eigen::Matrix4cd mBeta = Eigen::Matrix4cd::Zero();
+			Matrix4cd mBeta = Matrix4cd::Zero();
 			mBeta(0, 0) = -beta * epsXY / epsXX;
 			mBeta(0, 1) = z0 - (z0 * sqr(beta)) / epsXX;
 			mBeta(0, 2) = -beta * epsXZ / epsXX;
@@ -321,7 +321,7 @@ namespace TmmModel{
 		}
 
 		// Sort eigenvalues
-		Eigen::Vector4d poyntingXTmp;
+		Vector4d poyntingXTmp;
 		int countF = 0, countB = 0;
 		int forward[4], backward[4];
 
@@ -377,7 +377,7 @@ namespace TmmModel{
 		}
 
 		// Ordering
-		Eigen::Vector4i order;
+		Vector4i order;
 		order << forward[0], backward[0], forward[1], backward[1];
 
 		// Save result

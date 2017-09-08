@@ -50,8 +50,8 @@ cdef extern from "tmm.h" namespace "TmmModel":
     #--------------------------------------------------------------------------- 
 
     cdef cppclass SweepResCpp "TmmModel::SweepRes":
-        map[string, ArrayXcd] GetComplexMap() except +
-        map[string, ArrayXd] GetDoubleMap() except +
+        map[string, ArrayXcd] mapComplex
+        map[string, ArrayXd] mapDouble
     
     #---------------------------------------------------------------------------
     

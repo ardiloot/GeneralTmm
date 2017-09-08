@@ -1,10 +1,11 @@
 #include "tmm.h"
 
-
-//---------------------------------------------------------------------
-// Tmm
-//---------------------------------------------------------------------
 namespace TmmModel {
+
+	//---------------------------------------------------------------------
+	// Tmm
+	//---------------------------------------------------------------------
+
 	Tmm::Tmm(){
 		solved = false;
 		needToSolve = true;
@@ -151,13 +152,6 @@ namespace TmmModel {
 		layers.push_back(Layer(d, matx, maty, matz, psi, xi));
 	}
 
-	/*
-	void Tmm::AddLayer(double d, boost::python::object &matX, boost::python::object &matY, boost::python::object &matZ, double psi, double xi){
-		needToSolve = true;
-		layers.push_back(Layer(d, Material(matX), Material(matY), Material(matZ), psi, xi));
-	}
-	*/
-
 	void Tmm::ClearLayers(){
 		layers.clear();
 	}
@@ -179,17 +173,17 @@ namespace TmmModel {
 		needToSolve = false;
 		needToCalcFieldCoefs = true;
 
-		for (int i = 0; i < len(layers); i++){
+		for (int i = 0; i < layers.size(); i++){
 			layers[i].SolveLayer(wl, beta);
 		}
 
 		// System matrix
 		A = layers[0].invF;
-		for (int i = 1; i < len(layers) - 1; i++){
+		for (int i = 1; i < layers.size() - 1; i++){
 			Layer &layer = layers[i];
 			A = A * layer.M;
 		}
-		A = A * layers[len(layers) - 1].F;
+		A = A * layers[layers.size() - 1].F;
 
 		//r - matrix
 		Eigen::Matrix4cd invr1;
@@ -208,7 +202,7 @@ namespace TmmModel {
 		r = invr1 * r2;
 
 		Eigen::Vector4d &poyningXF = layers[0].poyntingX;
-		Eigen::Vector4d &poyningXL = layers[len(layers) - 1].poyntingX;
+		Eigen::Vector4d &poyningXL = layers[layers.size() - 1].poyntingX;
 
 		Eigen::Vector4d pBackward, pForward;
 		pBackward << poyningXF(1), poyningXF(3), poyningXL(1), poyningXL(3);
@@ -248,10 +242,10 @@ namespace TmmModel {
 		bool alphasEnabled = bool(alphasLayer >= 0);
 		
 		if (alphasEnabled){
-			alphas0 = resComplex.insert(std::make_pair("alphas0", Eigen::RowVectorXcd(len(sweepValues)))).first;
-			alphas1 = resComplex.insert(std::make_pair("alphas1", Eigen::RowVectorXcd(len(sweepValues)))).first;
-			alphas2 = resComplex.insert(std::make_pair("alphas2", Eigen::RowVectorXcd(len(sweepValues)))).first;
-			alphas3 = resComplex.insert(std::make_pair("alphas3", Eigen::RowVectorXcd(len(sweepValues)))).first;
+			alphas0 = resComplex.insert(std::make_pair("alphas0", Eigen::RowVectorXcd(sweepValues.size()))).first;
+			alphas1 = resComplex.insert(std::make_pair("alphas1", Eigen::RowVectorXcd(sweepValues.size()))).first;
+			alphas2 = resComplex.insert(std::make_pair("alphas2", Eigen::RowVectorXcd(sweepValues.size()))).first;
+			alphas3 = resComplex.insert(std::make_pair("alphas3", Eigen::RowVectorXcd(sweepValues.size()))).first;
 		}
 
 		DoubleVectorMap::iterator enhs;
@@ -260,20 +254,20 @@ namespace TmmModel {
 		DoubleVectorMap::iterator enhEzs;
 
 		if (enhpos.IsEnabled()){
-			enhs = resDouble.insert(std::make_pair("enh", Eigen::RowVectorXd(len(sweepValues)))).first;
-			enhExs = resDouble.insert(std::make_pair("enhEx", Eigen::RowVectorXd(len(sweepValues)))).first;
-			enhEys = resDouble.insert(std::make_pair("enhEy", Eigen::RowVectorXd(len(sweepValues)))).first;
-			enhEzs = resDouble.insert(std::make_pair("enhEz", Eigen::RowVectorXd(len(sweepValues)))).first;
+			enhs = resDouble.insert(std::make_pair("enh", Eigen::RowVectorXd(sweepValues.size()))).first;
+			enhExs = resDouble.insert(std::make_pair("enhEx", Eigen::RowVectorXd(sweepValues.size()))).first;
+			enhEys = resDouble.insert(std::make_pair("enhEy", Eigen::RowVectorXd(sweepValues.size()))).first;
+			enhEzs = resDouble.insert(std::make_pair("enhEz", Eigen::RowVectorXd(sweepValues.size()))).first;
 		}
 
 		for (int i = 0; i < 4; i++){
 			for (int j = 0; j < 2; j++){
-				data_R[i][j] = resDouble.insert(std::make_pair(names_R[i][j], Eigen::RowVectorXd(len(sweepValues)))).first;
-				data_r[i][j] = resComplex.insert(std::make_pair(names_r[i][j], Eigen::RowVectorXcd(len(sweepValues)))).first;
+				data_R[i][j] = resDouble.insert(std::make_pair(names_R[i][j], Eigen::RowVectorXd(sweepValues.size()))).first;
+				data_r[i][j] = resComplex.insert(std::make_pair(names_r[i][j], Eigen::RowVectorXcd(sweepValues.size()))).first;
 			}
 		}
 
-		for (int i = 0; i < len(sweepValues); i++){
+		for (int i = 0; i < sweepValues.size(); i++){
 			SetParam(sweepParam, sweepValues[i]);
 			Solve();
 
@@ -312,9 +306,9 @@ namespace TmmModel {
 		Solve();
 		CalcFieldCoefs(polarization);
 
-		EMFieldsList res(len(xs));
+		EMFieldsList res(xs.size());
 		LayerIndices layerP = CalcLayerIndices(xs);
-		for (int i = 0; i < len(xs); i++){
+		for (int i = 0; i < xs.size(); i++){
 			int layerId = layerP.indices(i);
 			EMFields f = layers[layerId].GetFields(wl, beta, layerP.ds(i), fieldCoefs.row(layerId), waveDirection);
 			res.E.row(i) = f.E / normCoef;
@@ -330,7 +324,7 @@ namespace TmmModel {
 	
 		int layerId;
 		if (pos.GetInterfaceId() < 0){
-			layerId = len(layers) + pos.GetInterfaceId();
+			layerId = layers.size() + pos.GetInterfaceId();
 		}
 		else{
 			layerId = pos.GetInterfaceId();
@@ -404,31 +398,31 @@ namespace TmmModel {
 		Eigen::Vector4cd coefsSubstrate;
 		coefsSubstrate << outputFields(2), 0.0, outputFields(3), 0.0;
 
-		Eigen::Matrix4cd mat = layers[len(layers) - 1].F;
-		fieldCoefs.resize(len(layers), 4);
-		for (int i = len(layers) - 1; i >= 0; i--){
+		Eigen::Matrix4cd mat = layers[layers.size() - 1].F;
+		fieldCoefs.resize(layers.size(), 4);
+		for (int i = layers.size() - 1; i >= 0; i--){
 			mat = layers[i].M * mat;
 			fieldCoefs.row(i) = layers[i].invF * mat * coefsSubstrate;
 		}
-		fieldCoefs(len(layers) - 1, 1) = fieldCoefs(len(layers) - 1, 3) = 0.0;
+		fieldCoefs(layers.size() - 1, 1) = fieldCoefs(layers.size() - 1, 3) = 0.0;
 	}
 
 	LayerIndices Tmm::CalcLayerIndices(const Eigen::Map<Eigen::ArrayXd> &xs){
 		LayerIndices res;
-		res.indices.resize(len(xs));
-		res.ds.resize(len(xs));
+		res.indices.resize(xs.size());
+		res.ds.resize(xs.size());
 
 		int curLayer = 0;
 		double curDist = 0.0;
 		double prevDist = 0.0;
 
-		for (int i = 0; i < len(xs); i++){
+		for (int i = 0; i < xs.size(); i++){
 			while (xs[i] >= curDist){
 				curLayer++;
 				prevDist = curDist;
-				if (curLayer >= len(layers) - 1){
+				if (curLayer >= layers.size() - 1){
 					curDist = INFINITY;
-					curLayer = len(layers) - 1;
+					curLayer = layers.size() - 1;
 				}
 				curDist += layers[curLayer].GetD();
 			}
@@ -436,5 +430,17 @@ namespace TmmModel {
 			res.ds(i) = xs(i) - prevDist;
 		}
 		return res;
+	}
+	EnhFitStuct::EnhFitStuct(Tmm * tmm_, std::vector<Param> optParams_, PositionSettings enhpos_) {
+		tmm = tmm_;
+		optParams = optParams_;
+		enhPos = enhpos_;
+	}
+	
+	void EnhFitStuct::SetParams(const ParameterType & params) const
+	{
+		for (int i = 0; i < params.size(); i++) {
+			tmm->SetParam(optParams[i], params[i]);
+		}
 	}
 } // Namespace
