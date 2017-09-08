@@ -63,8 +63,8 @@ cdef class _SweepRes:
         self._res = {}
     
     cdef _Init(self, SweepResCpp resCpp):
-        cdef map[string, ArrayXcd] mapComplex = resCpp.GetComplexMap()
-        cdef map[string, ArrayXd] mapDouble = resCpp.GetDoubleMap()
+        cdef map[string, ArrayXcd] mapComplex = resCpp.mapComplex
+        cdef map[string, ArrayXd] mapDouble = resCpp.mapDouble
         
         for kvPair in mapComplex:
             self._res[kvPair.first.decode()] = ndarray_copy(kvPair.second).squeeze()
