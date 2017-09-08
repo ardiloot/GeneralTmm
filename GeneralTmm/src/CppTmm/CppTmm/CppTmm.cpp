@@ -42,7 +42,10 @@ int main(){
 	tmm.OptimizeEnhancement(optParams, optInitial, ps);
 	*/
 	clock_t startTime = clock();
-	SweepRes rr = tmm.Sweep(Param(BETA), Eigen::VectorXd::LinSpaced(10, 0.0, 1.4));
+	Eigen::VectorXd betas = Eigen::VectorXd::LinSpaced(10, 0.0, 1.4);
+	Eigen::Map<Eigen::ArrayXd> betasMap(&betas[0], betas.size());
+
+	SweepRes rr = tmm.Sweep(Param(BETA), betasMap);
 	cout << rr.mapDouble["R22"] << endl;
 	cout << double(clock() - startTime) / (double)CLOCKS_PER_SEC << " seconds." << endl;
 

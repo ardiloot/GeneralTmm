@@ -23,8 +23,8 @@ namespace TmmModel
 	using namespace Eigen;
 
 	typedef complex<double> dcomplex;
-	typedef map<string, RowVectorXcd> ComplexVectorMap;
-	typedef map<string, RowVectorXd> DoubleVectorMap;
+	typedef map<string, ArrayXcd> ComplexVectorMap;
+	typedef map<string, ArrayXd> DoubleVectorMap;
 
 	//---------------------------------------------------------------------
 	// Param Type
@@ -193,6 +193,13 @@ namespace TmmModel
 			enabled = true;
 		}
 
+		PositionSettings(double polCoef1, double polCoef2, int interfaceId_, double distFromInterface_) {
+			polarization << polCoef1, polCoef2;
+			interfaceId = interfaceId_;
+			distFromInterface = distFromInterface_;
+			enabled = true;
+		}
+
 		PositionSettings(){
 			polarization.setZero();
 			interfaceId = -1;
@@ -295,8 +302,8 @@ namespace TmmModel
 		void ClearLayers();
 		Matrix4d GetIntensityMatrix();
 		Matrix4cd GetAmplitudeMatrix();
-		SweepRes Sweep(Param sweepParam, VectorXd sweepValues, PositionSettings enhpos, int alphasLayer);
-		SweepRes Sweep(Param sweepParam, VectorXd sweepValues);
+		SweepRes Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd> &sweepValues, PositionSettings enhpos, int alphasLayer);
+		SweepRes Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd> &sweepValues);
 		EMFieldsList CalcFields1D(VectorXd xs, VectorXd polarization, WaveDirection waveDirection);
 		EMFields CalcFieldsAtInterface(PositionSettings pos, WaveDirection waveDirection);
 		double OptimizeEnhancement(vector<Param> optParams, VectorXd optInitial, PositionSettings pos);

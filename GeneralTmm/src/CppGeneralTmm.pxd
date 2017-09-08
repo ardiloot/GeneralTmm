@@ -1,4 +1,6 @@
 from libcpp cimport bool
+from libcpp.map cimport map
+from libcpp.string cimport string
 from eigency.core cimport *
 
 #===============================================================================
@@ -31,10 +33,20 @@ cdef extern from "tmm.h" namespace "TmmModel":
             ParamCpp() except +
             ParamCpp(ParamTypeCpp pType) except +
             ParamCpp(ParamTypeCpp pType_, int layerId_) except +
-            #ParamTypeCpp GetParamType() except +
-            #int GetLayerID() except +
     
     #--------------------------------------------------------------------------- 
+    
+    cdef cppclass PositionSettingsCpp "TmmModel::PositionSettings":
+        PositionSettingsCpp() except +
+        PositionSettingsCpp(double polCoef1, double polCoef2, int interfaceId_, double distFromInterface_) except +
+            
+    #--------------------------------------------------------------------------- 
+
+    cdef cppclass SweepResCpp "TmmModel::SweepRes":
+        map[string, ArrayXcd] GetComplexMap() except +
+        map[string, ArrayXd] GetDoubleMap() except +
+    
+    #---------------------------------------------------------------------------
 
     cdef cppclass TmmCpp "TmmModel::Tmm":
         Tmm() except +
@@ -53,9 +65,9 @@ cdef extern from "tmm.h" namespace "TmmModel":
         #//void AddLayer(double d, boost::python::object &matX, boost::python::object &matY, boost::python::object &matZ, double psi, double xi) except +
         void ClearLayers() except +
         
-        #Matrix4d GetIntensityMatrix() except +
-        #Matrix4cd GetAmplitudeMatrix() except +
-        #SweepRes Sweep(ParamCpp sweepParamCpp, VectorXd sweepValues, PositionSettings enhpos, int alphasLayer) except +
+        Matrix4d GetIntensityMatrix() except +
+        Matrix4cd GetAmplitudeMatrix() except +
+        SweepResCpp Sweep(ParamCpp sweepParamCpp, Map[ArrayXd] sweepValues, PositionSettingsCpp enhpos, int alphasLayer) except +
         #SweepRes Sweep(ParamCpp sweepParamCpp, VectorXd sweepValues) except +
         #EMFieldsList CalcFields1D(VectorXd xs, VectorXd polarization, WaveDirection waveDirection) except +
         #EMFields CalcFieldsAtInterface(PositionSettings pos, WaveDirection waveDirection) except +

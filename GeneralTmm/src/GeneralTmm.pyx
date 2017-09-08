@@ -45,6 +45,29 @@ cdef pair[ParamCpp, ParamDatatype] ToCppParam(str param) except +:
     else:
         raise ValueError("Unknown param: %s" % (param))
 
+
+cdef class _SweepRes:
+    cdef dict _res;
+
+    def __init__(self):
+        self._res = {}
+    
+    cdef _Init(self, SweepResCpp resCpp):
+        cdef map[string, ArrayXcd] mapComplex = resCpp.GetComplexMap()
+        cdef map[string, ArrayXd] mapDouble = resCpp.GetDoubleMap()
+        
+        for kvPair in mapComplex:
+            self._res[kvPair.first.decode()] = ndarray_copy(kvPair.second).squeeze()
+        for kvPair in mapDouble:
+            self._res[kvPair.first.decode()] = ndarray_copy(kvPair.second).squeeze() 
+
+    def __getitem__(self, index):
+        return self._res[index]
+    
+    def __repr__(self):
+        return "%s(%r)" % (self.__class__, self._res)
+
+
 #===============================================================================
 # Tmm
 #===============================================================================
@@ -80,6 +103,25 @@ cdef class Tmm:
 
     def ClearLayers(self):
         self._thisptr.ClearLayers()
+
+    def GetIntensityMatrix(self):
+        return ndarray_copy(self._thisptr.GetIntensityMatrix())
+    
+    def GetAmplitudeMatrix(self):
+        return ndarray_copy(self._thisptr.GetAmplitudeMatrix())
+    
+    def Sweep(self, paramName, np.ndarray[double, ndim = 1] values, enhPos = None, int alphaLayer = -1):
+        cdef pair[ParamCpp, ParamDatatype] paramDef = ToCppParam(paramName)
+        cdef PositionSettingsCpp enhPosCpp
+        cdef SweepResCpp resCpp
+        
+        if enhPos is not None:
+            enhPosCpp = PositionSettingsCpp(enhPos[0][0], enhPos[0][1], enhPos[1], enhPos[2])
+        
+        resCpp = self._thisptr.Sweep(paramDef.first, Map[ArrayXd](values), enhPosCpp, <int>alphaLayer)
+        res = _SweepRes()
+        res._Init(resCpp)
+        return res
         
     # Getters
     #--------------------------------------------------------------------------- 

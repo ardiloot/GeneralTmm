@@ -242,7 +242,7 @@ namespace TmmModel {
 		solved = true;
 	}
 
-	SweepRes Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues, PositionSettings enhpos, int alphasLayer){
+	SweepRes Tmm::Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd> &sweepValues, PositionSettings enhpos, int alphasLayer){
 		SweepRes res;
 		ComplexVectorMap &resComplex = res.mapComplex;
 		DoubleVectorMap &resDouble = res.mapDouble;
@@ -312,7 +312,7 @@ namespace TmmModel {
 		return res;
 	}
 
-	SweepRes Tmm::Sweep(Param sweepParam, Eigen::VectorXd sweepValues){
+	SweepRes Tmm::Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd> &sweepValues){
 		PositionSettings enhpos;
 		return Sweep(sweepParam, sweepValues, enhpos, -1);
 	}
