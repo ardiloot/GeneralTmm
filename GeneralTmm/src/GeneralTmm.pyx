@@ -150,9 +150,10 @@ cdef class Tmm:
     cdef TmmCpp *_thisptr
     cdef readonly list materialsCache
     
-    def __cinit__(self):
+    def __cinit__(self, **kwargs):
         self._thisptr = new TmmCpp()
         self.materialsCache = []
+        self.SetParams(**kwargs)
         
     def __dealloc__(self):
         if self._thisptr is not NULL:

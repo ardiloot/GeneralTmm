@@ -4,10 +4,10 @@ from libcpp.string cimport string
 from eigency.core cimport *
 
 #===============================================================================
-# tmm.h
+# Common.h
 #===============================================================================
         
-cdef extern from "tmm.h" namespace "TmmModel":
+cdef extern from "Common.h" namespace "TmmModel":
     
     cdef enum ParamTypeCpp "TmmModel::ParamType":
         WL,
@@ -65,14 +65,22 @@ cdef extern from "tmm.h" namespace "TmmModel":
         MatrixXcd E
         MatrixXcd H
         
-    #---------------------------------------------------------------------------
+#===============================================================================
+# Material.h
+#===============================================================================
+        
+cdef extern from "Material.h" namespace "TmmModel":        
     
     cdef cppclass MaterialCpp "TmmModel::Material":
         MaterialCpp() except +
         MaterialCpp(Map[ArrayXd] & wlsExp, Map[ArrayXcd] & nsExp) except +
         double complex n(double wl) except +
             
-    #---------------------------------------------------------------------------
+#===============================================================================
+# tmm.h
+#===============================================================================
+        
+cdef extern from "tmm.h" namespace "TmmModel":
 
     cdef cppclass TmmCpp "TmmModel::Tmm":
         Tmm() except +

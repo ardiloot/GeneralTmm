@@ -1,8 +1,17 @@
-from GeneralTmm import _GeneralTmmCppExt  # @UnresolvedImport
 import numpy as np
-import pylab as plt
+from GeneralTmm import _GeneralTmmCppExt  # @UnresolvedImport
 
 __all__ = ["Material", "Tmm"]
+
+#===============================================================================
+# Tmm
+#===============================================================================
+
+Tmm = _GeneralTmmCppExt.Tmm
+
+#===============================================================================
+# Material
+#===============================================================================
 
 class Material(_GeneralTmmCppExt.Material):# @UndefinedVariable
     __doc__ = _GeneralTmmCppExt.Material.__doc__
@@ -52,34 +61,6 @@ class Material(_GeneralTmmCppExt.Material):# @UndefinedVariable
         res._materialLabPy = materialLabPy
         return res
 
-Tmm = _GeneralTmmCppExt.Tmm
 
 if __name__ == "__main__":
-    mat0 = Material.Static(1.7)
-    mat1 = Material.Static(1.0)
-    
-    tmm = Tmm()
-    tmm.wl = 500e-9
-    tmm.beta = 0.0
-    tmm.AddIsotropicLayer(float("inf"), mat0)
-    tmm.AddIsotropicLayer(float("inf"), mat1)
-    
-    print(tmm.GetIntensityMatrix())
-    print(tmm.GetAmplitudeMatrix())
-    
-    
-    
-    
-    betas = np.linspace(0, 0.99, 5)
-    sr = tmm.Sweep("beta", betas)
-    print(sr)
-    
-    tmm.beta = 0.0
-    pol = np.array([1.0, 0.0])
-    xs = np.linspace(-1e-6, 1e-6, 100)
-    E, H = tmm.CalcFields1D(xs, pol)
-    
-    #plt.plot(1e6 * xs, E[:, 0])
-    #plt.plot(1e6 * xs, E[:, 1])
-    #plt.plot(1e6 * xs, E[:, 2])
-    #plt.show()
+    pass
