@@ -359,19 +359,6 @@ namespace TmmModel {
 		return res;
 	}
 
-	/*
-	double Tmm::OptimizeEnhancementPython(boost::python::list optParams, Eigen::VectorXd optInitial, PositionSettings pos){
-		std::vector<Param> optParamsVector;
-		ssize_t length = PyObject_Length(optParams.ptr());
-		for (int i = 0; i < length; ++i)
-		{
-			optParamsVector.push_back(boost::python::extract<Param>(optParams[i]));
-		}
-		double res = Tmm::OptimizeEnhancement(optParamsVector, optInitial, pos);
-		return res;
-	}
-	*/
-
 	void Tmm::CalcFieldCoefs(Eigen::Vector2d polarization){	
 		if (!needToCalcFieldCoefs && polarization == lastFieldCoefsPol){
 			return;

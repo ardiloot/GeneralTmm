@@ -1,5 +1,6 @@
 import numpy as np
 from libcpp.pair cimport pair
+from libcpp.vector cimport vector
 from CppGeneralTmm cimport *
 
 #===============================================================================
@@ -239,6 +240,18 @@ cdef class Tmm:
         H = ndarray_copy(resCpp.H).squeeze()
         return E, H
         
+    def OptimizeEnhancement(self, list optParams, np.ndarray[double, ndim = 1] optInitials, enhpos):
+        cdef PositionSettingsCpp enhPosCpp
+        cdef vector[ParamCpp] paramVec
+        (pol, interface, dist) = enhpos
+        enhPosCpp = PositionSettingsCpp(pol[0], pol[1], interface, dist)
+        
+        for paramName in optParams:
+            paramVec.push_back(ToCppParam(paramName).first)
+        
+        res = self._thisptr.OptimizeEnhancement(paramVec, Map[ArrayXd](optInitials), enhPosCpp)
+        return res
+    
         
     # Getters
     #--------------------------------------------------------------------------- 

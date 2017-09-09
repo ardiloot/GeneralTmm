@@ -33,8 +33,6 @@ namespace TmmModel
 		EMFieldsList CalcFields1D(const Eigen::Map<Eigen::ArrayXd> &xs, const Eigen::Map<Eigen::Array2d> &polarization, WaveDirection waveDirection);
 		EMFields CalcFieldsAtInterface(PositionSettings pos, WaveDirection waveDirection);
 		double OptimizeEnhancement(std::vector<Param> optParams, ArrayXd optInitial, PositionSettings pos);
-		//double OptimizeEnhancementPython(boost::python::list optParams, VectorXd optInitial, PositionSettings pos);
-
 
 	private:
 		double wl;

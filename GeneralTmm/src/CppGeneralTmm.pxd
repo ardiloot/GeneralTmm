@@ -1,5 +1,6 @@
 from libcpp cimport bool
 from libcpp.map cimport map
+from libcpp.vector cimport vector
 from libcpp.string cimport string
 from eigency.core cimport *
 
@@ -103,6 +104,6 @@ cdef extern from "tmm.h" namespace "TmmModel":
         
         EMFieldsListCpp CalcFields1D(Map[ArrayXd] xs, Map[Array2d] polarization, WaveDirectionCpp waveDirection) except +
         EMFieldsCpp CalcFieldsAtInterface(PositionSettingsCpp pos, WaveDirectionCpp waveDirection) except +
-        #double OptimizeEnhancement(vector<ParamCpp> optParamCpps, VectorXd optInitial, PositionSettings pos) except +
-        #//double OptimizeEnhancementPython(boost::python::list optParams, VectorXd optInitial, PositionSettings pos) except +
+        double OptimizeEnhancement(vector[ParamCpp] optParams, Map[ArrayXd] optInitial, PositionSettingsCpp pos) except +
+        
 
