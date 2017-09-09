@@ -1,0 +1,8 @@
+include LICENSE
+include README.md
+recursive-include Examples *.py
+recursive-include tests *.py
+recursive-include GeneralTmm/src/eigen_3.2.4 *
+recursive-include GeneralTmm/src/Simplex *
+recursive-include GeneralTmm/src *.pxd
+recursive-include GeneralTmm/src/CppTmm/CppTmm *.h
