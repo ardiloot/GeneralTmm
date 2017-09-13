@@ -1,12 +1,17 @@
 """This module contains classes for 4x4 TMM
 Hodgkinson, I. J., Kassam, S., & Wu, Q. H. (1997). 
 Journal of Computational Physics, 133(1) 75-83
+
+This Python code is only used for testing the C++ code of the same algorithm.
+
 """
 
 import numpy as np
 import math
 import warnings
 from scipy import optimize
+
+__all__ = ["TmmPy"]
 
 def RotationSx(phi):
     res = np.array([[1.0, 0.0, 0.0], \

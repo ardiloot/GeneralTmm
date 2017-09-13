@@ -8,11 +8,31 @@ from CppGeneralTmm cimport *
 #===============================================================================
 
 cdef enum ParamDatatype:
+    """ParamDatatype
+    
+    Helper class to indicate the datatype of the parameter.
+    
+    """
     PARAM_DT_DOUBLE,
     PARAM_DT_INT,
     PARAM_DT_COMPLEX
 
 cdef pair[ParamCpp, ParamDatatype] ToCppParam(str param) except +: 
+    """ToCppParam(param)
+    
+    Converts the name of the param (e.g wl, beta, ...) to C++ param class.
+    
+    Parameters
+    ----------
+    param : str
+        The name of the parameter.
+        
+    Returns
+    -------
+    tuple of ParamCpp and ParamDatatype
+        C++ class describing the parameter and its datatype
+        
+    """
     cdef int layerNr = -1
     if param.count("_") == 1:
         layerNr = int(param.split("_")[-1])
@@ -47,6 +67,21 @@ cdef pair[ParamCpp, ParamDatatype] ToCppParam(str param) except +:
         raise ValueError("Unknown param: %s" % (param))
 
 cdef WaveDirectionCpp WaveDirectionFromStr(str waveStr) except +:
+    """WaveDirectionFromStr(waveStr)
+    
+    Helper function to convert wave direction string to WaveDirectionCpp enum.
+    
+    Parameters
+    ----------
+    waveStr : str
+        Wave direction string (forward, backward or both)
+        
+    Returns
+    -------
+    WaveDirectionCpp
+        Enum indicating the direction.
+    
+    """
     if waveStr == "forward":
         return WD_FORWARD
     elif waveStr == "backward":
@@ -58,6 +93,58 @@ cdef WaveDirectionCpp WaveDirectionFromStr(str waveStr) except +:
 
 
 cdef class _SweepRes:
+    """_SweepRes()
+    
+    Helper class to hold the results of the :any:`Tmm.Sweep` method. The
+    __getitem__ method is overloaded to return the results stored in the
+    internal dictionary. For full details of the calculated quantities see the
+    publication Hodgkinson, I. J., Kassam, S., & Wu, Q. H. (1997) Journal of 
+    Computational Physics, 133(1) 75-83
+    
+    Attributes
+    ----------
+    ["R11"] : ndarray of floats
+        The intensity reflection coefficient of p-polarized wave (1 == p).
+    ["R22"] : ndarray of floats
+        The intensity reflection coefficient of s-polarized wave (2 == s).
+    ["R12"] : ndarray of floats
+        The anisotropic reflection intensity coefficient. Incident light is
+        s-polarized (2) and the measured field is p-polarized(1).
+    ["R21"] : ndarray of floats
+        The anisotropic reflection intensity coefficient. Incident light is
+        p-polarized (1) and the measured field is s-polarized(2).
+    ["T31"] : ndarray of floats
+        The intensity transmission coefficient of p-polarized wave (1 & 3 == p).
+    ["T42"] : ndarray of floats
+        The intensity transmission coefficient of s-polarized wave (2 & 4 == s).
+    ["T32"] : ndarray of floats
+        The anisotropic transmission intensity coefficient. Incident light is
+        s-polarized (2) and the measured field is p-polarized (3).
+    ["T41"] : ndarray of floats
+        The anisotropic transmission intensity coefficient. Incident light is
+        p-polarized (1) and the measured field is s-polarized (4).
+    ["rXY"] : ndarray of complex
+        The amplitude reflection coefficients similarly to intensity coefficients.
+        The X denotes measured field polarization (1..4) and Y incident
+        polarization (1..4)
+    ["tXY"] : ndarray of complex
+        The amplitude transmission coefficients similarly to intensity coefficients.
+        The X denotes measured field polarization (1..4) and Y incident
+        polarization (1..4)
+    ["enh"] : ndarray of floats
+        The the enhancement of electrical field norm in specified position in
+        comparison to the incident field norm in vacuum.
+    ["enhEx"] : ndarray of floats
+        The the enhancement of electrical field x-component amplitude in
+        specified position in comparison to the incident field norm in vacuum.
+    ["enhEy"] : ndarray of floats
+        The the enhancement of electrical field y-component amplitude in
+        specified position in comparison to the incident field norm in vacuum.
+    ["enhEz"] : ndarray of floats
+        The the enhancement of electrical field z-component amplitude in
+        specified position in comparison to the incident field norm in vacuum.
+        
+    """
     cdef dict _res;
 
     def __init__(self):
@@ -86,9 +173,9 @@ cdef class _SweepRes:
 cdef class Material:
     """Material(wls, ns)
     
-    This class describes the optical parameters of nonlinear medium. Default
+    This class describes the optical parameters of medium. Default
     contructor takes arrays of wavelengths and complex refractive indices and
-    does linear interpolation. For shortcut __call__ is defined as GetN.
+    does linear interpolation. For shortcut __call__(wl) is defined as GetN(wl).
     
     Parameters
     ----------
@@ -96,11 +183,6 @@ cdef class Material:
         Array of wavelengths (m)
     ns : ndarray of complex floats
         Corresponding complex refractive indices to the wls array.
-    
-    Attributes
-    ----------
-    chi2 : :class:`_Chi2Tensor`
-        Instance of the :class:`_Chi2Tensor` helper class to store second-order nonlinearity tensor.
         
     """
     cdef MaterialCpp *_thisptr
@@ -148,6 +230,23 @@ cdef class Material:
 #===============================================================================
 
 cdef class Tmm:
+    """Tmm(**kwargs)
+    
+    This is main class for 4x4 matrix anisotropic transfer-matrix method (TMM).
+    Allows to calculate both isotropic and anisotropic mediums. In case of
+    anisotropic mediums the layer is specified by the thickness, by three
+    refractive indices (along each axis) and by to angles denoting the alignment
+    of crystallographic axes with structure axes. This class is wrapper for the
+    code written in C++. This implementation is based on the publication
+    Hodgkinson, I. J., Kassam, S., & Wu, Q. H. (1997). Journal of Computational
+    Physics, 133(1) 75-83.
+    
+    Parameters
+    ----------
+    **kwargs : dict
+        All parameters are passed to :any:`Tmm.SetParams`.
+     
+    """
     cdef TmmCpp *_thisptr
     cdef readonly list materialsCache
     
@@ -161,6 +260,17 @@ cdef class Tmm:
             del self._thisptr
 
     def SetParams(self, **kwargs):
+        """SetParams(**kwargs)
+        
+        Convenience function to set multiple parameters at once. For the list
+        of parameters see function :any:`ToCppParam`
+        
+        Parameters
+        ----------
+        **kwargs : dict
+            Param and value pais to set.
+        
+        """
         cdef pair[ParamCpp, ParamDatatype] paramDef
         for name, value in kwargs.items():
             paramDef = ToCppParam(name)
@@ -174,26 +284,125 @@ cdef class Tmm:
                 raise ValueError("Unknown param datatype.")
         
     def AddIsotropicLayer(self, double d, Material mat):
+        """AddIsotropicLayer(d, mat)
+        
+        Adds isotropic layer to transfer-matrix method.
+        
+        Parameters
+        ----------
+        d : float
+            The thickness of the layer. First and last layers should have
+            thikness equal to float("inf").
+        mat : :any:`Material`
+            Instance of the :any:`Material` class decribing the refractive
+            index dispersion over wavelength. 
+        
+        """
         self._thisptr.AddIsotropicLayer(d, mat._thisptr)
         self.materialsCache.append(mat) # Avoids dealloc
 
     def AddLayer(self, double d, Material matx, Material maty, Material matz, double psi, double xi):
+        """AddLayer(d, mat)
+        
+        Adds anisotropic layer to transfer-matrix method.
+        
+        Parameters
+        ----------
+        d : float
+            The thickness of the layer. First and last layers should have
+            thikness equal to float("inf").
+        matx : :any:`Material`
+            Instance of the :any:`Material` class decribing the refractive
+            index dispersion over wavelength in x-direction.
+        maty : :any:`Material`
+            Instance of the :any:`Material` class decribing the refractive
+            index dispersion over wavelength in y-direction.
+        matz : :any:`Material`
+            Instance of the :any:`Material` class decribing the refractive
+            index dispersion over wavelength in z-direction.
+        psi : float
+            The rotational angle around the z-axis for alignment of the material.
+            Measured in radians.
+        xi : float
+            The rotational angle around the x-axis for alignment of the material.
+            Measured in radians.
+            
+        """
         self._thisptr.AddLayer(d, matx._thisptr, maty._thisptr, matz._thisptr, psi, xi)
         self.materialsCache.append(matx) # Avoids dealloc
         self.materialsCache.append(maty) # Avoids dealloc
         self.materialsCache.append(matz) # Avoids dealloc
 
     def ClearLayers(self):
+        """ClearLayers()
+        
+        Clears all the layers from the structure.
+        
+        """
+        
         self._materialsCache.clear()
         self._thisptr.ClearLayers()
 
     def GetIntensityMatrix(self):
+        """GetIntensityMatrix()
+        
+        Solves the system and returns the intensity matrix defined by Eq. 20
+        in I. J. Hodgkinson, et al (1997). Contains all intensity reflection and
+        transmission coefficients. See also :any:`_SweepRes`.
+        
+        Returns
+        -------
+        ndarray of floats
+            Has shape (4, 4) and contains the intensity matrix coefficients.
+        
+        """
         return ndarray_copy(self._thisptr.GetIntensityMatrix())
     
     def GetAmplitudeMatrix(self):
+        """GetAmplitudeMatrix()
+        
+        Solves the system and returns the amplitude matrix defined by Eq. 19
+        in I. J. Hodgkinson, et al (1997). See also :any:`_SweepRes`.
+        
+        Returns
+        -------
+        ndarray of complex floats
+            Has shape (4, 4) and contains the amplitude matrix coefficients.
+        
+        """
         return ndarray_copy(self._thisptr.GetAmplitudeMatrix())
     
     def Sweep(self, paramName, np.ndarray[double, ndim = 1] values, enhPos = None, int alphaLayer = -1):
+        """Sweep(paramName, values, enhPos = None, alphaLayer = -1)
+        
+        Convenience function for solving system for multiple values of a single
+        parameter (given by :any:`paramName`).
+        
+        Parameters
+        ----------
+        paramName : str
+            The name of parameter. See :any:`Tmm.SetParams` for the list of all
+            possible parameter names.
+        values : ndarray of floats
+            The list of values for parameter to solve for.
+        enhPos : tuple
+            Tuple structured like ((polCoef1, polCoef2), layerNr, distance).
+            If this parameter is not None, then the field enhancment will be
+            calculated in layer numbered by `layerNr` at distance `distance`
+            from the interface. The variables (polCoef1, polCoef2) define the
+            polarization for the field enhancement calculation (in comparison to
+            the excitation in vacuum) and (1.0, 0.0) corresonds to p-polarization
+            and (0.0, 1.0) corresond to s-polarization.
+        alphaLayer: int
+            Computes the perpendicular component of the wavevectors in layer
+            nr `alphaLayer`.
+            
+        Returns
+        -------
+        :any:`_SweepRes`
+            Helper class containing all the results of the sweep.
+        
+        """
         cdef pair[ParamCpp, ParamDatatype] paramDef = ToCppParam(paramName)
         cdef PositionSettingsCpp enhPosCpp
         cdef SweepResCpp resCpp
@@ -207,6 +416,27 @@ cdef class Tmm:
         return res
     
     def CalcFields1D(self, np.ndarray[double, ndim = 1] xs, np.ndarray[double, ndim = 1] polarization, str waveDirectionStr = "both"):
+        """CalcFields1D(xs, polarization, waveDirection = "both")
+        
+        Calculates the complex electric and magnetic fields along the x-axis.
+        
+        Paramaters
+        ----------
+        xs : ndarray of floats
+            Position array where to calculate the fields.
+        polarization : ndarray of floats (2,)
+            Contains the polarization coefficients of the excitation.
+        waveDirection : str {"both", "forward", "backward"}
+            Allows to select the output fields.
+            
+        Returns
+        -------
+            tuple (E, H) of ndarrays of complex floats
+               Variable E contains the electrical fields and has shape (N, 3), 
+               where N is the length of `xs` array and 3 correspond to x-, y- and
+               z-direction. Variable H contains magnetic fields in similar manner.  
+        
+        """
         cdef WaveDirectionCpp waveDirection = WaveDirectionFromStr(waveDirectionStr) 
         cdef EMFieldsListCpp resCpp        
         resCpp = self._thisptr.CalcFields1D(Map[ArrayXd](xs), Map[Array2d](polarization), waveDirection)
@@ -216,6 +446,31 @@ cdef class Tmm:
         return E, H
     
     def CalcFields2D(self, np.ndarray[double, ndim = 1] xs, np.ndarray[double, ndim = 1] ys, np.ndarray[double, ndim = 1] pol, str waveDirectionStr = "both"):
+        """CalcFields2D(xs, ys, polarization, waveDirection = "both")
+        
+        Calculates the complex electric and magnetic fields along in xy-plane in
+        the rectangular grid following from `xs` and `ys`.
+        
+        Paramaters
+        ----------
+        xs : ndarray of floats
+            Position array where to calculate the fields in x-direction.
+        ys : ndarray of floats
+            Position array where to calculate the fields in y-direction.
+        polarization : ndarray of floats (2,)
+            Contains the polarization coefficients of the excitation.
+        waveDirection : str {"both", "forward", "backward"}
+            Allows to select the output fields.
+            
+        Returns
+        -------
+            tuple (E, H) of ndarrays of complex floats
+               Variable E contains the electrical fields and has shape (N, M, 3), 
+               where N is the length of `xs` array, M is the lenght of `ys`
+               array and 3 correspond to x-, y- and z-direction. Variable H
+               contains magnetic fields in similar manner.  
+        
+        """
         ky = self.beta * 2.0 * np.pi / self.wl
         phaseY = np.exp(1.0j * ky * ys)
         E1D, H1D = self.CalcFields1D(xs, pol, waveDirectionStr)

@@ -43,6 +43,20 @@ class Material(_GeneralTmmCppExt.Material):# @UndefinedVariable
     
     @staticmethod
     def FromLabPy(materialLabPy):
+        """Helper method to convert LabPy Material to this Material class.
+        As LabPy is currently not a public library, this function has no use
+        for most of the users.
+        
+        Parameters
+        ----------
+        materialLabPy : :any:`LabPy.Material`
+            The instance of LabPy Material
+            
+        Returns
+        -------
+        None
+        
+        """
         if materialLabPy.materialFile == "Static":
             wls = np.array([-1.0, 1.0])
             n = materialLabPy.n + 1.0j * (materialLabPy.k + materialLabPy.kAdditional)
