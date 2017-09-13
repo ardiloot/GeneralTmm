@@ -246,6 +246,19 @@ cdef class Tmm:
     **kwargs : dict
         All parameters are passed to :any:`Tmm.SetParams`.
      
+    Attributes
+    ----------
+    wl : float
+        Wavelength in meters.
+    beta : float
+        Effective mode index. Determines the angle of incidence.
+    enhOptRel : float
+        The relative error termination condition for optimization.
+    enhOptMaxIters : int
+        Maximum number of optimization iterations.
+    enhInitialStep : float
+        Initial step for optimization.
+     
     """
     cdef TmmCpp *_thisptr
     cdef readonly list materialsCache
@@ -431,10 +444,10 @@ cdef class Tmm:
             
         Returns
         -------
-            tuple (E, H) of ndarrays of complex floats
-               Variable E contains the electrical fields and has shape (N, 3), 
-               where N is the length of `xs` array and 3 correspond to x-, y- and
-               z-direction. Variable H contains magnetic fields in similar manner.  
+        tuple (E, H) of ndarrays of complex floats
+           Variable E contains the electrical fields and has shape (N, 3), 
+           where N is the length of `xs` array and 3 correspond to x-, y- and
+           z-direction. Variable H contains magnetic fields in similar manner.  
         
         """
         cdef WaveDirectionCpp waveDirection = WaveDirectionFromStr(waveDirectionStr) 
@@ -464,11 +477,11 @@ cdef class Tmm:
             
         Returns
         -------
-            tuple (E, H) of ndarrays of complex floats
-               Variable E contains the electrical fields and has shape (N, M, 3), 
-               where N is the length of `xs` array, M is the lenght of `ys`
-               array and 3 correspond to x-, y- and z-direction. Variable H
-               contains magnetic fields in similar manner.  
+        tuple (E, H) of ndarrays of complex floats
+           Variable E contains the electrical fields and has shape (N, M, 3), 
+           where N is the length of `xs` array, M is the lenght of `ys`
+           array and 3 correspond to x-, y- and z-direction. Variable H
+           contains magnetic fields in similar manner.  
         
         """
         ky = self.beta * 2.0 * np.pi / self.wl
@@ -484,6 +497,32 @@ cdef class Tmm:
         return E, H
         
     def CalcFieldsAtInterface(self, enhPos, str waveDirectionStr = "both"):
+        """CalcFieldsAtInterface(enhPos, waveDirectionStr = "both")
+        
+        Calculates electic and magnetic fields in one point defined by
+        `enhPos`.
+        
+        Parameters
+        ----------
+        enhPos : tuple
+            Tuple structured like ((polCoef1, polCoef2), layerNr, distance).
+            If this parameter is not None, then the field enhancment will be
+            calculated in layer numbered by `layerNr` at distance `distance`
+            from the interface. The variables (polCoef1, polCoef2) define the
+            polarization for the field enhancement calculation (in comparison to
+            the excitation in vacuum) and (1.0, 0.0) corresonds to p-polarization
+            and (0.0, 1.0) corresond to s-polarization.
+        waveDirection : str {"both", "forward", "backward"}
+            Allows to select the output fields.
+            
+        Returns
+        -------
+        tuple (E, H) of ndarrays of complex
+            Variable E is ndarray of complex floats (length 3) containing
+            field x-, y- and z-component. Variable H contains magnetic fields
+            in similar manner.
+            
+        """
         cdef WaveDirectionCpp waveDirection = WaveDirectionFromStr(waveDirectionStr)
         cdef PositionSettingsCpp enhPosCpp
         cdef EMFieldsCpp resCpp
@@ -496,6 +535,34 @@ cdef class Tmm:
         return E, H
         
     def OptimizeEnhancement(self, list optParams, np.ndarray[double, ndim = 1] optInitials, enhpos):
+        """OptimizeEnhancement(optParams, optInitials, enhpos)
+        
+        Function for optimizing structure params for maximal field enhancment in
+        one point (defined by enhpos). See also parameters for optimization:
+        `enhOptRel`, `enhOptMaxIters` and `enhInitialStep`.
+        
+        Parameters
+        ----------
+        optParams: list of str
+            List of parameter names to optimize.
+        optInitials: ndarray of float
+            Contains initial quesses for parameters in `optParams`.
+        enhPos : tuple
+            Tuple structured like ((polCoef1, polCoef2), layerNr, distance).
+            The field enhancment will be calculated in layer numbered by
+            `layerNr` at distance `distance` from the interface. The variables 
+            (polCoef1, polCoef2) define the polarization for the field
+            enhancement calculation (in comparison to the excitation in vacuum):
+            (1.0, 0.0) corresonds to p-polarization and (0.0, 1.0) corresond to
+            s-polarization.
+        
+        Returns
+        -------
+        float
+            The optimized field enhancment. All the parameters will be assigned
+            their optimal values and could be thus accessed in usual way.
+        
+        """
         cdef PositionSettingsCpp enhPosCpp
         cdef vector[ParamCpp] paramVec
         (pol, interface, dist) = enhpos
