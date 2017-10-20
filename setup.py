@@ -6,7 +6,8 @@ import re
 
 # Optimization flags
 copt = {"msvc": ["/openmp", "/arch:SSE2", "/O2", "/Ot", "/MP"],
-         "mingw32" : ["-O3", "-fopenmp"]}
+        "mingw32": ["-O3", "-fopenmp"],
+        "unix": ["-std=c++14", "-O3", "-fopenmp"]}
 lopt = {"mingw32" : ["-fopenmp"] }
 
 class build_ext_subclass(build_ext):
