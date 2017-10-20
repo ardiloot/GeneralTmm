@@ -3,7 +3,7 @@
 # General 4x4 transfer-matric method (TMM)
 
 ## Requirements
-* Python > 3.3
+* Python (64-bit) >= 3.5
 * Cython
 * Numpy
 * Scipy
