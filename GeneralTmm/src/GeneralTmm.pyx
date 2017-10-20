@@ -8,11 +8,6 @@ from CppGeneralTmm cimport *
 #===============================================================================
 
 cdef enum ParamDatatype:
-    """ParamDatatype
-    
-    Helper class to indicate the datatype of the parameter.
-    
-    """
     PARAM_DT_DOUBLE,
     PARAM_DT_INT,
     PARAM_DT_COMPLEX

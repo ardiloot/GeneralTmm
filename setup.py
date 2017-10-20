@@ -1,10 +1,8 @@
 from setuptools import setup
 from setuptools.extension import Extension
 from Cython.Distutils import build_ext
-import numpy
 import glob
 import re
-import eigency
 
 # Optimization flags
 copt = {"msvc": ["/openmp", "/arch:SSE2", "/O2", "/Ot", "/MP"],
@@ -12,6 +10,19 @@ copt = {"msvc": ["/openmp", "/arch:SSE2", "/O2", "/Ot", "/MP"],
 lopt = {"mingw32" : ["-fopenmp"] }
 
 class build_ext_subclass(build_ext):
+    def finalize_options(self):
+        build_ext.finalize_options(self)
+        # Prevent numpy from thinking it is still in its setup process:
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        import eigency
+        print(eigency.get_includes(include_eigen = False))
+        self.include_dirs += [r"GeneralTmm/src/CppTmm/CppTmm",
+                r"GeneralTmm/src/eigen_3.2.4",
+                r"GeneralTmm/src/Simplex",
+                numpy.get_include()] + \
+                eigency.get_includes(include_eigen = False)
+        
     def build_extensions(self):
         c = self.compiler.compiler_type
         if c in copt:
@@ -28,16 +39,9 @@ __version__ = re.search(r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
 
 sources = ["GeneralTmm/src/GeneralTmm.pyx"] + \
     glob.glob("GeneralTmm/src/CppTmm/CppTmm/*.cpp")
-    
-include_dirs = [r"GeneralTmm/src/CppTmm/CppTmm",
-                r"GeneralTmm/src/eigen_3.2.4",
-                r"GeneralTmm/src/Simplex",
-                numpy.get_include()] + \
-                eigency.get_includes(include_eigen = False)
 
 ext = Extension("GeneralTmm._GeneralTmmCppExt",
     sources = sources,
-    include_dirs = include_dirs,
     language = "c++")
 
 setup(name = "GeneralTmm",
@@ -47,4 +51,6 @@ setup(name = "GeneralTmm",
       author_email = "ardi.loot@outlook.com",
       packages = ["GeneralTmm"],
       cmdclass = {"build_ext": build_ext_subclass},
-      ext_modules = [ext],)
+      ext_modules = [ext],
+      setup_requires = ["numpy", "Cython", "eigency"],
+      install_requires = ["scipy"])
