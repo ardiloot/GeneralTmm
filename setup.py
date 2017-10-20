@@ -16,7 +16,6 @@ class build_ext_subclass(build_ext):
         __builtins__.__NUMPY_SETUP__ = False
         import numpy
         import eigency
-        print(eigency.get_includes(include_eigen = False))
         self.include_dirs += [r"GeneralTmm/src/CppTmm/CppTmm",
                 r"GeneralTmm/src/eigen_3.2.4",
                 r"GeneralTmm/src/Simplex",
