@@ -45,8 +45,8 @@ namespace TmmModel {
 		return res;
 	}
 
-	template dcomplex TmmModel::Interpolate<dcomplex>(double, const ArrayXd &, const ArrayXcd &);
-	template double TmmModel::Interpolate<double>(double, const ArrayXd &, const ArrayXd &);
+	template dcomplex Interpolate<dcomplex>(double, const ArrayXd &, const ArrayXcd &);
+	template double Interpolate<double>(double, const ArrayXd &, const ArrayXd &);
 
 	double sqr(double a) {
 		return a * a;
