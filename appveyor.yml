@@ -1,15 +1,15 @@
 version: 1.0.{build}
 
 init:
-- ps: >-
-    if ($env:APPVEYOR_REPO_TAG -eq "true")
-    {
-        Update-AppveyorBuild -Version "$env:APPVEYOR_REPO_TAG_NAME"
-    }
-    else
-    {
-        Update-AppveyorBuild -Version "dev-$($env:APPVEYOR_REPO_COMMIT.substring(0,7))"
-    }
+  - ps: >-
+      if ($env:APPVEYOR_REPO_TAG -eq "true")
+      {
+          Update-AppveyorBuild -Version "$env:APPVEYOR_REPO_TAG_NAME"
+      }
+      else
+      {
+          Update-AppveyorBuild -Version "dev-$($env:APPVEYOR_REPO_COMMIT.substring(0,7))"
+      }
 
 environment:
   TWINE_USERNAME: ardiloot
@@ -22,28 +22,27 @@ environment:
     MINICONDA: C:\Miniconda35-x64
 
 install:
-- cmd: >-
-    set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%
-    conda config --set always_yes yes --set changeps1 no
-    conda update -q conda
-    conda info -a
-    conda create -q -n test-environment python=%PYTHON_VERSION% numpy scipy
-    activate test-environment
-    pip install Cython
-    pip install eigency
-    pip install nose
-    pip install twine
+  - cmd: set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%
+  - cmd: conda config --set always_yes yes --set changeps1 no
+  - cmd: conda update -q conda
+  - cmd: conda info -a
+  - cmd: conda create -q -n test-environment python=%PYTHON_VERSION% numpy scipy
+  - cmd: activate test-environment
+  - cmd: pip install Cython
+  - cmd: pip install eigency
+  - cmd: pip install nose
+  - cmd: pip install twine
 
 build_script:
-- cmd: python setup.py build install
+  - cmd: python setup.py build install
 
 test_script:
-- cmd: >-
-    nosetests -v -w tests
-    python setup.py sdist bdist_wheel
+  - cmd: >-
+      nosetests -v -w tests
+      python setup.py sdist bdist_wheel
 
 artifacts:
-- path: dist/*
+  - path: dist/*
 
 deploy_script:
-- cmd: if "%APPVEYOR_REPO_TAG%"=="true" ( twine upload --skip-existing dist/* ) else ( echo "Not deplaying because not a tagged commit.")
+  - cmd: if "%APPVEYOR_REPO_TAG%"=="true" ( twine upload --skip-existing dist/* ) else ( echo "Not deplaying because not a tagged commit.")
