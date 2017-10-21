@@ -29,6 +29,7 @@ install:
   - cmd: conda create -q -n test-environment python=%PYTHON_VERSION% numpy scipy Cython
   - cmd: activate test-environment
   - cmd: pip install -r requirements.txt
+  - cmd: pip install twine
 
 build_script:
   - cmd: python setup.py build install
