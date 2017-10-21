@@ -33,6 +33,8 @@ namespace TmmModel
 	using std::cout;
 	using std::cerr;
 	using std::endl;
+	using std::abs;
+	using std::norm;
 
 	//---------------------------------------------------------------
 	// Typedefs
