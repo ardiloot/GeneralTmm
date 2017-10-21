@@ -1,0 +1,6 @@
+numpy
+Cython
+eigency
+nose
+scipy
+twine
