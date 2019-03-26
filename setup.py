@@ -5,10 +5,10 @@ import glob
 import re
 
 # Optimization flags
-copt = {"msvc": ["/openmp", "/arch:SSE2", "/O2", "/Ot", "/MP"],
-        "mingw32": ["-O3", "-fopenmp"],
-        "unix": ["-std=c++11", "-O3", "-fopenmp"]}
-lopt = {"mingw32" : ["-fopenmp"] }
+copt = {"msvc": ["/O2",],
+        "mingw32": ["-O3"],
+        "unix": ["-std=c++11", "-O3"]}
+lopt = {"mingw32" : [] }
 
 class build_ext_subclass(build_ext):
     def finalize_options(self):
