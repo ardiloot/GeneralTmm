@@ -4,6 +4,9 @@ on:
   release:
     types: [created]
 
+env:
+  CIBW_SKIP: pp*
+
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -45,8 +48,6 @@ jobs:
     steps:
       - uses: actions/download-artifact@v3
         with:
-          # unpacks default artifact into dist/
-          # if `name: artifact` is omitted, the action will create extra parent dir
           name: artifact
           path: dist
 
@@ -54,4 +55,3 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
-          # To test: repository_url: https://test.pypi.org/legacy/
