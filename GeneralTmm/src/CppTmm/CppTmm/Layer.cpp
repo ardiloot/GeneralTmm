@@ -315,7 +315,7 @@ namespace TmmModel{
 			//mBeta(3, 3) = 0.0;
 
 			// Calc eigenvalues
-			ces.compute(mBeta, true, false);
+			ces.compute(mBeta, true);
 			eigenvalues = ces.eigenvalues();
 			eigenvectors = ces.eigenvectors();
 		}
