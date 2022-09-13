@@ -1,5 +1,4 @@
 import re
-import glob
 import eigency
 import numpy as np
 from setuptools import setup
@@ -13,7 +12,7 @@ __version__ = re.search(r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
 extensions = cythonize([
     Extension(
         "GeneralTmm._GeneralTmmCppExt",
-        sources=["GeneralTmm/src/GeneralTmm.pyx"] + glob.glob("GeneralTmm/src/*.cpp"),
+        sources=["GeneralTmm/src/GeneralTmm.pyx"],
         include_dirs=[np.get_include(), "GeneralTmm/src", "GeneralTmm/src/Simplex"] + eigency.get_includes(),
         language="c++"
     ),
