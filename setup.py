@@ -13,8 +13,8 @@ __version__ = re.search(r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
 extensions = cythonize([
     Extension(
         "GeneralTmm._GeneralTmmCppExt",
-        sources=["GeneralTmm/src/GeneralTmm.pyx"] + glob.glob("GeneralTmm/src/CppTmm/CppTmm/*.cpp"),
-        include_dirs=[np.get_include(), "GeneralTmm/src/Simplex"] + eigency.get_includes(include_eigen=True),
+        sources=["GeneralTmm/src/GeneralTmm.pyx"] + glob.glob("GeneralTmm/src/*.cpp"),
+        include_dirs=[np.get_include(), "GeneralTmm/src", "GeneralTmm/src/Simplex"] + eigency.get_includes(include_eigen=True),
         language="c++"
     ),
 ])
