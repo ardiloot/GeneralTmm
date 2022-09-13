@@ -34,8 +34,13 @@ extensions = cythonize([
     ),
 ])
 
+long_description = open("README.md").read()
+
 setup(
     name="GeneralTmm",
+    description="General 4x4 transfer-matric method (TMM)",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     version=__version__,
     author="Ardi Loot",
     url="https://github.com/ardiloot/GeneralTmm",
