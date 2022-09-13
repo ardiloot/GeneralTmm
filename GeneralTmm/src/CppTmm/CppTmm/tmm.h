@@ -5,7 +5,6 @@
 #include "simplex.h"
 #include "criteria.h"
 #include <Eigen/Eigenvalues>
-#include <unsupported/Eigen/MatrixFunctions>
 
 namespace TmmModel
 {
