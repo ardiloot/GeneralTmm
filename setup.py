@@ -1,4 +1,5 @@
 import re
+import sys
 import eigency
 import numpy as np
 from setuptools import setup
@@ -8,6 +9,10 @@ from Cython.Build import cythonize
 
 __version__ = re.search(r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
     open("GeneralTmm/__init__.py").read()).group(1)
+
+extra_compile_args = []
+if sys.platform in ("linux", "darwin"):
+    extra_compile_args.append("-std=c++11")
 
 extensions = cythonize([
     Extension(
@@ -24,7 +29,8 @@ extensions = cythonize([
             "GeneralTmm/src",
             "GeneralTmm/src/Simplex"
         ] + eigency.get_includes(),
-        language="c++11"
+        language="c++",
+        extra_compile_args=extra_compile_args,
     ),
 ])
 
