@@ -1,6 +1,4 @@
 [![PyPI version](https://badge.fury.io/py/GeneralTmm.svg)](https://badge.fury.io/py/GeneralTmm)
-[![Build status](https://ci.appveyor.com/api/projects/status/hm7fnsatogrhkfgd/branch/master?svg=true)](https://ci.appveyor.com/project/ardiloot/generaltmm/branch/master)
-[![Build Status](https://travis-ci.org/ardiloot/GeneralTmm.svg?branch=master)](https://travis-ci.org/ardiloot/GeneralTmm)
 
 # General 4x4 transfer-matric method (TMM)
 
