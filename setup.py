@@ -24,7 +24,7 @@ extensions = cythonize([
             "GeneralTmm/src",
             "GeneralTmm/src/Simplex"
         ] + eigency.get_includes(),
-        language="c++"
+        language="c++11"
     ),
 ])
 
