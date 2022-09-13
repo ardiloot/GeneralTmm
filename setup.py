@@ -14,7 +14,7 @@ class build_ext_subclass(build_ext):
     def finalize_options(self):
         build_ext.finalize_options(self)
         # Prevent numpy from thinking it is still in its setup process:
-        __builtins__.__NUMPY_SETUP__ = False
+        #__builtins__.__NUMPY_SETUP__ = False
         import numpy
         import eigency
         self.include_dirs += [r"GeneralTmm/src/CppTmm/CppTmm",
@@ -52,5 +52,5 @@ setup(name = "GeneralTmm",
       packages = ["GeneralTmm"],
       cmdclass = {"build_ext": build_ext_subclass},
       ext_modules = [ext],
-      setup_requires = ["numpy", "Cython", "eigency"],
-      install_requires = ["scipy"])
+      install_requires = ["numpy", "scipy"],
+)
