@@ -52,5 +52,5 @@ setup(name = "GeneralTmm",
       packages = ["GeneralTmm"],
       cmdclass = {"build_ext": build_ext_subclass},
       ext_modules = [ext],
-      install_requires = ["numpy", "scipy"],
+      install_requires = ["numpy", "scipy", "eigency"],
 )
