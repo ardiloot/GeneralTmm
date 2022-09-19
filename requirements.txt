@@ -1,4 +1,6 @@
-numpy
-Cython
-eigency
-scipy
+Cython==0.29.32
+eigency==2.0.0
+matplotlib==3.6.0
+numpy==1.23.3
+scipy==1.9.1
+setuptools==63.4.1
