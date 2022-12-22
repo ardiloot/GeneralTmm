@@ -6,10 +6,6 @@ from setuptools import setup
 from setuptools.extension import Extension
 from Cython.Build import cythonize
 
-
-__version__ = re.search(r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
-    open("GeneralTmm/__init__.py").read()).group(1)
-
 extra_compile_args = []
 if sys.platform in ("linux", "darwin"):
     extra_compile_args.append("-std=c++11")
@@ -41,7 +37,7 @@ setup(
     description="General 4x4 transfer-matric method (TMM)",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version=__version__,
+    use_scm_version=True,
     author="Ardi Loot",
     url="https://github.com/ardiloot/GeneralTmm",
     author_email="ardi.loot@outlook.com",
