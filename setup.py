@@ -44,5 +44,10 @@ setup(
     packages=["GeneralTmm"],
     include_package_data=True,
     ext_modules=extensions,
-    install_requires=["numpy", "scipy", "eigency"],
+    python_requires=">=3.5",
+    install_requires=[
+        "numpy",
+        "scipy",
+        "eigency>=2.0.0",
+    ],
 )
