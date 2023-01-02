@@ -6,7 +6,7 @@
 #
 eigency==2.0.0
     # via GeneralTmm (setup.py)
-numpy==1.24.0
+numpy==1.24.1
     # via
     #   GeneralTmm (setup.py)
     #   eigency
