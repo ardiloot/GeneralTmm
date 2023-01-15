@@ -11,5 +11,5 @@ numpy==1.24.1
     #   GeneralTmm (setup.py)
     #   eigency
     #   scipy
-scipy==1.9.3
+scipy==1.10.0
     # via GeneralTmm (setup.py)
