@@ -1,4 +1,5 @@
 #include "Layer.h"
+#define PI 3.14159265358979323846
 
 namespace TmmModel{
 
@@ -176,7 +177,7 @@ namespace TmmModel{
 		// Phase matrix
 		phaseMatrix.setIdentity();
 		if (d != INFINITY){
-			dcomplex expParam = 2.0 * M_PI / wl *  d * dcomplex(0.0, -1.0);
+			dcomplex expParam = 2.0 * PI / wl *  d * dcomplex(0.0, -1.0);
 			for (int i = 0; i < 4; i++){
 				phaseMatrix(i, i) = exp(expParam * alpha(i));
 			}
@@ -201,8 +202,8 @@ namespace TmmModel{
 		EMFields res;
 		res.E.setZero();
 		res.H.setZero();
-		double z0 = 119.9169832 * M_PI;
-		double k0 = 2.0 * M_PI / wl;
+		double z0 = 119.9169832 * PI;
+		double k0 = 2.0 * PI / wl;
 
 		for (int mode = 0; mode < 4; mode++){
 			if (waveDirection == WD_BACKWARD && (mode == 0 || mode == 2)) {
@@ -271,7 +272,7 @@ namespace TmmModel{
 
 
 	void Layer::SolveEigenFunction(double beta){
-		double z0 = 119.9169832 * M_PI;
+		double z0 = 119.9169832 * PI;
 
 		Eigen::ComplexEigenSolver<Eigen::Matrix4cd>::EigenvalueType eigenvalues;
 		Eigen::ComplexEigenSolver<Eigen::Matrix4cd>::EigenvectorType eigenvectors;
