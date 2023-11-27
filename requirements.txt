@@ -4,7 +4,7 @@
 #
 #    pip-compile
 #
-eigency==3.4.0.0
+eigency==3.4.0.2
     # via GeneralTmm (setup.py)
 numpy==1.25.1
     # via
