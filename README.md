@@ -93,7 +93,7 @@ Versioning is handled automatically by [setuptools-scm](https://github.com/pypa/
    For testing, use a pre-release tag (e.g. `v1.2.0rc1`) — it will be marked as a pre-release and **not** published to PyPI.
 3. A **draft GitHub Release** is created automatically with generated release notes.
 4. **Review the draft** on the [Releases](https://github.com/ardiloot/GeneralTmm/releases) page, edit if needed, then **publish** it.
-5. The publish workflow builds wheels for Linux (x86_64), Windows (x86_64), and macOS (x86_64 + ARM) and uploads to [PyPI](https://pypi.org/project/GeneralTmm/).
+5. The publish workflow builds wheels for Linux (x86_64 + aarch64), Windows (AMD64 + ARM64), and macOS (ARM64) and uploads to [PyPI](https://pypi.org/project/GeneralTmm/).
 
 ## License
 

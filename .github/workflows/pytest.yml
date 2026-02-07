@@ -8,6 +8,7 @@ on:
 
 jobs:
   build:
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -31,6 +32,7 @@ jobs:
 
   pip-install:
     name: pip install (${{ matrix.os }}, ${{ matrix.python }})
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
