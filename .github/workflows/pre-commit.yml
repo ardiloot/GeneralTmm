@@ -16,4 +16,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Install project (for pyright import resolution)
+        run: uv sync
+
       - uses: pre-commit/action@v3.0.1
