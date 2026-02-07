@@ -4,6 +4,8 @@
 #include <cmath>
 #include <string>
 #include <map>
+#include <limits>
+#include <stdexcept>
 #include <Eigen/Dense>
 
 namespace TmmModel
@@ -30,20 +32,24 @@ namespace TmmModel
 	using Eigen::MatrixXd;
 	using Eigen::MatrixXcd;
 
-	using std::cout;
-	using std::cerr;
-	using std::endl;
 	using std::abs;
 	using std::norm;
 
 	//---------------------------------------------------------------
-	// Typedefs
+	// Type aliases
 	//---------------------------------------------------------------
 
-	typedef std::complex<double> dcomplex;
-	typedef std::map<std::string, ArrayXcd> ComplexVectorMap;
-	typedef std::map<std::string, ArrayXd> DoubleVectorMap;
-	
+	using dcomplex = std::complex<double>;
+	using ComplexVectorMap = std::map<std::string, ArrayXcd>;
+	using DoubleVectorMap = std::map<std::string, ArrayXd>;
+
+	//---------------------------------------------------------------
+	// Constants
+	//---------------------------------------------------------------
+
+	inline constexpr double PI = 3.14159265358979323846;
+	inline constexpr double Z0 = 119.9169832 * PI;
+
 	//---------------------------------------------------------------
 	// Functions
 	//---------------------------------------------------------------
@@ -58,7 +64,7 @@ namespace TmmModel
 	// Enums
 	//---------------------------------------------------------------------
 
-	enum ParamType {
+	enum class ParamType {
 		WL,
 		BETA,
 		ENH_OPT_REL,
@@ -77,7 +83,7 @@ namespace TmmModel
 		NOT_DEFINED
 	};
 
-	enum WaveDirection {
+	enum class WaveDirection {
 		WD_FORWARD,
 		WD_BACKWARD,
 		WD_BOTH
@@ -89,11 +95,11 @@ namespace TmmModel
 
 	class Param {
 	public:
-		Param() : Param(NOT_DEFINED) {}
+		Param() : Param(ParamType::NOT_DEFINED) {}
 		Param(ParamType pType_);
 		Param(ParamType pType_, int layerId_);
-		ParamType GetParamType();
-		int GetLayerID();
+		ParamType GetParamType() const;
+		int GetLayerID() const;
 
 		bool operator == (const Param &p) const
 		{
@@ -114,10 +120,10 @@ namespace TmmModel
 		PositionSettings();
 		PositionSettings(RowVector2d polarization_, int interfaceId_, double distFromInterface_);
 		PositionSettings(double polCoef1, double polCoef2, int interfaceId_, double distFromInterface_);
-		RowVector2d GetPolarization();
-		int GetInterfaceId();
-		double GetDistFromInterface();
-		bool IsEnabled();
+		RowVector2d GetPolarization() const;
+		int GetInterfaceId() const;
+		double GetDistFromInterface() const;
+		bool IsEnabled() const;
 
 	private:
 		bool enabled;
