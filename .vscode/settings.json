@@ -1,0 +1,23 @@
+{
+    "python.analysis.typeCheckingMode": "standard",
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true
+    },
+    "cSpell.words": [
+        "arcsin",
+        "axvline",
+        "cbar",
+        "coefs",
+        "colorbar",
+        "figsize",
+        "linalg",
+        "pcolormesh",
+        "plasmons",
+        "poynting",
+        "suptitle",
+        "twinx",
+        "xlabel",
+        "ylabel"
+    ]
+}

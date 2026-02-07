@@ -1,0 +1,28 @@
+name: Create draft release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  draft-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          ARGS=(--draft --generate-notes --title "$TAG_NAME")
+          if [[ "$TAG_NAME" =~ (rc|alpha|beta|dev) ]]; then
+            ARGS+=(--prerelease)
+          fi
+          gh release create "$TAG_NAME" "${ARGS[@]}"
