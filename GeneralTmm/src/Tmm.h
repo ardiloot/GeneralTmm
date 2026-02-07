@@ -1,9 +1,10 @@
 #pragma once
 #include "Common.h"
-#include "Material.h"
 #include "Layer.h"
+#include "Material.h"
+#include <array>
 
-namespace TmmModel {
+namespace tmm {
 //---------------------------------------------------------------------
 // Tmm
 //---------------------------------------------------------------------
@@ -20,8 +21,8 @@ public:
     void AddIsotropicLayer(double d, Material* mat);
     void AddLayer(double d, Material* matx, Material* maty, Material* matz, double psi, double xi);
     void ClearLayers() noexcept;
-    [[nodiscard]] Matrix4d GetIntensityMatrix();
-    [[nodiscard]] Matrix4cd GetAmplitudeMatrix();
+    [[nodiscard]] const Matrix4d& GetIntensityMatrix();
+    [[nodiscard]] const Matrix4cd& GetAmplitudeMatrix();
     [[nodiscard]] SweepRes Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd>& sweepValues,
                                  const PositionSettings& enhpos, int alphasLayer);
     [[nodiscard]] SweepRes Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd>& sweepValues);
@@ -37,14 +38,17 @@ private:
     double beta_;
     double enhOptMaxRelError_;
     double enhOptInitialStep_;
-    int enhOptMaxIters_;
+    long enhOptMaxIters_;
     std::vector<Layer> layers_;
-    std::vector<std::vector<std::string>> names_R_;
-    std::vector<std::vector<std::string>> names_r_;
+
+    static constexpr int kMatrixSize = 4;
+    std::array<std::array<std::string, kMatrixSize>, kMatrixSize> names_R_;
+    std::array<std::array<std::string, kMatrixSize>, kMatrixSize> names_r_;
+
     Matrix4cd A_;
     bool needToSolve_;
     bool needToCalcFieldCoefs_;
-    Vector2d lastFieldCoefsPol_;
+    RowVector2d lastFieldCoefsPol_;
     Matrix4d R_;
     Matrix4cd r_;
 
@@ -52,7 +56,7 @@ private:
     MatrixXcd fieldCoefs_;
 
     void Solve();
-    void CalcFieldCoefs(const Vector2d& polarization);
+    void CalcFieldCoefs(const RowVector2d& polarization);
     LayerIndices CalcLayerIndices(const Eigen::Map<Eigen::ArrayXd>& xs);
 };
 
@@ -67,13 +71,13 @@ public:
     using DataType = double;
     using ParameterType = VectorXd;
 
+    // Non-owning pointer. Lifetime managed by caller.
     EnhFitStruct(Tmm* tmm, const std::vector<Param>& optParams, const PositionSettings& enhpos);
 
     DataType operator()(const ParameterType& params) const {
         SetParams(params);
         EMFields r = tmm_->CalcFieldsAtInterface(enhPos_, WaveDirection::WD_BOTH);
-        double res = -r.E.matrix().norm();
-        return res;
+        return -r.E.matrix().norm();
     }
 
 private:
@@ -82,4 +86,4 @@ private:
     PositionSettings enhPos_;
     void SetParams(const ParameterType& params) const;
 };
-} // namespace TmmModel
+} // namespace tmm

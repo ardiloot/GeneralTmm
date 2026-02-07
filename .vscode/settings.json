@@ -13,9 +13,15 @@
         "colorbar",
         "dcomplex",
         "Eigen",
+        "Einc",
         "enhpos",
+        "enhs",
         "figsize",
+        "invr",
         "linalg",
+        "matx",
+        "maty",
+        "matz",
         "pcolormesh",
         "plasmons",
         "poynting",
@@ -23,8 +29,5 @@
         "twinx",
         "xlabel",
         "ylabel"
-    ],
-    "chat.tools.terminal.autoApprove": {
-        "pip": true
-    }
+    ]
 }

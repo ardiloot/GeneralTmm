@@ -1,6 +1,6 @@
 #include "Common.h"
 
-namespace TmmModel {
+namespace tmm {
 
 template <typename T> T Interpolate(double x, const ArrayXd& xs, const Eigen::Array<T, Eigen::Dynamic, 1>& ys) {
     // xs must be sorted
@@ -70,15 +70,14 @@ int Param::GetLayerID() const noexcept {
     return layerId_;
 }
 PositionSettings::PositionSettings(const RowVector2d& polarization, int interfaceId, double distFromInterface)
-    : enabled_(true), polarization_(polarization), interfaceId_(interfaceId),
-      distFromInterface_(distFromInterface) {}
+    : enabled_(true), polarization_(polarization), interfaceId_(interfaceId), distFromInterface_(distFromInterface) {}
 
 PositionSettings::PositionSettings(double polCoef1, double polCoef2, int interfaceId, double distFromInterface)
     : enabled_(true), polarization_{polCoef1, polCoef2}, interfaceId_(interfaceId),
       distFromInterface_(distFromInterface) {}
 
 PositionSettings::PositionSettings() = default;
-RowVector2d PositionSettings::GetPolarization() const noexcept {
+const RowVector2d& PositionSettings::GetPolarization() const noexcept {
     return polarization_;
 }
 int PositionSettings::GetInterfaceId() const noexcept {
@@ -90,4 +89,4 @@ double PositionSettings::GetDistFromInterface() const noexcept {
 bool PositionSettings::IsEnabled() const noexcept {
     return enabled_;
 }
-} // namespace TmmModel
+} // namespace tmm

@@ -1,7 +1,7 @@
 #include "Material.h"
 #include <utility>
 
-namespace TmmModel {
+namespace tmm {
 
 Material::Material(dcomplex staticN) noexcept : staticN_(staticN) {}
 
@@ -35,4 +35,4 @@ bool Material::IsStatic() const noexcept {
     return isStatic_;
 }
 
-} // namespace TmmModel
+} // namespace tmm

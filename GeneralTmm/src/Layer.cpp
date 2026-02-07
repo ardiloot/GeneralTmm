@@ -1,7 +1,7 @@
 #include "Layer.h"
 #include <sstream>
 
-namespace TmmModel {
+namespace tmm {
 
 //---------------------------------------------------------------------
 // Layer
@@ -12,7 +12,7 @@ Layer::Layer(double d, Material* n) : isotropicLayer_(true), d_(d), nx_(n), ny_(
 Layer::Layer(double d, Material* nx, Material* ny, Material* nz, double psi, double xi)
     : isotropicLayer_(false), d_(d), nx_(nx), ny_(ny), nz_(nz), psi_(psi), xi_(xi) {}
 
-void Layer::SetParam(Param param, int value) {
+void Layer::SetParam(Param param, [[maybe_unused]] int value) {
     switch (param.GetParamType()) {
     default:
         throw std::invalid_argument("Invalid layer param int");
@@ -140,7 +140,7 @@ void Layer::SolveLayer(double wl, double beta) {
 
     // Phase matrix
     phaseMatrix_.setIdentity();
-    if (d_ != std::numeric_limits<double>::infinity()) {
+    if (!std::isinf(d_)) {
         dcomplex expParam = 2.0 * PI / wl * d_ * (-I);
         for (int i = 0; i < 4; i++) {
             phaseMatrix_(i, i) = exp(expParam * alpha_(i));
@@ -159,7 +159,8 @@ void Layer::SolveLayer(double wl, double beta) {
     solved_ = true;
 }
 
-EMFields Layer::GetFields(double wl, double beta, double x, const Vector4cd& coefs, WaveDirection waveDirection) const {
+EMFields Layer::GetFields(double wl, double beta, double x, const Eigen::Ref<const Vector4cd>& coefs,
+                          WaveDirection waveDirection) const {
     EMFields res;
     res.E.setZero();
     res.H.setZero();
@@ -326,4 +327,4 @@ void Layer::SolveEigenFunction(double beta) {
         F_.col(i) = eigenvectors.col(index);
     }
 }
-} // namespace TmmModel
+} // namespace tmm

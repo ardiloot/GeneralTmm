@@ -21,7 +21,7 @@ extensions = cythonize(
                 "GeneralTmm/src/Common.cpp",
                 "GeneralTmm/src/Layer.cpp",
                 "GeneralTmm/src/Material.cpp",
-                "GeneralTmm/src/tmm.cpp",
+                "GeneralTmm/src/Tmm.cpp",
             ],
             include_dirs=[np.get_include(), "GeneralTmm/src", "GeneralTmm/src/Simplex"] + eigency.get_includes(),
             language="c++",

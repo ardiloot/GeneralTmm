@@ -1,7 +1,7 @@
 #pragma once
 #include "Common.h"
 
-namespace TmmModel {
+namespace tmm {
 
 //---------------------------------------------------------------------
 // Material
@@ -24,4 +24,4 @@ private:
 };
 
 
-} // namespace TmmModel
+} // namespace tmm

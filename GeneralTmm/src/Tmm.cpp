@@ -1,8 +1,8 @@
-#include "tmm.h"
-#include "simplex.h"
+#include "Tmm.h"
 #include "criteria.h"
+#include "simplex.h"
 
-namespace TmmModel {
+namespace tmm {
 
 //---------------------------------------------------------------------
 // Tmm
@@ -11,11 +11,9 @@ namespace TmmModel {
 Tmm::Tmm()
     : wl_(500e-9), beta_(0.0), enhOptMaxRelError_(1e-10), enhOptInitialStep_(0.1), enhOptMaxIters_(100),
       needToSolve_(true), needToCalcFieldCoefs_(true), normCoef_(0.0) {
-    names_R_ = std::vector<std::vector<std::string>>(4, std::vector<std::string>(4));
-    names_r_ = std::vector<std::vector<std::string>>(4, std::vector<std::string>(4));
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            std::string numbers = std::to_string(i + 1) + std::to_string(j + 1);
+    for (int i = 0; i < kMatrixSize; i++) {
+        for (int j = 0; j < kMatrixSize; j++) {
+            auto numbers = std::to_string(i + 1) + std::to_string(j + 1);
             if ((i < 2 && j < 2) || (i >= 2 && j >= 2)) {
                 names_R_[i][j] = "R" + numbers;
                 names_r_[i][j] = "r" + numbers;
@@ -32,7 +30,7 @@ void Tmm::SetParam(Param param, int value) {
     if (param.GetLayerID() < 0) {
         switch (param.GetParamType()) {
         case ParamType::ENH_OPT_MAX_ITERS:
-            enhOptMaxIters_ = value;
+            enhOptMaxIters_ = static_cast<long>(value);
             break;
         default:
             throw std::invalid_argument("Invalid param int");
@@ -79,7 +77,7 @@ int Tmm::GetParamInt(Param param) const {
     if (param.GetLayerID() < 0) {
         switch (param.GetParamType()) {
         case ParamType::ENH_OPT_MAX_ITERS:
-            return enhOptMaxIters_;
+            return static_cast<int>(enhOptMaxIters_);
         default:
             throw std::invalid_argument("Get invalid param int");
         }
@@ -130,12 +128,12 @@ void Tmm::ClearLayers() noexcept {
     needToSolve_ = true;
 }
 
-Eigen::Matrix4d Tmm::GetIntensityMatrix() {
+const Eigen::Matrix4d& Tmm::GetIntensityMatrix() {
     Solve();
     return R_;
 }
 
-Eigen::Matrix4cd Tmm::GetAmplitudeMatrix() {
+const Eigen::Matrix4cd& Tmm::GetAmplitudeMatrix() {
     Solve();
     return r_;
 }
@@ -200,11 +198,10 @@ void Tmm::Solve() {
 SweepRes Tmm::Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd>& sweepValues, const PositionSettings& enhpos,
                     int alphasLayer) {
     SweepRes res;
-    ComplexVectorMap& resComplex = res.mapComplex;
-    DoubleVectorMap& resDouble = res.mapDouble;
-    DoubleVectorMap::iterator data_R[4][4];
-    ComplexVectorMap::iterator data_r[4][4];
-
+    auto& resComplex = res.mapComplex;
+    auto& resDouble = res.mapDouble;
+    DoubleVectorMap::iterator data_R[kMatrixSize][kMatrixSize];
+    ComplexVectorMap::iterator data_r[kMatrixSize][kMatrixSize];
 
     ComplexVectorMap::iterator alphas0;
     ComplexVectorMap::iterator alphas1;
@@ -213,10 +210,10 @@ SweepRes Tmm::Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd>& sweepVal
     bool alphasEnabled = (alphasLayer >= 0);
 
     if (alphasEnabled) {
-        alphas0 = resComplex.insert(std::make_pair("alphas0", ArrayXcd(sweepValues.size()))).first;
-        alphas1 = resComplex.insert(std::make_pair("alphas1", ArrayXcd(sweepValues.size()))).first;
-        alphas2 = resComplex.insert(std::make_pair("alphas2", ArrayXcd(sweepValues.size()))).first;
-        alphas3 = resComplex.insert(std::make_pair("alphas3", ArrayXcd(sweepValues.size()))).first;
+        alphas0 = resComplex.try_emplace("alphas0", sweepValues.size()).first;
+        alphas1 = resComplex.try_emplace("alphas1", sweepValues.size()).first;
+        alphas2 = resComplex.try_emplace("alphas2", sweepValues.size()).first;
+        alphas3 = resComplex.try_emplace("alphas3", sweepValues.size()).first;
     }
 
     DoubleVectorMap::iterator enhs;
@@ -225,24 +222,25 @@ SweepRes Tmm::Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd>& sweepVal
     DoubleVectorMap::iterator enhEzs;
 
     if (enhpos.IsEnabled()) {
-        enhs = resDouble.insert(std::make_pair("enh", ArrayXd(sweepValues.size()))).first;
-        enhExs = resDouble.insert(std::make_pair("enhEx", ArrayXd(sweepValues.size()))).first;
-        enhEys = resDouble.insert(std::make_pair("enhEy", ArrayXd(sweepValues.size()))).first;
-        enhEzs = resDouble.insert(std::make_pair("enhEz", ArrayXd(sweepValues.size()))).first;
+        enhs = resDouble.try_emplace("enh", sweepValues.size()).first;
+        enhExs = resDouble.try_emplace("enhEx", sweepValues.size()).first;
+        enhEys = resDouble.try_emplace("enhEy", sweepValues.size()).first;
+        enhEzs = resDouble.try_emplace("enhEz", sweepValues.size()).first;
     }
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < kMatrixSize; i++) {
         for (int j = 0; j < 2; j++) {
-            data_R[i][j] = resDouble.insert(std::make_pair(names_R_[i][j], ArrayXd(sweepValues.size()))).first;
-            data_r[i][j] = resComplex.insert(std::make_pair(names_r_[i][j], ArrayXcd(sweepValues.size()))).first;
+            data_R[i][j] = resDouble.try_emplace(names_R_[i][j], sweepValues.size()).first;
+            data_r[i][j] = resComplex.try_emplace(names_r_[i][j], sweepValues.size()).first;
         }
     }
 
+    EMFields fields;
     for (Eigen::Index i = 0; i < sweepValues.size(); i++) {
         SetParam(sweepParam, sweepValues[i]);
         Solve();
 
-        for (int j = 0; j < 4; j++) {
+        for (int j = 0; j < kMatrixSize; j++) {
             for (int k = 0; k < 2; k++) {
                 data_R[j][k]->second(i) = R_(j, k);
                 data_r[j][k]->second(i) = r_(j, k);
@@ -257,7 +255,7 @@ SweepRes Tmm::Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd>& sweepVal
         }
 
         if (enhpos.IsEnabled()) {
-            EMFields fields = CalcFieldsAtInterface(enhpos, WaveDirection::WD_BOTH);
+            fields = CalcFieldsAtInterface(enhpos, WaveDirection::WD_BOTH);
             enhs->second(i) = fields.E.matrix().norm();
             enhExs->second(i) = abs(fields.E(0));
             enhEys->second(i) = abs(fields.E(1));
@@ -276,7 +274,8 @@ SweepRes Tmm::Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd>& sweepVal
 EMFieldsList Tmm::CalcFields1D(const Eigen::Map<Eigen::ArrayXd>& xs, const Eigen::Map<Eigen::Array2d>& polarization,
                                WaveDirection waveDirection) {
     Solve();
-    CalcFieldCoefs(polarization);
+    RowVector2d pol(polarization(0), polarization(1));
+    CalcFieldCoefs(pol);
 
     EMFieldsList res(xs.size());
     LayerIndices layerP = CalcLayerIndices(xs);
@@ -325,7 +324,7 @@ double Tmm::OptimizeEnhancement(const std::vector<Param>& optParams, const Eigen
 
     fitFunc.SetParams(optimizer.get_best_parameters());
     double res = -optimizer.get_best_value();
-    int nIterations = optimizer.get_number_of_iterations();
+    long nIterations = optimizer.get_number_of_iterations();
 
     if (nIterations >= enhOptMaxIters_) {
         throw std::runtime_error("Maximum number of iterations reached: " + std::to_string(nIterations) + "/" +
@@ -335,7 +334,7 @@ double Tmm::OptimizeEnhancement(const std::vector<Param>& optParams, const Eigen
     return res;
 }
 
-void Tmm::CalcFieldCoefs(const Eigen::Vector2d& polarization) {
+void Tmm::CalcFieldCoefs(const RowVector2d& polarization) {
     if (!needToCalcFieldCoefs_ && polarization == lastFieldCoefsPol_) {
         return;
     }
@@ -379,14 +378,15 @@ LayerIndices Tmm::CalcLayerIndices(const Eigen::Map<Eigen::ArrayXd>& xs) {
     int curLayer = 0;
     double curDist = 0.0;
     double prevDist = 0.0;
+    int numLayers = static_cast<int>(layers_.size());
 
     for (Eigen::Index i = 0; i < xs.size(); i++) {
         while (xs[i] >= curDist) {
             curLayer++;
             prevDist = curDist;
-            if (curLayer >= static_cast<int>(layers_.size()) - 1) {
+            if (curLayer >= numLayers - 1) {
                 curDist = std::numeric_limits<double>::infinity();
-                curLayer = layers_.size() - 1;
+                curLayer = numLayers - 1;
             }
             curDist += layers_[curLayer].GetD();
         }
@@ -403,4 +403,4 @@ void EnhFitStruct::SetParams(const ParameterType& params) const {
         tmm_->SetParam(optParams_[i], params[i]);
     }
 }
-} // namespace TmmModel
+} // namespace tmm

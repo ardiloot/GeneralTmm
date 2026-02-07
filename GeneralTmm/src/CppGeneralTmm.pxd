@@ -8,61 +8,61 @@ from eigency.core cimport *
 # Common.h
 #===============================================================================
         
-cdef extern from "Common.h" namespace "TmmModel":
+cdef extern from "Common.h" namespace "tmm":
     
-    cdef enum ParamTypeCpp "TmmModel::ParamType":
-        WL "TmmModel::ParamType::WL",
-        BETA "TmmModel::ParamType::BETA",
-        ENH_OPT_REL "TmmModel::ParamType::ENH_OPT_REL",
-        ENH_OPT_MAX_ITERS "TmmModel::ParamType::ENH_OPT_MAX_ITERS",
-        ENH_INITIAL_STEP "TmmModel::ParamType::ENH_INITIAL_STEP",
-        LAYER_D "TmmModel::ParamType::LAYER_D",
-        LAYER_N "TmmModel::ParamType::LAYER_N",
-        LAYER_NX "TmmModel::ParamType::LAYER_NX",
-        LAYER_NY "TmmModel::ParamType::LAYER_NY",
-        LAYER_NZ "TmmModel::ParamType::LAYER_NZ",
-        LAYER_PSI "TmmModel::ParamType::LAYER_PSI",
-        LAYER_XI "TmmModel::ParamType::LAYER_XI",
-        LAYER_MAT_NX "TmmModel::ParamType::LAYER_MAT_NX",
-        LAYER_MAT_NY "TmmModel::ParamType::LAYER_MAT_NY",
-        LAYER_MAT_NZ "TmmModel::ParamType::LAYER_MAT_NZ",
-        NOT_DEFINED "TmmModel::ParamType::NOT_DEFINED"
+    cdef enum ParamTypeCpp "tmm::ParamType":
+        WL "tmm::ParamType::WL",
+        BETA "tmm::ParamType::BETA",
+        ENH_OPT_REL "tmm::ParamType::ENH_OPT_REL",
+        ENH_OPT_MAX_ITERS "tmm::ParamType::ENH_OPT_MAX_ITERS",
+        ENH_INITIAL_STEP "tmm::ParamType::ENH_INITIAL_STEP",
+        LAYER_D "tmm::ParamType::LAYER_D",
+        LAYER_N "tmm::ParamType::LAYER_N",
+        LAYER_NX "tmm::ParamType::LAYER_NX",
+        LAYER_NY "tmm::ParamType::LAYER_NY",
+        LAYER_NZ "tmm::ParamType::LAYER_NZ",
+        LAYER_PSI "tmm::ParamType::LAYER_PSI",
+        LAYER_XI "tmm::ParamType::LAYER_XI",
+        LAYER_MAT_NX "tmm::ParamType::LAYER_MAT_NX",
+        LAYER_MAT_NY "tmm::ParamType::LAYER_MAT_NY",
+        LAYER_MAT_NZ "tmm::ParamType::LAYER_MAT_NZ",
+        NOT_DEFINED "tmm::ParamType::NOT_DEFINED"
     
     #---------------------------------------------------------------------------
         
-    cdef enum WaveDirectionCpp "TmmModel::WaveDirection":
-        WD_FORWARD "TmmModel::WaveDirection::WD_FORWARD",
-        WD_BACKWARD "TmmModel::WaveDirection::WD_BACKWARD",
-        WD_BOTH "TmmModel::WaveDirection::WD_BOTH"
+    cdef enum WaveDirectionCpp "tmm::WaveDirection":
+        WD_FORWARD "tmm::WaveDirection::WD_FORWARD",
+        WD_BACKWARD "tmm::WaveDirection::WD_BACKWARD",
+        WD_BOTH "tmm::WaveDirection::WD_BOTH"
     
     #---------------------------------------------------------------------------
     
-    cdef cppclass ParamCpp "TmmModel::Param":
+    cdef cppclass ParamCpp "tmm::Param":
             ParamCpp() except +
             ParamCpp(ParamTypeCpp pType) except +
             ParamCpp(ParamTypeCpp pType, int layerId) except +
     
     #--------------------------------------------------------------------------- 
     
-    cdef cppclass PositionSettingsCpp "TmmModel::PositionSettings":
+    cdef cppclass PositionSettingsCpp "tmm::PositionSettings":
         PositionSettingsCpp() except +
         PositionSettingsCpp(double polCoef1, double polCoef2, int interfaceId, double distFromInterface) except +
             
     #--------------------------------------------------------------------------- 
 
-    cdef cppclass SweepResCpp "TmmModel::SweepRes":
+    cdef cppclass SweepResCpp "tmm::SweepRes":
         map[string, ArrayXcd] mapComplex
         map[string, ArrayXd] mapDouble
     
     #---------------------------------------------------------------------------
     
-    cdef cppclass EMFieldsCpp "TmmModel::EMFields":
+    cdef cppclass EMFieldsCpp "tmm::EMFields":
         ArrayXcd E
         ArrayXcd H
     
     #---------------------------------------------------------------------------
     
-    cdef cppclass EMFieldsListCpp "TmmModel::EMFieldsList":
+    cdef cppclass EMFieldsListCpp "tmm::EMFieldsList":
         MatrixXcd E
         MatrixXcd H
         
@@ -70,20 +70,20 @@ cdef extern from "Common.h" namespace "TmmModel":
 # Material.h
 #===============================================================================
         
-cdef extern from "Material.h" namespace "TmmModel":        
+cdef extern from "Material.h" namespace "tmm":        
     
-    cdef cppclass MaterialCpp "TmmModel::Material":
+    cdef cppclass MaterialCpp "tmm::Material":
         MaterialCpp() except +
         MaterialCpp(Map[ArrayXd] & wlsExp, Map[ArrayXcd] & nsExp) except +
         double complex n(double wl) except +
             
 #===============================================================================
-# tmm.h
+# Tmm.h
 #===============================================================================
         
-cdef extern from "tmm.h" namespace "TmmModel":
+cdef extern from "Tmm.h" namespace "tmm":
 
-    cdef cppclass TmmCpp "TmmModel::Tmm":
+    cdef cppclass TmmCpp "tmm::Tmm":
         Tmm() except +
         
         void SetParam(ParamCpp ParamCpp, int value) except +

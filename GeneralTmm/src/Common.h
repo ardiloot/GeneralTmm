@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <Eigen/Dense>
 
-namespace TmmModel {
+namespace tmm {
 //---------------------------------------------------------------
 // Namespaces
 //---------------------------------------------------------------
@@ -118,7 +118,7 @@ struct PositionSettings {
     PositionSettings();
     PositionSettings(const RowVector2d& polarization, int interfaceId, double distFromInterface);
     PositionSettings(double polCoef1, double polCoef2, int interfaceId, double distFromInterface);
-    [[nodiscard]] RowVector2d GetPolarization() const noexcept;
+    [[nodiscard]] const RowVector2d& GetPolarization() const noexcept;
     [[nodiscard]] int GetInterfaceId() const noexcept;
     [[nodiscard]] double GetDistFromInterface() const noexcept;
     [[nodiscard]] bool IsEnabled() const noexcept;
@@ -172,4 +172,4 @@ struct SweepRes {
 };
 
 
-} // namespace TmmModel
+} // namespace tmm
