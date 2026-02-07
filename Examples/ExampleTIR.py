@@ -11,32 +11,32 @@ from GeneralTmm import Material, Tmm
 
 
 def main():
-    prismN = Material.Static(1.5)
-    substrateN = Material.Static(1.0)
+    prism = Material.Static(1.5)
+    substrate = Material.Static(1.0)
 
     wl = 532e-9  # green laser
     betas = np.linspace(0.0, 1.49, 100)  # beta = n*sin(theta)
-    angles = np.arcsin(betas / prismN(wl).real)
+    angles = np.arcsin(betas / prism(wl).real)
 
     tmm = Tmm(wl=wl)
-    tmm.AddIsotropicLayer(float("inf"), prismN)
-    tmm.AddIsotropicLayer(float("inf"), substrateN)
+    tmm.AddIsotropicLayer(float("inf"), prism)
+    tmm.AddIsotropicLayer(float("inf"), substrate)
     sr = tmm.Sweep("beta", betas)
 
     # Plot
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
-    fig.suptitle("Total Internal Reflection", fontsize=14)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
+    fig.suptitle("Total Internal Reflection", fontsize=13)
 
-    ax1.set_title("Reflection")
-    ax1.plot(np.degrees(angles), sr["R11"], label="p-pol")
-    ax1.plot(np.degrees(angles), sr["R22"], label="s-pol")
+    ax1.set_title("(a)  Reflection")
+    ax1.plot(np.degrees(angles), sr["R11"], label=r"R$_{pp}$")
+    ax1.plot(np.degrees(angles), sr["R22"], label=r"R$_{ss}$")
     ax1.set_xlabel(r"$\theta$ ($\degree$)")
     ax1.set_ylabel("Reflectance")
     ax1.legend()
 
-    ax2.set_title("Transmission")
-    ax2.plot(np.degrees(angles), sr["T31"], label="p-pol")
-    ax2.plot(np.degrees(angles), sr["T42"], label="s-pol")
+    ax2.set_title("(b)  Transmission")
+    ax2.plot(np.degrees(angles), sr["T31"], label=r"T$_{pp}$")
+    ax2.plot(np.degrees(angles), sr["T42"], label=r"T$_{ss}$")
     ax2.set_xlabel(r"$\theta$ ($\degree$)")
     ax2.set_ylabel("Transmittance")
     ax2.legend()

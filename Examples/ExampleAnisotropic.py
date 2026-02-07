@@ -37,8 +37,12 @@ def main():
     sr_qwp = build_plate(d_qwp)
 
     # Plot
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 7), sharex=True)
-    fig.suptitle("Wave plates: polarization conversion vs plate angle", fontsize=14)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 5.5), sharex=True)
+    fig.suptitle("Wave plates: polarization conversion vs plate angle", fontsize=13)
+
+    for ax in (ax1, ax2):
+        for deg in [0, 45, 90, 135, 180]:
+            ax.axvline(deg, ls="--", color="gray", lw=0.5)
 
     ax1.plot(np.degrees(xi_values), sr_hwp["T31"], label=r"T$_{pp}$ (p→p)")
     ax1.plot(np.degrees(xi_values), sr_hwp["T41"], label=r"T$_{ps}$ (p→s)")

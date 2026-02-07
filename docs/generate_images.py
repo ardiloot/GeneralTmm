@@ -1,5 +1,6 @@
 """Generate README images by running each example and saving the figures."""
 
+import importlib
 import os
 import sys
 
@@ -14,47 +15,39 @@ IMAGES_DIR = os.path.join(os.path.dirname(__file__), "images")
 # Add project root so examples can be imported
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-
-def save_open_figures(prefix):
-    """Save all open matplotlib figures and close them."""
-    os.makedirs(IMAGES_DIR, exist_ok=True)
-    figs = [plt.figure(n) for n in plt.get_fignums()]
-    if len(figs) == 1:
-        path = os.path.join(IMAGES_DIR, f"{prefix}.png")
-        figs[0].savefig(path, dpi=150, bbox_inches="tight")
-        print(f"  {path}")
-    else:
-        for i, fig in enumerate(figs, 1):
-            path = os.path.join(IMAGES_DIR, f"{prefix}_{i}.png")
-            fig.savefig(path, dpi=150, bbox_inches="tight")
-            print(f"  {path}")
-    plt.close("all")
-
-
 # Monkey-patch plt.show so examples don't block
 plt.show = lambda *args, **kwargs: None
 
-print("Generating README images...")
+# (module path, list of output filenames — one per figure the example creates)
+EXAMPLES = [
+    ("Examples.ExampleTIR", ["tir_reflection"]),
+    ("Examples.ExampleSPP", ["spp_reflection", "spp_fields_2d"]),
+    ("Examples.ExampleFilter", ["filter_dielectric"]),
+    ("Examples.ExampleAnisotropic", ["anisotropic_wave_plates"]),
+    ("Examples.ExampleCholesteric", ["cholesteric_bragg"]),
+    ("Examples.ExampleDSPP", ["dspp_leaky"]),
+]
 
-from Examples.ExampleTIR import main as tir_main  # noqa: E402
 
-tir_main()
-save_open_figures("tir_reflection")
+def run_and_save(module_path: str, names: list[str]) -> None:
+    """Import an example, call its main(), and save all open figures."""
+    mod = importlib.import_module(module_path)
+    mod.main()
 
-from Examples.ExampleSPP import main  # noqa: E402
+    os.makedirs(IMAGES_DIR, exist_ok=True)
+    figs = [plt.figure(n) for n in plt.get_fignums()]
+    if len(figs) != len(names):
+        raise RuntimeError(f"{module_path}: expected {len(names)} figure(s), got {len(figs)}")
+    for fig, name in zip(figs, names):
+        path = os.path.join(IMAGES_DIR, f"{name}.png")
+        fig.savefig(path, dpi=150, bbox_inches="tight")
+        print(f"  {path}")
+    plt.close("all")
 
-main()
-figs = [plt.figure(n) for n in plt.get_fignums()]
-os.makedirs(IMAGES_DIR, exist_ok=True)
-for name, fig in zip(["spp_reflection", "spp_fields_1d", "spp_fields_2d"], figs):
-    path = os.path.join(IMAGES_DIR, f"{name}.png")
-    fig.savefig(path, dpi=150, bbox_inches="tight")
-    print(f"  {path}")
-plt.close("all")
 
-from Examples.ExampleAnisotropic import main as aniso_main  # noqa: E402
-
-aniso_main()
-save_open_figures("anisotropic_wave_plates")
-
-print("Done.")
+if __name__ == "__main__":
+    print("Generating README images...")
+    for module_path, names in EXAMPLES:
+        print(f"  Running {module_path}...")
+        run_and_save(module_path, names)
+    print("Done.")
