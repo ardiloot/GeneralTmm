@@ -476,7 +476,6 @@ class TestCrossPolarization:
             res = tmm.Sweep("beta", betas, (pol, -1, 0.0))
             resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=-1, enhDist=0.0)
 
-            # Cross-polarization terms are key for anisotropic layers
             for k in ["R12", "R21", "T32", "T41"]:
                 np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7, atol=1e-14)
 
@@ -510,14 +509,12 @@ class TestOptimizeEnhancement:
         silver = Material(SILVER_WLS_FULL, SILVER_NS_FULL)
         n_ag = silver(wl)
 
-        # Setup C++ TMM
         tmm = Tmm()
         tmm.SetParams(wl=wl)
         tmm.AddIsotropicLayer(float("inf"), Material.Static(1.5))
         tmm.AddIsotropicLayer(50e-9, Material(SILVER_WLS_FULL, SILVER_NS_FULL))
         tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
 
-        # Setup Python TMM
         oldTmm = TmmPy()
         oldTmm.SetConf(wl=wl)
         oldTmm.AddIsotropicLayer(float("inf"), 1.5)
@@ -527,12 +524,10 @@ class TestOptimizeEnhancement:
         pol = (1.0, 0.0)
         enhPos = (pol, 2, 0.0)
 
-        # Sweep beta values around SPP resonance
         betas = np.linspace(1.01, 1.3, 30)
         res = tmm.Sweep("beta", betas, enhPos)
         resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=2, enhDist=0.0)
 
-        # Enhancement values should match
         np.testing.assert_allclose(res["enh"], resOld["enh"], rtol=1e-7)
 
 
@@ -541,7 +536,6 @@ class TestWavelengthSweep:
 
     def test_wl_sweep_simple(self):
         """Test sweeping over wavelength parameter."""
-        # This tests the "wl" sweep parameter which is different from beta sweep
         wls = np.linspace(500e-9, 700e-9, 10)
 
         tmm = Tmm()
@@ -552,11 +546,8 @@ class TestWavelengthSweep:
 
         res = tmm.Sweep("wl", wls)
 
-        # Check that results have correct length
         assert len(res["R11"]) == len(wls)
         assert len(res["T31"]) == len(wls)
-
-        # R and T should be bounded
         assert np.all(res["R11"] >= 0)
         assert np.all(res["R11"] <= 1)
         assert np.all(res["T31"] >= 0)
@@ -568,17 +559,13 @@ class TestMaterialInterpolation:
     def test_material_interpolation(self):
         """Test that Material interpolates correctly at intermediate wavelengths."""
         mat = Material(SILVER_WLS_FULL, SILVER_NS_FULL)
-
-        # Test at a known data point
         n_500 = mat(500e-9)
         assert n_500.real == pytest.approx(0.050, rel=0.01)
         assert n_500.imag == pytest.approx(3.131, rel=0.01)
 
-        # Test interpolation between points - just verify finite values
         n_550 = mat(550e-9)
         assert np.isfinite(n_550.real)
         assert np.isfinite(n_550.imag)
-        # Verify imaginary part is reasonable (between nearby data points)
         assert n_550.imag > 3.0
         assert n_550.imag < 5.0
 

@@ -38,7 +38,6 @@ class TestMaterialClass:
     def test_material_creation(self):
         """Test basic Material creation with wavelength and n data."""
         mat = Material(SILVER_WLS, SILVER_NS)
-        # Should be callable
         n = mat(500e-9)
         assert np.isfinite(n.real)
         assert np.isfinite(n.imag)
@@ -59,13 +58,10 @@ class TestMaterialClass:
     def test_material_interpolation(self):
         """Test that Material interpolates at intermediate wavelengths."""
         mat = Material(SILVER_WLS, SILVER_NS)
-
-        # Test at a known data point
         n_500 = mat(500e-9)
         assert n_500.real == pytest.approx(0.050, rel=0.01)
         assert n_500.imag == pytest.approx(3.131, rel=0.01)
 
-        # Test interpolation between points
         n_550 = mat(550e-9)
         assert np.isfinite(n_550.real)
         assert np.isfinite(n_550.imag)
@@ -84,7 +80,6 @@ class TestTmmLayerManagement:
         tmm.AddIsotropicLayer(100e-9, Material.Static(1.8))
         tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
 
-        # Should be able to compute
         tmm.SetParams(beta=0.3)
         R = tmm.GetIntensityMatrix()
         assert R.shape == (4, 4)
@@ -99,8 +94,8 @@ class TestTmmLayerManagement:
             Material.Static(1.55),
             Material.Static(1.58),
             Material.Static(1.62),
-            np.pi / 4,  # psi
-            np.pi / 6,  # xi
+            np.pi / 4,
+            np.pi / 6,
         )
         tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
 
@@ -120,14 +115,12 @@ class TestTmmLayerManagement:
         res1 = tmm.Sweep("beta", betas)
         r11_original = res1["R11"].copy()
 
-        # Clear and add different structure
         tmm.ClearLayers()
         tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
         tmm.AddIsotropicLayer(float("inf"), Material.Static(1.5))
 
         res2 = tmm.Sweep("beta", betas)
 
-        # Results should be different
         assert not np.allclose(r11_original, res2["R11"], rtol=0.01)
 
 
@@ -171,10 +164,9 @@ class TestSweepFunctions:
         tmm.AddIsotropicLayer(float("inf"), Material.Static(1.5))
         tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
 
-        betas = np.linspace(0.0, 0.95, 20)  # Must be < n_substrate (1.0)
+        betas = np.linspace(0.0, 0.95, 20)
         res = tmm.Sweep("beta", betas)
 
-        # Check results can be accessed and have correct length
         assert len(res["R11"]) == len(betas)
         assert len(res["R22"]) == len(betas)
         assert len(res["T31"]) == len(betas)
@@ -202,13 +194,12 @@ class TestSweepFunctions:
         tmm.AddIsotropicLayer(100e-9, Material.Static(1.8))
         tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
 
-        betas = np.linspace(0.0, 0.95, 20)  # Must be < n_substrate (1.0)
+        betas = np.linspace(0.0, 0.95, 20)
         pol = (1.0, 0.0)
         enhPos = (pol, 2, 0.0)
 
         res = tmm.Sweep("beta", betas, enhPos)
 
-        # Check enhancement results
         assert len(res["enh"]) == len(betas)
         assert np.all(res["enh"] >= 0)
 
@@ -327,7 +318,6 @@ class TestMatrixAccess:
 
         R = tmm.GetIntensityMatrix()
 
-        # Diagonal elements should be non-negative (intensities)
         assert R[0, 0] >= 0
         assert R[1, 1] >= 0
 

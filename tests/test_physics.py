@@ -37,9 +37,7 @@ class TestEnergyConservation:
         betas = np.linspace(0.0, min(n1, n2) - 0.01, 20)
         res = tmm.Sweep("beta", betas)
 
-        # For p-polarization: R11 + T31 = 1
         np.testing.assert_allclose(res["R11"] + res["T31"], 1.0, rtol=1e-10)
-        # For s-polarization: R22 + T42 = 1
         np.testing.assert_allclose(res["R22"] + res["T42"], 1.0, rtol=1e-10)
 
     def test_energy_conservation_thin_film(self):
@@ -92,8 +90,6 @@ class TestFresnelEquations:
         tmm.AddIsotropicLayer(float("inf"), Material.Static(n2))
 
         R_matrix = tmm.GetIntensityMatrix()
-
-        # Analytic Fresnel reflection at normal incidence
         R_expected = ((n1 - n2) / (n1 + n2)) ** 2
 
         np.testing.assert_allclose(R_matrix[0, 0], R_expected, rtol=1e-10)
@@ -120,23 +116,18 @@ class TestBrewsterAngle:
         tmm.AddIsotropicLayer(float("inf"), Material.Static(n1))
         tmm.AddIsotropicLayer(float("inf"), Material.Static(n2))
 
-        # Brewster angle: tan(theta_B) = n2/n1
         theta_brewster = np.arctan(n2 / n1)
         beta_brewster = n1 * np.sin(theta_brewster)
 
-        # Sweep around Brewster angle with fine resolution
         betas = np.linspace(0.0, 0.99, 200)
         res = tmm.Sweep("beta", betas)
 
-        # Find minimum in p-polarization reflection
         min_idx = np.argmin(res["R11"])
         beta_at_min = betas[min_idx]
         r_at_min = res["R11"][min_idx]
 
-        # Minimum should be near Brewster angle
         np.testing.assert_allclose(beta_at_min, beta_brewster, rtol=0.05)
-        # p-polarization reflection should be very small at Brewster angle
-        assert r_at_min < 1e-5  # Numerical precision limits
+        assert r_at_min < 1e-5
 
     def test_brewster_no_s_pol_minimum(self):
         """s-polarization should NOT have zero reflection at Brewster angle."""
@@ -151,12 +142,10 @@ class TestBrewsterAngle:
         theta_brewster = np.arctan(n2 / n1)
         beta_brewster = n1 * np.sin(theta_brewster)
 
-        # Set beta near Brewster angle
         tmm.SetParams(beta=beta_brewster)
         R = tmm.GetIntensityMatrix()
 
-        # s-polarization (R22) should have significant reflection
-        assert R[1, 1] > 0.01  # Should be around 7-8% for glass
+        assert R[1, 1] > 0.01
 
 
 class TestTotalInternalReflection:
@@ -175,14 +164,13 @@ class TestTotalInternalReflection:
         """Beyond critical angle, R should equal 1."""
         wl = 532e-9
         n1, n2 = 1.5, 1.0
-        beta_critical = n2  # Critical beta equals lower refractive index
+        beta_critical = n2
 
         tmm = Tmm()
         tmm.SetParams(wl=wl)
         tmm.AddIsotropicLayer(float("inf"), Material.Static(n1))
         tmm.AddIsotropicLayer(float("inf"), Material.Static(n2))
 
-        # Sweep beyond critical angle (beta > n2)
         betas = np.linspace(beta_critical + 0.01, n1 - 0.01, 20)
         res = tmm.Sweep("beta", betas)
 
@@ -217,18 +205,15 @@ class TestTotalInternalReflection:
         tmm.AddIsotropicLayer(float("inf"), Material.Static(n1))
         tmm.AddIsotropicLayer(float("inf"), Material.Static(n2))
 
-        # Sweep below and above critical angle (avoid exact critical point)
         betas_below = np.linspace(0.5, beta_critical - 0.05, 20)
         betas_above = np.linspace(beta_critical + 0.05, n1 - 0.1, 20)
 
         res_below = tmm.Sweep("beta", betas_below)
         res_above = tmm.Sweep("beta", betas_above)
 
-        # Below critical: R < 1 and T > 0
         assert np.all(res_below["R11"] < 1.0)
         assert np.all(res_below["T31"] > 0.0)
 
-        # Above critical: R = 1 and T = 0
         np.testing.assert_allclose(res_above["R11"], 1.0, rtol=1e-10)
         np.testing.assert_allclose(res_above["T31"], 0.0, atol=1e-10)
 
@@ -246,10 +231,7 @@ class TestQuarterWaveCoating:
         wl = 532e-9
         n_air = 1.0
         n_glass = 1.5
-
-        # Optimal coating: n_coating = sqrt(n_air * n_glass)
         n_coating = np.sqrt(n_air * n_glass)
-        # Quarter-wave thickness
         d_coating = wl / (4 * n_coating)
 
         tmm = Tmm()
@@ -260,7 +242,6 @@ class TestQuarterWaveCoating:
 
         R = tmm.GetIntensityMatrix()
 
-        # Reflection should be zero at design wavelength
         np.testing.assert_allclose(R[0, 0], 0.0, atol=1e-10)
         np.testing.assert_allclose(R[1, 1], 0.0, atol=1e-10)
 
@@ -278,13 +259,10 @@ class TestQuarterWaveCoating:
         tmm.AddIsotropicLayer(d_coating, Material.Static(n_coating))
         tmm.AddIsotropicLayer(float("inf"), Material.Static(n_glass))
 
-        # Check at design wavelength vs off-design
         wls = np.array([wl_design, 400e-9, 700e-9])
         res = tmm.Sweep("wl", wls)
 
-        # At design wavelength, R should be ~0
         assert res["R11"][0] < 1e-10
-        # Off design, R should be larger
         assert res["R11"][1] > 0.001
         assert res["R11"][2] > 0.001
 
@@ -308,9 +286,7 @@ class TestPolarizationSymmetry:
         betas = np.array([0.0])
         res = tmm.Sweep("beta", betas)
 
-        # At normal incidence, R11 should equal R22
         np.testing.assert_allclose(res["R11"], res["R22"], rtol=1e-10)
-        # And T31 should equal T42
         np.testing.assert_allclose(res["T31"], res["T42"], rtol=1e-10)
 
     def test_polarization_symmetry_multilayer(self):
