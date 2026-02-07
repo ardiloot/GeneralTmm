@@ -26,22 +26,74 @@ import pytest
 from GeneralTmm import Material, Tmm, TmmPy
 
 # Full silver data from Johnson and Christy (1972)
-SILVER_WLS_FULL = np.array([
-    4.0e-07, 4.2e-07, 4.4e-07, 4.6e-07, 4.8e-07, 5.0e-07, 5.2e-07, 5.4e-07,
-    5.6e-07, 5.8e-07, 6.0e-07, 6.2e-07, 6.4e-07, 6.6e-07, 6.8e-07, 7.0e-07,
-    7.2e-07, 7.4e-07, 7.6e-07, 7.8e-07, 8.0e-07, 8.2e-07, 8.4e-07, 8.6e-07,
-    8.8e-07, 9.0e-07, 9.2e-07, 9.4e-07, 9.6e-07, 9.8e-07,
-])
-SILVER_NS_FULL = np.array([
-    0.050 + 2.104j, 0.046 + 2.348j, 0.040 + 2.553j, 0.044 + 2.751j,
-    0.050 + 2.948j, 0.050 + 3.131j, 0.050 + 3.316j, 0.057 + 3.505j,
-    0.057 + 3.679j, 0.051 + 3.841j, 0.055 + 4.010j, 0.059 + 4.177j,
-    0.055 + 4.332j, 0.050 + 4.487j, 0.045 + 4.645j, 0.041 + 4.803j,
-    0.037 + 4.960j, 0.033 + 5.116j, 0.031 + 5.272j, 0.034 + 5.421j,
-    0.037 + 5.570j, 0.040 + 5.719j, 0.040 + 5.883j, 0.040 + 6.048j,
-    0.040 + 6.213j, 0.040 + 6.371j, 0.040 + 6.519j, 0.040 + 6.667j,
-    0.040 + 6.815j, 0.040 + 6.962j,
-])
+SILVER_WLS_FULL = np.array(
+    [
+        4.0e-07,
+        4.2e-07,
+        4.4e-07,
+        4.6e-07,
+        4.8e-07,
+        5.0e-07,
+        5.2e-07,
+        5.4e-07,
+        5.6e-07,
+        5.8e-07,
+        6.0e-07,
+        6.2e-07,
+        6.4e-07,
+        6.6e-07,
+        6.8e-07,
+        7.0e-07,
+        7.2e-07,
+        7.4e-07,
+        7.6e-07,
+        7.8e-07,
+        8.0e-07,
+        8.2e-07,
+        8.4e-07,
+        8.6e-07,
+        8.8e-07,
+        9.0e-07,
+        9.2e-07,
+        9.4e-07,
+        9.6e-07,
+        9.8e-07,
+    ]
+)
+SILVER_NS_FULL = np.array(
+    [
+        0.050 + 2.104j,
+        0.046 + 2.348j,
+        0.040 + 2.553j,
+        0.044 + 2.751j,
+        0.050 + 2.948j,
+        0.050 + 3.131j,
+        0.050 + 3.316j,
+        0.057 + 3.505j,
+        0.057 + 3.679j,
+        0.051 + 3.841j,
+        0.055 + 4.010j,
+        0.059 + 4.177j,
+        0.055 + 4.332j,
+        0.050 + 4.487j,
+        0.045 + 4.645j,
+        0.041 + 4.803j,
+        0.037 + 4.960j,
+        0.033 + 5.116j,
+        0.031 + 5.272j,
+        0.034 + 5.421j,
+        0.037 + 5.570j,
+        0.040 + 5.719j,
+        0.040 + 5.883j,
+        0.040 + 6.048j,
+        0.040 + 6.213j,
+        0.040 + 6.371j,
+        0.040 + 6.519j,
+        0.040 + 6.667j,
+        0.040 + 6.815j,
+        0.040 + 6.962j,
+    ]
+)
 
 
 def prepare_tmm_pair(wl, layers):
@@ -400,13 +452,13 @@ class TestMixedPolarization:
 
 class TestCrossPolarization:
     """Tests for cross-polarization coupling in anisotropic media.
-    
+
     Note: test_tmm.py covers anisotropic layers extensively but uses loops
     that hide individual test cases. These tests explicitly test cross-polarization
     terms (R12, R21, T32, T41) which are key for validating anisotropic behavior.
     """
 
-    @pytest.mark.parametrize("psi", [np.pi/8, np.pi/4, 3*np.pi/8])
+    @pytest.mark.parametrize("psi", [np.pi / 8, np.pi / 4, 3 * np.pi / 8])
     def test_cross_polarization_finite_layer(self, psi):
         """Compare cross-polarization terms for finite anisotropic layer."""
         wl = 532e-9
@@ -540,3 +592,287 @@ class TestMaterialInterpolation:
         n = mat_complex(532e-9)
         assert n.real == pytest.approx(1.5)
         assert n.imag == pytest.approx(0.1)
+
+
+# =============================================================================
+# Physics-based validation tests (not comparing against Python reference)
+# =============================================================================
+
+
+class TestEnergyConservation:
+    """Tests for energy conservation (R + T = 1 for lossless materials)."""
+
+    @pytest.mark.parametrize("n1,n2", [(1.0, 1.5), (1.5, 1.0), (1.5, 2.0)])
+    def test_energy_conservation_interface(self, n1, n2):
+        """R + T should equal 1 for lossless interface."""
+        wl = 532e-9
+        tmm = Tmm()
+        tmm.SetParams(wl=wl)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n1))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n2))
+
+        betas = np.linspace(0.0, min(n1, n2) - 0.01, 20)
+        res = tmm.Sweep("beta", betas)
+
+        # For p-polarization: R11 + T31 = 1
+        np.testing.assert_allclose(res["R11"] + res["T31"], 1.0, rtol=1e-10)
+        # For s-polarization: R22 + T42 = 1
+        np.testing.assert_allclose(res["R22"] + res["T42"], 1.0, rtol=1e-10)
+
+    def test_energy_conservation_thin_film(self):
+        """R + T should equal 1 for lossless thin film."""
+        wl = 532e-9
+        tmm = Tmm()
+        tmm.SetParams(wl=wl)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
+        tmm.AddIsotropicLayer(100e-9, Material.Static(1.5))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
+
+        betas = np.linspace(0.0, 0.99, 20)
+        res = tmm.Sweep("beta", betas)
+
+        np.testing.assert_allclose(res["R11"] + res["T31"], 1.0, rtol=1e-7)
+        np.testing.assert_allclose(res["R22"] + res["T42"], 1.0, rtol=1e-7)
+
+    def test_energy_conservation_multilayer(self):
+        """R + T should equal 1 for lossless multilayer."""
+        wl = 532e-9
+        tmm = Tmm()
+        tmm.SetParams(wl=wl)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.5))
+        tmm.AddIsotropicLayer(80e-9, Material.Static(2.0))
+        tmm.AddIsotropicLayer(120e-9, Material.Static(1.8))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.5))
+
+        betas = np.linspace(0.0, 1.4, 30)
+        res = tmm.Sweep("beta", betas)
+
+        np.testing.assert_allclose(res["R11"] + res["T31"], 1.0, rtol=1e-7)
+        np.testing.assert_allclose(res["R22"] + res["T42"], 1.0, rtol=1e-7)
+
+
+class TestBrewsterAngle:
+    """Tests for Brewster angle physics."""
+
+    def test_brewster_angle_minimum(self):
+        """p-polarization reflection should have minimum near Brewster angle."""
+        wl = 532e-9
+        n1, n2 = 1.0, 1.5
+
+        tmm = Tmm()
+        tmm.SetParams(wl=wl)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n1))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n2))
+
+        # Brewster angle: tan(theta_B) = n2/n1
+        theta_brewster = np.arctan(n2 / n1)
+        beta_brewster = n1 * np.sin(theta_brewster)
+
+        # Sweep around Brewster angle
+        betas = np.linspace(0.0, 0.99, 100)
+        res = tmm.Sweep("beta", betas)
+
+        # Find minimum in p-polarization reflection
+        min_idx = np.argmin(res["R11"])
+        beta_at_min = betas[min_idx]
+
+        # Minimum should be near Brewster angle
+        np.testing.assert_allclose(beta_at_min, beta_brewster, rtol=0.1)
+
+        # s-polarization should not have minimum at same location
+        assert np.argmin(res["R22"]) != min_idx or res["R22"][min_idx] > 0.01
+
+
+class TestTotalInternalReflectionPhysics:
+    """Tests for TIR physics."""
+
+    def test_tir_complete_reflection(self):
+        """Beyond critical angle, R should equal 1."""
+        wl = 532e-9
+        n1, n2 = 1.5, 1.0
+        critical_angle = np.arcsin(n2 / n1)
+        beta_critical = n1 * np.sin(critical_angle)
+
+        tmm = Tmm()
+        tmm.SetParams(wl=wl)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n1))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n2))
+
+        # Sweep beyond critical angle
+        betas = np.linspace(beta_critical + 0.01, n1 - 0.01, 20)
+        res = tmm.Sweep("beta", betas)
+
+        # Beyond critical angle, reflection should be 1
+        np.testing.assert_allclose(res["R11"], 1.0, rtol=1e-10)
+        np.testing.assert_allclose(res["R22"], 1.0, rtol=1e-10)
+
+    def test_tir_zero_transmission(self):
+        """Beyond critical angle, T should equal 0."""
+        wl = 532e-9
+        n1, n2 = 1.5, 1.0
+        critical_angle = np.arcsin(n2 / n1)
+        beta_critical = n1 * np.sin(critical_angle)
+
+        tmm = Tmm()
+        tmm.SetParams(wl=wl)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n1))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n2))
+
+        betas = np.linspace(beta_critical + 0.01, n1 - 0.01, 20)
+        res = tmm.Sweep("beta", betas)
+
+        np.testing.assert_allclose(res["T31"], 0.0, atol=1e-10)
+        np.testing.assert_allclose(res["T42"], 0.0, atol=1e-10)
+
+
+class TestNormalIncidenceSymmetry:
+    """Tests for symmetry at normal incidence."""
+
+    def test_polarization_symmetry_normal(self):
+        """At normal incidence, p and s polarizations should give same result."""
+        wl = 532e-9
+        tmm = Tmm()
+        tmm.SetParams(wl=wl)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
+        tmm.AddIsotropicLayer(100e-9, Material.Static(1.5))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
+
+        betas = np.array([0.0])
+        res = tmm.Sweep("beta", betas)
+
+        # At normal incidence, R11 should equal R22
+        np.testing.assert_allclose(res["R11"], res["R22"], rtol=1e-10)
+        # And T31 should equal T42
+        np.testing.assert_allclose(res["T31"], res["T42"], rtol=1e-10)
+
+
+class TestCalcFields2D:
+    """Tests for 2D field calculations."""
+
+    def test_calc_fields_2d_shape(self):
+        """Test that CalcFields2D returns correct shape."""
+        wl = 532e-9
+        tmm = Tmm()
+        tmm.SetParams(wl=wl, beta=0.3)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.5))
+        tmm.AddIsotropicLayer(100e-9, Material.Static(1.8))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
+
+        xs = np.linspace(-200e-9, 200e-9, 20)
+        ys = np.linspace(-100e-9, 100e-9, 15)
+        pol = np.array([1.0, 0.0])
+
+        E, H = tmm.CalcFields2D(xs, ys, pol)
+
+        # Should have shape (len(xs), len(ys), 3)
+        assert E.shape == (len(xs), len(ys), 3)
+        assert H.shape == (len(xs), len(ys), 3)
+
+    def test_calc_fields_2d_consistency(self):
+        """2D fields at y=0 should match 1D fields."""
+        wl = 532e-9
+        tmm = Tmm()
+        tmm.SetParams(wl=wl, beta=0.3)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.5))
+        tmm.AddIsotropicLayer(100e-9, Material.Static(1.8))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
+
+        xs = np.linspace(-200e-9, 200e-9, 30)
+        ys = np.array([0.0])
+        pol = np.array([1.0, 0.0])
+
+        E_2d, H_2d = tmm.CalcFields2D(xs, ys, pol)
+        E_1d, H_1d = tmm.CalcFields1D(xs, pol)
+
+        # 2D fields at y=0 should match 1D fields (up to phase)
+        np.testing.assert_allclose(np.abs(E_2d[:, 0, :]), np.abs(E_1d), rtol=1e-7)
+        np.testing.assert_allclose(np.abs(H_2d[:, 0, :]), np.abs(H_1d), rtol=1e-7)
+
+
+class TestClearLayers:
+    """Tests for layer management."""
+
+    def test_clear_layers(self):
+        """Test that ClearLayers resets the structure."""
+        wl = 532e-9
+        tmm = Tmm()
+        tmm.SetParams(wl=wl)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.5))
+        tmm.AddIsotropicLayer(100e-9, Material.Static(1.8))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
+
+        # Get result with 3 layers
+        betas = np.linspace(0.0, 0.5, 10)
+        res1 = tmm.Sweep("beta", betas)
+        r11_original = res1["R11"].copy()
+
+        # Clear and add different structure
+        tmm.ClearLayers()
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.5))
+
+        res2 = tmm.Sweep("beta", betas)
+
+        # Results should be different
+        assert not np.allclose(r11_original, res2["R11"], rtol=0.01)
+
+
+class TestMatrixAccess:
+    """Tests for amplitude and intensity matrix access."""
+
+    def test_get_intensity_matrix(self):
+        """Test GetIntensityMatrix returns valid matrix."""
+        wl = 532e-9
+        tmm = Tmm()
+        tmm.SetParams(wl=wl, beta=0.3)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.5))
+        tmm.AddIsotropicLayer(100e-9, Material.Static(1.8))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
+
+        R = tmm.GetIntensityMatrix()
+
+        # Should be 4x4 matrix
+        assert R.shape == (4, 4)
+        # Diagonal elements should be non-negative
+        assert R[0, 0] >= 0
+        assert R[1, 1] >= 0
+
+    def test_get_amplitude_matrix(self):
+        """Test GetAmplitudeMatrix returns valid matrix."""
+        wl = 532e-9
+        tmm = Tmm()
+        tmm.SetParams(wl=wl, beta=0.3)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.5))
+        tmm.AddIsotropicLayer(100e-9, Material.Static(1.8))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
+
+        r = tmm.GetAmplitudeMatrix()
+
+        # Should be 4x4 complex matrix
+        assert r.shape == (4, 4)
+        assert np.iscomplexobj(r)
+
+
+class TestFieldsAtInterface:
+    """Tests for field calculations at specific interfaces."""
+
+    def test_fields_at_interface(self):
+        """Test CalcFieldsAtInterface returns valid fields."""
+        wl = 532e-9
+        tmm = Tmm()
+        tmm.SetParams(wl=wl, beta=0.3)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.5))
+        tmm.AddIsotropicLayer(100e-9, Material.Static(1.8))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
+
+        pol = (1.0, 0.0)
+        enhPos = (pol, 2, 0.0)
+
+        E, H = tmm.CalcFieldsAtInterface(enhPos)
+
+        # Should return 3-component vectors
+        assert len(E) == 3
+        assert len(H) == 3
+        # Fields should be finite
+        assert np.all(np.isfinite(E))
+        assert np.all(np.isfinite(H))
