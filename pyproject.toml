@@ -65,3 +65,10 @@ line-length = 120
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
 ignore = ["E501"]
+
+[tool.pyright]
+include = ["GeneralTmm"]
+exclude = ["GeneralTmm/src"]
+reportAttributeAccessIssue = "warning"
+reportReturnType = "warning"
+reportAssignmentType = "warning"

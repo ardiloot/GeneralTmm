@@ -2,7 +2,8 @@ import unittest
 
 import numpy as np
 
-from GeneralTmm import Material, Tmm, TmmPy
+from GeneralTmm import Material, Tmm
+from GeneralTmm._GeneralTMMPy import TmmPy
 
 # Refractive index data of silver from
 # P. B. Johnson and R. W. Christy. Optical Constants of the Noble Metals, Phys. Rev. B 6, 4370-4379 (1972)

@@ -82,6 +82,7 @@ class _AnisotropicLayer:
         z0 = 119.9169832 * math.pi
 
         beta = self.tmm.beta
+        assert beta is not None, "beta must be set before calling _GetTangentialFields"
         epsXX = self.epsTensor[0, 0]
         epsXY = self.epsTensor[0, 1]
         epsXZ = self.epsTensor[0, 2]
@@ -337,6 +338,8 @@ class TmmPy:
             wl = self.wl
         if beta is None:
             beta = self.beta
+        if wl is None or beta is None:
+            raise ValueError("wl and beta must be set before calling Solve")
         self.wl = wl
         self.beta = beta
         self.k0 = 2.0 * math.pi / wl
@@ -501,6 +504,10 @@ class TmmPy:
     ) -> tuple[complex, npt.NDArray[np.complex128]]:
         if polarization is not None:
             self.polarization = polarization
+        if self.polarization is None:
+            raise ValueError("polarization must be set before calling _CalcFieldCoefs")
+        if self.beta is None:
+            raise ValueError("beta must be set before calling _CalcFieldCoefs")
         a1In, a2In = self.polarization
 
         inputFields = np.array([a1In, a2In, 0.0, 0.0], dtype=complex)
