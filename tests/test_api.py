@@ -171,17 +171,14 @@ class TestSweepFunctions:
         tmm.AddIsotropicLayer(float("inf"), Material.Static(1.5))
         tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
 
-        betas = np.linspace(0.0, 1.0, 20)
+        betas = np.linspace(0.0, 0.95, 20)  # Must be < n_substrate (1.0)
         res = tmm.Sweep("beta", betas)
 
-        # Check result keys exist
-        assert "R11" in res
-        assert "R22" in res
-        assert "T31" in res
-        assert "T42" in res
-
-        # Check correct length
+        # Check results can be accessed and have correct length
         assert len(res["R11"]) == len(betas)
+        assert len(res["R22"]) == len(betas)
+        assert len(res["T31"]) == len(betas)
+        assert len(res["T42"]) == len(betas)
 
     def test_wl_sweep(self):
         """Test sweeping over wavelength parameter."""
@@ -205,13 +202,13 @@ class TestSweepFunctions:
         tmm.AddIsotropicLayer(100e-9, Material.Static(1.8))
         tmm.AddIsotropicLayer(float("inf"), Material.Static(1.0))
 
-        betas = np.linspace(0.0, 1.0, 20)
+        betas = np.linspace(0.0, 0.95, 20)  # Must be < n_substrate (1.0)
         pol = (1.0, 0.0)
         enhPos = (pol, 2, 0.0)
 
         res = tmm.Sweep("beta", betas, enhPos)
 
-        assert "enh" in res
+        # Check enhancement results
         assert len(res["enh"]) == len(betas)
         assert np.all(res["enh"] >= 0)
 
