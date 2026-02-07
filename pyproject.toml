@@ -52,7 +52,7 @@ include = ["GeneralTmm*"]
 testpaths = ["tests"]
 
 [dependency-groups]
-dev = ["pytest", "ruff", "matplotlib", "pyright"]
+dev = ["pytest", "matplotlib"]
 
 [tool.ruff]
 target-version = "py310"
