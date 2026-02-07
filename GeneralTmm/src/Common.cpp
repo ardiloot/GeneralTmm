@@ -81,11 +81,11 @@ namespace TmmModel {
 		layerId = layerId_;
 	}
 
-	ParamType Param::GetParamType() const {
+	ParamType Param::GetParamType() {
 		return pType;
 	}
 
-	int Param::GetLayerID() const {
+	int Param::GetLayerID() {
 		return layerId;
 	}
 	PositionSettings::PositionSettings(RowVector2d polarization_, int interfaceId_, double distFromInterface_) {
@@ -106,16 +106,16 @@ namespace TmmModel {
 		distFromInterface = 0.0;
 		enabled = false;
 	}
-	RowVector2d PositionSettings::GetPolarization() const {
+	RowVector2d PositionSettings::GetPolarization() {
 		return polarization;
 	}
-	int PositionSettings::GetInterfaceId() const {
+	int PositionSettings::GetInterfaceId() {
 		return interfaceId;
 	}
-	double PositionSettings::GetDistFromInterface() const {
+	double PositionSettings::GetDistFromInterface() {
 		return distFromInterface;
 	}
-	bool PositionSettings::IsEnabled() const {
+	bool PositionSettings::IsEnabled() {
 		return enabled;
 	}
 }

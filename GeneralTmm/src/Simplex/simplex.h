@@ -196,9 +196,7 @@ namespace Optimization
             display(fun, contraction_parameters);
 #endif
               ParameterType best_parameters = polytope_points.col(best);
-#if VERBOSE > 5
               std::cout << ((polytope_points.colwise() - best_parameters.array()) / 2) << std::endl;
-#endif
               polytope_points = ((polytope_points.colwise() - best_parameters.array()) / 2).colwise() + best_parameters.array();
               for(int i = 0; i < polytope_points.cols(); ++i)
               {
@@ -233,12 +231,12 @@ namespace Optimization
       /**
        * Retrieves the best final value
        */
-      DataType get_best_value() const
+      const DataType get_best_value() const
       {
         return state.best_value;
       }
 	  
-	  int get_number_of_iterations() const
+	  const int get_number_of_iterations() const
       {
 		return state.iteration;
       }

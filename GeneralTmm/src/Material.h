@@ -14,8 +14,8 @@ namespace TmmModel
 		Material(dcomplex staticN_);
 		Material(ArrayXd wlsExp_, ArrayXcd nsExp_);
 		void SetStatic(dcomplex staticN_);
-		dcomplex n(double wl) const;
-		bool IsStatic() const;
+		dcomplex n(double wl);
+		bool IsStatic();
 
 	private:
 		bool isStatic;

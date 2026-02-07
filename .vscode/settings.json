@@ -19,8 +19,5 @@
         "twinx",
         "xlabel",
         "ylabel"
-    ],
-    "chat.tools.terminal.autoApprove": {
-        "pip": true
-    }
+    ]
 }
