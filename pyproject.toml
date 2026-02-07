@@ -64,6 +64,8 @@ ignore = ["E501"]
 
 [tool.pyright]
 typeCheckingMode = "standard"
+venvPath = "."
+venv = ".venv"
 include = ["GeneralTmm"]
 exclude = ["GeneralTmm/src"]
 reportAttributeAccessIssue = "warning"

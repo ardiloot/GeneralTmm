@@ -64,22 +64,15 @@ uv sync
 uv run pytest -v
 ```
 
-### Code formatting
+### Code formatting and linting
 
-```bash
-uvx ruff format .
-uvx ruff check --fix .
-```
-
-### Pre-commit hooks
-
-Pre-commit hooks are configured to enforce formatting (ruff, clang-format) and catch common issues. To install the git hook locally:
+[Pre-commit](https://pre-commit.com/) hooks are configured to enforce formatting (ruff, clang-format) and catch common issues. To install the git hook locally:
 
 ```bash
 uvx pre-commit install
 ```
 
-To run all hooks manually:
+To run all checks manually:
 
 ```bash
 uvx pre-commit run --all-files

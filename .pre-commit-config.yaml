@@ -21,3 +21,12 @@ repos:
     hooks:
       - id: clang-format
         types_or: [c++, c]
+
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright
+        entry: uvx pyright
+        language: system
+        types: [python]
+        pass_filenames: false
