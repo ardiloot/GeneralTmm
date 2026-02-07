@@ -592,4 +592,3 @@ class TestMaterialInterpolation:
         n = mat_complex(532e-9)
         assert n.real == pytest.approx(1.5)
         assert n.imag == pytest.approx(0.1)
-
