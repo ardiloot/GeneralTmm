@@ -1,42 +1,42 @@
 #include "Material.h"
+#include <utility>
 
-TmmModel::Material::Material() {
-	SetStatic(1.0);
+namespace TmmModel {
+
+Material::Material() noexcept : isStatic_(true), staticN_(1.0) {}
+
+Material::Material(dcomplex staticN) noexcept : isStatic_(true), staticN_(staticN) {}
+
+Material::Material(ArrayXd wlsExp, ArrayXcd nsExp)
+    : isStatic_(false), staticN_(1.0), wlsExp_(std::move(wlsExp)), nsExp_(std::move(nsExp)) {
+    if (wlsExp_.size() != nsExp_.size()) {
+        throw std::invalid_argument("wls and ns must have the same length");
+    }
+
+    if (wlsExp_.size() < 2) {
+        throw std::invalid_argument("The length of wls and ns must be at least 2");
+    }
 }
 
-TmmModel::Material::Material(dcomplex staticN_) {
-	SetStatic(staticN_);
+void Material::SetStatic(dcomplex staticN) noexcept {
+    isStatic_ = true;
+    staticN_ = staticN;
+    wlsExp_.resize(0);
+    nsExp_.resize(0);
 }
 
-TmmModel::Material::Material(ArrayXd wlsExp_, ArrayXcd nsExp_) : wlsExp(wlsExp_), nsExp(nsExp_) {
-	// Copy of wlsExp and nsExp is made intentionally
-	isStatic = false;
-	staticN = 1.0;
+dcomplex Material::n(double wl) const {
+    if (isStatic_) {
+        return staticN_;
+    }
 
-	if (wlsExp.size() != nsExp.size()) {
-		throw std::invalid_argument("wls and ns must have the same length");
-	}
-
-	if (wlsExp.size() < 2) {
-		throw std::invalid_argument("The length of wls and ns must be at least 2");
-	}
+    // Interpolate
+    dcomplex res = Interpolate(wl, wlsExp_, nsExp_);
+    return res;
 }
 
-void TmmModel::Material::SetStatic(dcomplex staticN_) {
-	isStatic = true;
-	staticN = staticN_;
+bool Material::IsStatic() const noexcept {
+    return isStatic_;
 }
 
-TmmModel::dcomplex TmmModel::Material::n(double wl) const {
-	if (isStatic) {
-		return staticN;
-	}
-
-	// Interpolate
-	dcomplex res = Interpolate(wl, wlsExp, nsExp);
-	return res;
-}
-
-bool TmmModel::Material::IsStatic() const {
-	return isStatic;
-}
+} // namespace TmmModel

@@ -2,86 +2,84 @@
 #include "Common.h"
 #include "Material.h"
 #include "Layer.h"
-#include "simplex.h"
-#include "criteria.h"
-#include <Eigen/Eigenvalues>
 
-namespace TmmModel
-{
-	//---------------------------------------------------------------------
-	// Tmm
-	//---------------------------------------------------------------------
+namespace TmmModel {
+//---------------------------------------------------------------------
+// Tmm
+//---------------------------------------------------------------------
 
-	class Tmm {
-	public:
+class Tmm {
+public:
+    Tmm();
+    void SetParam(Param param, int value);
+    void SetParam(Param param, double value);
+    void SetParam(Param param, dcomplex value);
+    [[nodiscard]] int GetParamInt(Param param) const;
+    [[nodiscard]] double GetParamDouble(Param param) const;
+    [[nodiscard]] dcomplex GetParamComplex(Param param) const;
+    void AddIsotropicLayer(double d, Material* mat);
+    void AddLayer(double d, Material* matx, Material* maty, Material* matz, double psi, double xi);
+    void ClearLayers() noexcept;
+    [[nodiscard]] Matrix4d GetIntensityMatrix();
+    [[nodiscard]] Matrix4cd GetAmplitudeMatrix();
+    [[nodiscard]] SweepRes Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd>& sweepValues,
+                                 const PositionSettings& enhpos, int alphasLayer);
+    [[nodiscard]] SweepRes Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd>& sweepValues);
+    [[nodiscard]] EMFieldsList CalcFields1D(const Eigen::Map<Eigen::ArrayXd>& xs,
+                                            const Eigen::Map<Eigen::Array2d>& polarization,
+                                            WaveDirection waveDirection);
+    [[nodiscard]] EMFields CalcFieldsAtInterface(const PositionSettings& pos, WaveDirection waveDirection);
+    [[nodiscard]] double OptimizeEnhancement(const std::vector<Param>& optParams, const ArrayXd& optInitial,
+                                             const PositionSettings& pos);
 
-		Tmm();
-		void SetParam(Param param, int value);
-		void SetParam(Param param, double value);
-		void SetParam(Param param, dcomplex value);
-		int GetParamInt(Param param) const;
-		double GetParamDouble(Param param) const; 
-		dcomplex GetParamComplex(Param param) const;
-		void AddIsotropicLayer(double d, Material *mat);
-		void AddLayer(double d, Material *matx, Material *maty, Material *matz, double psi, double xi);
-		void ClearLayers();
-		Matrix4d GetIntensityMatrix();
-		Matrix4cd GetAmplitudeMatrix();
-		SweepRes Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd> &sweepValues, PositionSettings enhpos, int alphasLayer);
-		SweepRes Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd> &sweepValues);
-		EMFieldsList CalcFields1D(const Eigen::Map<Eigen::ArrayXd> &xs, const Eigen::Map<Eigen::Array2d> &polarization, WaveDirection waveDirection);
-		EMFields CalcFieldsAtInterface(PositionSettings pos, WaveDirection waveDirection);
-		double OptimizeEnhancement(std::vector<Param> optParams, ArrayXd optInitial, PositionSettings pos);
+private:
+    double wl_;
+    double beta_;
+    double enhOptMaxRelError_;
+    double enhOptInitialStep_;
+    int enhOptMaxIters_;
+    std::vector<Layer> layers_;
+    std::vector<std::vector<std::string>> names_R_;
+    std::vector<std::vector<std::string>> names_r_;
+    Matrix4cd A_;
+    bool needToSolve_;
+    bool needToCalcFieldCoefs_;
+    Vector2d lastFieldCoefsPol_;
+    Matrix4d R_;
+    Matrix4cd r_;
 
-	private:
-		double wl;
-		double beta;
-		double enhOptMaxRelError;
-		double enhOptInitialStep;
-		int enhOptMaxIters;
-		std::vector<Layer> layers;
-		std::vector<std::vector<std::string> > names_R;
-		std::vector<std::vector<std::string> > names_r;
-		Matrix4cd A;
-		bool solved;
-		bool needToSolve;
-		bool needToCalcFieldCoefs;
-		Vector2d lastFieldCoefsPol;
-		Matrix4d R;
-		Matrix4cd r;
+    double normCoef_;
+    MatrixXcd fieldCoefs_;
 
-		double normCoef;
-		MatrixXcd fieldCoefs;
+    void Solve();
+    void CalcFieldCoefs(const Vector2d& polarization);
+    LayerIndices CalcLayerIndices(const Eigen::Map<Eigen::ArrayXd>& xs);
+};
 
-		void Solve();
-		void CalcFieldCoefs(Vector2d polarization);
-		LayerIndices CalcLayerIndices(const Eigen::Map<Eigen::ArrayXd> &xs);
-	};
+//---------------------------------------------------------------------
+// EnhFitStruct
+//---------------------------------------------------------------------
 
-	//---------------------------------------------------------------------
-	// EnhFitStruct
-	//---------------------------------------------------------------------
+class EnhFitStruct {
+    friend Tmm;
 
-	class EnhFitStruct{
-		friend Tmm;
-	public:
-		typedef double DataType;
-		typedef VectorXd ParameterType;
+public:
+    using DataType = double;
+    using ParameterType = VectorXd;
 
-		EnhFitStruct(Tmm *tmm_, std::vector<Param> optParams_, PositionSettings enhpos_);
+    EnhFitStruct(Tmm* tmm, const std::vector<Param>& optParams, const PositionSettings& enhpos);
 
-		DataType operator()(const ParameterType &params) const
-		{
-			SetParams(params);
-			EMFields r = tmm->CalcFieldsAtInterface(enhPos, WaveDirection::WD_BOTH);
-			double res = -r.E.matrix().norm();
-			return res;
-		}
-	private:
-		Tmm *tmm;
-		std::vector<Param> optParams;
-		PositionSettings enhPos;
-		void SetParams(const ParameterType &params) const;
+    DataType operator()(const ParameterType& params) const {
+        SetParams(params);
+        EMFields r = tmm_->CalcFieldsAtInterface(enhPos_, WaveDirection::WD_BOTH);
+        double res = -r.E.matrix().norm();
+        return res;
+    }
 
-	};
-} // Namespace
+private:
+    Tmm* tmm_;
+    std::vector<Param> optParams_;
+    PositionSettings enhPos_;
+    void SetParams(const ParameterType& params) const;
+};
+} // namespace TmmModel

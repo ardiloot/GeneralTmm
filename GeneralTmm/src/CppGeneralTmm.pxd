@@ -40,13 +40,13 @@ cdef extern from "Common.h" namespace "TmmModel":
     cdef cppclass ParamCpp "TmmModel::Param":
             ParamCpp() except +
             ParamCpp(ParamTypeCpp pType) except +
-            ParamCpp(ParamTypeCpp pType_, int layerId_) except +
+            ParamCpp(ParamTypeCpp pType, int layerId) except +
     
     #--------------------------------------------------------------------------- 
     
     cdef cppclass PositionSettingsCpp "TmmModel::PositionSettings":
         PositionSettingsCpp() except +
-        PositionSettingsCpp(double polCoef1, double polCoef2, int interfaceId_, double distFromInterface_) except +
+        PositionSettingsCpp(double polCoef1, double polCoef2, int interfaceId, double distFromInterface) except +
             
     #--------------------------------------------------------------------------- 
 

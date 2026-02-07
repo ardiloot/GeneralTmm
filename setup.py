@@ -9,6 +9,8 @@ from setuptools.extension import Extension
 extra_compile_args = []
 if sys.platform in ("linux", "darwin"):
     extra_compile_args.append("-std=c++17")
+elif sys.platform == "win32":
+    extra_compile_args.append("/std:c++17")
 
 extensions = cythonize(
     [
