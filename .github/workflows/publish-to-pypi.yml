@@ -70,6 +70,12 @@ jobs:
     permissions:
       id-token: write
     steps:
+      - name: Verify release is from master branch
+        if: ${{ github.event.release.target_commitish != 'master' }}
+        run: |
+          echo "::error::Production releases must be published from the master branch, got '${{ github.event.release.target_commitish }}'."
+          exit 1
+
       - uses: actions/download-artifact@v7
         with:
           path: dist
