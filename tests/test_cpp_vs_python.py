@@ -23,7 +23,8 @@ This file adds additional scenarios not covered by test_tmm.py:
 import numpy as np
 import pytest
 
-from GeneralTmm import Material, Tmm, TmmPy
+from GeneralTmm import Material, Tmm
+from GeneralTmm._GeneralTMMPy import TmmPy
 
 # Full silver data from Johnson and Christy (1972)
 SILVER_WLS_FULL = np.array(

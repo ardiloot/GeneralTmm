@@ -1,11 +1,14 @@
 {
-    "python.analysis.typeCheckingMode": "standard",
     "[python]": {
-        "editor.defaultFormatter": "ms-python.black-formatter",
-        "editor.formatOnSave": true
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": false
     },
     "cSpell.words": [
+        "allclose",
+        "antireflection",
         "arcsin",
+        "arctan",
+        "ascontiguousarray",
         "axvline",
         "cbar",
         "Coef",
@@ -17,14 +20,18 @@
         "enhpos",
         "enhs",
         "figsize",
+        "fmin",
         "invr",
+        "iscomplexobj",
         "linalg",
         "matx",
         "maty",
         "matz",
+        "namesr",
         "pcolormesh",
         "plasmons",
         "poynting",
+        "rtol",
         "suptitle",
         "twinx",
         "xlabel",

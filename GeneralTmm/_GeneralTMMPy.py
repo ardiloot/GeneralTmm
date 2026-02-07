@@ -6,41 +6,53 @@ This Python code is only used for testing the C++ code of the same algorithm.
 
 """
 
+from __future__ import annotations
+
 import math
 import warnings
+from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 from scipy import optimize
 
 __all__ = ["TmmPy"]
 
 
-def RotationSx(phi):
+def RotationSx(phi: float) -> npt.NDArray[np.float64]:
     res = np.array([[1.0, 0.0, 0.0], [0.0, math.cos(phi), -math.sin(phi)], [0.0, math.sin(phi), math.cos(phi)]])
     return res
 
 
-def RotationSz(phi):
+def RotationSz(phi: float) -> npt.NDArray[np.float64]:
     res = np.array([[math.cos(phi), -math.sin(phi), 0.0], [math.sin(phi), math.cos(phi), 0.0], [0.0, 0.0, 1.0]])
     return res
 
 
-def Norm(vector):
+def Norm(vector: npt.NDArray[np.complex128]) -> npt.NDArray[np.float64] | np.floating[Any]:
     if len(vector.shape) > 1:
         if vector.shape[1] != 3:
             raise Exception("Only vectors with length 3 supported.")
         return np.sqrt(
             abs(vector[:, 0]) ** 2.0 + abs(vector[:, 1]) ** 2.0 + abs(vector[:, 2]) ** 2.0, dtype=complex
-        ).real
+        ).real  # type: ignore[union-attr]
     else:
         if len(vector) != 3:
             raise Exception("Only vectors with length 3 supported.")
-        return np.sqrt(abs(vector[0]) ** 2.0 + abs(vector[1]) ** 2.0 + abs(vector[2]) ** 2.0, dtype=complex).real
+        return np.sqrt(abs(vector[0]) ** 2.0 + abs(vector[1]) ** 2.0 + abs(vector[2]) ** 2.0, dtype=complex).real  # type: ignore[union-attr]
 
 
 class _AnisotropicLayer:
-
-    def __init__(self, tmm, d, n1, n2, n3, psi, xi):
+    def __init__(
+        self,
+        tmm: TmmPy,
+        d: float,
+        n1: complex,
+        n2: complex,
+        n3: complex,
+        psi: float,
+        xi: float,
+    ) -> None:
         self.tmm = tmm
         self.d = d
         self.n1 = n1
@@ -49,13 +61,13 @@ class _AnisotropicLayer:
         self.psi = psi
         self.xi = xi
 
-    def GetConf(self):
+    def GetConf(self) -> tuple[str, float, complex] | tuple[str, float, complex, complex, complex, float, float]:
         if self.n1 == self.n2 and self.n1 == self.n3:
             return ("iso", self.d, self.n1)
         else:
             return ("aniso", self.d, self.n1, self.n2, self.n3, self.psi, self.xi)
 
-    def SetConf(self, **kwargs):
+    def SetConf(self, **kwargs: Any) -> None:
         self.d = kwargs.pop("d", self.d)
         self.n1 = kwargs.pop("n1", self.n1)
         self.n2 = kwargs.pop("n2", self.n2)
@@ -63,10 +75,11 @@ class _AnisotropicLayer:
         self.psi = kwargs.pop("psi", self.psi)
         self.xi = kwargs.pop("xi", self.xi)
 
-    def _GetTangentialFields(self, Ey, Hz, Ez, Hy):
+    def _GetTangentialFields(self, Ey: complex, Hz: complex, Ez: complex, Hy: complex) -> tuple[complex, complex]:
         z0 = 119.9169832 * math.pi
 
         beta = self.tmm.beta
+        assert beta is not None, "beta must be set before calling _GetTangentialFields"
         epsXX = self.epsTensor[0, 0]
         epsXY = self.epsTensor[0, 1]
         epsXZ = self.epsTensor[0, 2]
@@ -76,7 +89,9 @@ class _AnisotropicLayer:
 
         return Ex, Hx
 
-    def GetFields(self, x, coefs):
+    def GetFields(
+        self, x: float, coefs: npt.NDArray[np.complex128]
+    ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
         E = np.array([0.0, 0.0, 0.0], dtype=complex)
         H = np.array([0.0, 0.0, 0.0], dtype=complex)
         for mode in range(4):
@@ -96,14 +111,13 @@ class _AnisotropicLayer:
 
         return E, H
 
-    def Solve(self, beta):
+    def Solve(self, beta: float) -> None:
         self._CalcEpsilonMatrix()
         self._SolveEigenFunction(beta)
         self._SolvePhaseMatrix()
         self._SolveFieldTransferMatrix()
 
-    def _CalcEpsilonMatrix(self):
-
+    def _CalcEpsilonMatrix(self) -> None:
         self.epsTensorCrystal = np.array(
             [[self.n1**2.0, 0.0, 0.0], [0.0, self.n2**2.0, 0.0], [0.0, 0.0, self.n3**2.0]], dtype=complex
         )
@@ -115,7 +129,7 @@ class _AnisotropicLayer:
             ),
         )
 
-    def _SolveEigenFunction(self, beta):
+    def _SolveEigenFunction(self, beta: float) -> None:
         z0 = 119.9169832 * math.pi
 
         epsXX = self.epsTensor[0, 0]
@@ -168,23 +182,21 @@ class _AnisotropicLayer:
                 backward.append(i)
 
         if len(forward) != 2:
-            print("ns", self.n1, self.n2, self.n3)
-            print("beta", beta)
-            print("Values", values)
-            print("Poynting", poyntingX)
-            print("vectors", vectors)
-            raise Exception("Wrong number of forward moving waves: %d" % len(forward))
+            raise Exception(
+                "Wrong number of forward moving waves: %d (ns=%s, beta=%s)"
+                % (len(forward), (self.n1, self.n2, self.n3), beta)
+            )
 
-        if abs(values.real[forward[0]] - values.real[forward[1]]) < 1e-10:
+        if abs(values.real[forward[0]] - values.real[forward[1]]) < 1e-10:  # type: ignore[union-attr]
             # print "TODO", values[forward[0]], values[forward[1]]
             pass
-        elif values.real[forward[0]] < values.real[forward[1]]:
+        elif values.real[forward[0]] < values.real[forward[1]]:  # type: ignore[union-attr]
             forward[0], forward[1] = forward[1], forward[0]
 
-        if abs(values.real[backward[0]] - values.real[backward[1]]) < 1e-10:
+        if abs(values.real[backward[0]] - values.real[backward[1]]) < 1e-10:  # type: ignore[union-attr]
             # print "TODO BACK", values[backward[0]], values[backward[1]]
             pass
-        elif values.real[backward[0]] > values.real[backward[1]]:
+        elif values.real[backward[0]] > values.real[backward[1]]:  # type: ignore[union-attr]
             backward[0], backward[1] = backward[1], backward[0]
 
         option1 = [forward[0], backward[0], forward[1], backward[1]]
@@ -196,7 +208,7 @@ class _AnisotropicLayer:
         self.poynting = poyntingX[order]
         self.invF = np.linalg.inv(self.F)
 
-    def _SolvePhaseMatrix(self):
+    def _SolvePhaseMatrix(self) -> None:
         self.phaseMatrix = np.identity(4, dtype=complex)
 
         if self.d == float("inf"):
@@ -206,17 +218,16 @@ class _AnisotropicLayer:
             phi = self.tmm.k0 * self.alpha[i] * self.d
             self.phaseMatrix[i, i] = np.exp(-1.0j * phi)
 
-    def _SolveFieldTransferMatrix(self):
+    def _SolveFieldTransferMatrix(self) -> None:
         self.M = np.dot(self.F, np.dot(self.phaseMatrix, self.invF))
 
 
 class TmmPy:
-
-    def __init__(self):
-        self.wl = None
-        self.beta = None
-        self.polarization = None
-        self.layers = []
+    def __init__(self) -> None:
+        self.wl: float | None = None
+        self.beta: float | None = None
+        self.polarization: tuple[float, float] | None = None
+        self.layers: list[_AnisotropicLayer] = []
         self.namesr = [
             ["r11", "r12", "t13", "t14"],
             ["r21", "r22", "t23", "t24"],
@@ -231,18 +242,18 @@ class TmmPy:
             ["T41", "T42", "R43", "R44"],
         ]
 
-    def AddIsotropicLayer(self, d, n):
+    def AddIsotropicLayer(self, d: float, n: complex) -> None:
         self.layers.append(_AnisotropicLayer(self, d, n, n, n, 0.0, 0.0))
 
-    def AddLayer(self, d, n1, n2, n3, psi, xi):
+    def AddLayer(self, d: float, n1: complex, n2: complex, n3: complex, psi: float, xi: float) -> None:
         self.layers.append(_AnisotropicLayer(self, d, n1, n2, n3, psi, xi))
 
-    def GetConf(self):
+    def GetConf(self) -> dict[str, Any]:
         layersConf = [layer.GetConf() for layer in self.layers]
         res = {"wl": self.wl, "beta": self.beta, "polarization": self.polarization, "layers": layersConf}
         return res
 
-    def SetConf(self, **kwargs):
+    def SetConf(self, **kwargs: Any) -> None:
         self.wl = kwargs.pop("wl", self.wl)
         self.beta = kwargs.pop("beta", self.beta)
         self.polarization = kwargs.pop("polarization", self.polarization)
@@ -266,11 +277,18 @@ class TmmPy:
             if key.find("_") == -1:
                 continue
             kwargs.pop(key)
-            param, index = key.split("_")
-            index = int(index)
-            self.layers[index].SetConf(**{param: value})
+            param, index_str = key.split("_")
+            layer_index = int(index_str)
+            self.layers[layer_index].SetConf(**{param: value})
 
-    def SolveFor(self, param, values, polarization=None, enhInterface=None, enhDist=0.0):
+    def SolveFor(
+        self,
+        param: str,
+        values: npt.NDArray[np.float64],
+        polarization: tuple[float, float] | None = None,
+        enhInterface: int | None = None,
+        enhDist: float = 0.0,
+    ) -> dict[str, npt.NDArray[Any]]:
         if polarization is not None:
             self.polarization = polarization
 
@@ -306,11 +324,15 @@ class TmmPy:
 
         return res
 
-    def Solve(self, wl=None, beta=None):
+    def Solve(
+        self, wl: float | None = None, beta: float | None = None
+    ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.float64]]:
         if wl is None:
             wl = self.wl
         if beta is None:
             beta = self.beta
+        if wl is None or beta is None:
+            raise ValueError("wl and beta must be set before calling Solve")
         self.wl = wl
         self.beta = beta
         self.k0 = 2.0 * math.pi / wl
@@ -389,17 +411,18 @@ class TmmPy:
             R[3, 2] = np.nan  # abs(r[3, 2]) ** 2.0 * abs(pForward[3] / pBackward[2])
             R[3, 3] = np.nan  # abs(r[3, 3]) ** 2.0 * abs(pForward[3] / pBackward[3])
             if len(w) > 0:
-                print("warning", w)
-                print(self.beta)
-                print(pBackward)
-                print(pForward)
+                warnings.warn("Calculation warning for beta=%s" % self.beta)
 
-        R = R.real
+        R = R.real  # type: ignore[union-attr]
         self.R = R
 
         return r, R
 
-    def CalcFields1D(self, xs, polarization=None):
+    def CalcFields1D(
+        self,
+        xs: npt.NDArray[np.float64],
+        polarization: tuple[float, float] | None = None,
+    ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]:
         if polarization is not None:
             self.polarization = polarization
         normCoef, coefsAll = self._CalcFieldCoefs()
@@ -421,7 +444,12 @@ class TmmPy:
 
         return resE, resH
 
-    def CalcEnhAtInterface(self, polarization=None, enhInterface=-1, enhDist=0.0):
+    def CalcEnhAtInterface(
+        self,
+        polarization: tuple[float, float] | None = None,
+        enhInterface: int = -1,
+        enhDist: float = 0.0,
+    ) -> tuple[npt.NDArray[np.float64] | np.floating[Any], npt.NDArray[np.complex128]]:
         if polarization is not None:
             self.polarization = polarization
 
@@ -437,19 +465,25 @@ class TmmPy:
         enh = Norm(E)
         return enh, E
 
-    def OptimizeForEnhancement(self, optParams, optInitial, polarization=None, enhInterface=-1, enhDist=0.0):
-        def FitFunc(x):
-
+    def OptimizeForEnhancement(
+        self,
+        optParams: list[str],
+        optInitial: npt.NDArray[np.float64],
+        polarization: tuple[float, float] | None = None,
+        enhInterface: int = -1,
+        enhDist: float = 0.0,
+    ) -> tuple[npt.NDArray[np.float64], float]:
+        def FitFunc(x: npt.NDArray[np.float64]) -> float:
             for i in range(len(x)):
                 self.SetConf(**{optParams[i]: x[i]})
             self.Solve()
             enh, _ = self.CalcEnhAtInterface(enhInterface=enhInterface, enhDist=enhDist)
             # print x, enh
-            return -enh
+            return -enh  # type: ignore[return-value]
 
         if polarization is not None:
             self.polarization = polarization
-        optValues, maxEnh, _, __, ___ = optimize.fmin(FitFunc, optInitial, disp=False, full_output=True)
+        optValues, maxEnh, _, __, ___ = optimize.fmin(FitFunc, optInitial, disp=False, full_output=True)  # type: ignore[misc]
         maxEnh *= -1
         # print "optValues", optValues
         for i in range(len(optParams)):
@@ -457,9 +491,15 @@ class TmmPy:
 
         return optValues, maxEnh
 
-    def _CalcFieldCoefs(self, polarization=None):
+    def _CalcFieldCoefs(
+        self, polarization: tuple[float, float] | None = None
+    ) -> tuple[complex, npt.NDArray[np.complex128]]:
         if polarization is not None:
             self.polarization = polarization
+        if self.polarization is None:
+            raise ValueError("polarization must be set before calling _CalcFieldCoefs")
+        if self.beta is None:
+            raise ValueError("beta must be set before calling _CalcFieldCoefs")
         a1In, a2In = self.polarization
 
         inputFields = np.array([a1In, a2In, 0.0, 0.0], dtype=complex)
@@ -486,7 +526,7 @@ class TmmPy:
         coefsAll[-1, 1] = coefsAll[-1, 3] = 0.0
         return normCoef, coefsAll
 
-    def _LayerIndices(self, xs):
+    def _LayerIndices(self, xs: npt.NDArray[np.float64]) -> tuple[npt.NDArray[np.int_], npt.NDArray[np.float64]]:
         resInd = np.zeros_like(xs, dtype=int)
         resD = np.zeros_like(xs, dtype=float)
 

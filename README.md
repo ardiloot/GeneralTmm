@@ -64,11 +64,18 @@ uv sync
 uv run pytest -v
 ```
 
-### Code formatting
+### Code formatting and linting
+
+[Pre-commit](https://pre-commit.com/) hooks are configured to enforce formatting (ruff, clang-format) and catch common issues. To install the git hook locally:
 
 ```bash
-uv run black .
-uv run ruff check --fix .
+uvx pre-commit install
+```
+
+To run all checks manually:
+
+```bash
+uvx pre-commit run --all-files
 ```
 
 ### CI overview
@@ -76,6 +83,7 @@ uv run ruff check --fix .
 | Workflow | Trigger | What it does |
 |----------|---------|-------------|
 | [Pytest](.github/workflows/pytest.yml) | Push to `master` / PRs | Tests on {ubuntu, windows, macos} × Python {3.10 – 3.14} |
+| [Pre-commit](.github/workflows/pre-commit.yml) | Push to `master` / PRs | Runs ruff, clang-format, and other checks |
 | [Publish to PyPI](.github/workflows/publish-to-pypi.yml) | Release published | Builds wheels + sdist via cibuildwheel, uploads to PyPI |
 | [Dependabot](.github/dependabot.yml) | Weekly | Keeps GitHub Actions and pip dependencies up to date |
 

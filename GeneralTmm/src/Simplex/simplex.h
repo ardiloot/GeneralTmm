@@ -237,7 +237,7 @@ namespace Optimization
       {
         return state.best_value;
       }
-	  
+
 	  int get_number_of_iterations() const
       {
 		return state.iteration;
