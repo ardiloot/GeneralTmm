@@ -80,8 +80,6 @@ nsAg = np.array(
 
 
 class TmmTest(unittest.TestCase):
-
-    @classmethod
     def _PrepareTmm(self, wl, layers):
         tmm = Tmm()
         tmm.SetParams(wl=wl)
@@ -110,7 +108,6 @@ class TmmTest(unittest.TestCase):
 
         return tmm, oldTmm
 
-    @classmethod
     def _testSweep(self, wl, layers, betas, pol, enhInterface, enhDist):
         tmm, oldTmm = self._PrepareTmm(wl, layers)
         res = tmm.Sweep("beta", betas, (pol, enhInterface, enhDist))
@@ -120,7 +117,6 @@ class TmmTest(unittest.TestCase):
 
         np.testing.assert_almost_equal(res["enh"], resOld["enh"])
 
-    @classmethod
     def _testFields(self, wl, beta, layers, xs, pol):
         tmm, oldTmm = self._PrepareTmm(wl, layers)
 

@@ -46,4 +46,3 @@ int main(int argc, char** argv)
   std::cout << "Best point: " << optimizer.get_best_parameters() << std::endl; // Retrieve the best parameters
   std::cout << "Best value: " << optimizer.get_best_value() << std::endl;      // Retrieve the best value
 }
-

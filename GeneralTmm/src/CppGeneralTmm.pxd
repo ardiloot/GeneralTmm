@@ -7,9 +7,9 @@ from eigency.core cimport *
 #===============================================================================
 # Common.h
 #===============================================================================
-        
+
 cdef extern from "Common.h" namespace "tmm":
-    
+
     cdef enum ParamTypeCpp "tmm::ParamType":
         WL "tmm::ParamType::WL",
         BETA "tmm::ParamType::BETA",
@@ -27,83 +27,81 @@ cdef extern from "Common.h" namespace "tmm":
         LAYER_MAT_NY "tmm::ParamType::LAYER_MAT_NY",
         LAYER_MAT_NZ "tmm::ParamType::LAYER_MAT_NZ",
         NOT_DEFINED "tmm::ParamType::NOT_DEFINED"
-    
+
     #---------------------------------------------------------------------------
-        
+
     cdef enum WaveDirectionCpp "tmm::WaveDirection":
         WD_FORWARD "tmm::WaveDirection::WD_FORWARD",
         WD_BACKWARD "tmm::WaveDirection::WD_BACKWARD",
         WD_BOTH "tmm::WaveDirection::WD_BOTH"
-    
+
     #---------------------------------------------------------------------------
-    
+
     cdef cppclass ParamCpp "tmm::Param":
             ParamCpp() except +
             ParamCpp(ParamTypeCpp pType) except +
             ParamCpp(ParamTypeCpp pType, int layerId) except +
-    
-    #--------------------------------------------------------------------------- 
-    
+
+    #---------------------------------------------------------------------------
+
     cdef cppclass PositionSettingsCpp "tmm::PositionSettings":
         PositionSettingsCpp() except +
         PositionSettingsCpp(double polCoef1, double polCoef2, int interfaceId, double distFromInterface) except +
-            
-    #--------------------------------------------------------------------------- 
+
+    #---------------------------------------------------------------------------
 
     cdef cppclass SweepResCpp "tmm::SweepRes":
         map[string, ArrayXcd] mapComplex
         map[string, ArrayXd] mapDouble
-    
+
     #---------------------------------------------------------------------------
-    
+
     cdef cppclass EMFieldsCpp "tmm::EMFields":
         ArrayXcd E
         ArrayXcd H
-    
+
     #---------------------------------------------------------------------------
-    
+
     cdef cppclass EMFieldsListCpp "tmm::EMFieldsList":
         MatrixXcd E
         MatrixXcd H
-        
+
 #===============================================================================
 # Material.h
 #===============================================================================
-        
-cdef extern from "Material.h" namespace "tmm":        
-    
+
+cdef extern from "Material.h" namespace "tmm":
+
     cdef cppclass MaterialCpp "tmm::Material":
         MaterialCpp() except +
         MaterialCpp(Map[ArrayXd] & wlsExp, Map[ArrayXcd] & nsExp) except +
         double complex n(double wl) except +
-            
+
 #===============================================================================
 # Tmm.h
 #===============================================================================
-        
+
 cdef extern from "Tmm.h" namespace "tmm":
 
     cdef cppclass TmmCpp "tmm::Tmm":
         Tmm() except +
-        
+
         void SetParam(ParamCpp ParamCpp, int value) except +
         void SetParam(ParamCpp ParamCpp, double value) except +
         void SetParam(ParamCpp ParamCpp, double complex value) except +
-        
+
         int GetParamInt(ParamCpp ParamCpp) except +
-        double GetParamDouble(ParamCpp ParamCpp) except + 
+        double GetParamDouble(ParamCpp ParamCpp) except +
         double complex GetParamComplex(ParamCpp ParamCpp) except +
-        
+
         void AddIsotropicLayer(double d, MaterialCpp *mat) except +
         void AddLayer(double d, MaterialCpp *matx, MaterialCpp *maty, MaterialCpp *matz, double psi, double xi) except +
         void ClearLayers() except +
-        
+
         Matrix4d GetIntensityMatrix() except +
         Matrix4cd GetAmplitudeMatrix() except +
         SweepResCpp Sweep(ParamCpp sweepParamCpp, Map[ArrayXd] sweepValues, PositionSettingsCpp enhpos, int alphasLayer) except +
-        
+
         EMFieldsListCpp CalcFields1D(Map[ArrayXd] xs, Map[Array2d] polarization, WaveDirectionCpp waveDirection) except +
         EMFieldsCpp CalcFieldsAtInterface(PositionSettingsCpp pos, WaveDirectionCpp waveDirection) except +
         double OptimizeEnhancement(vector[ParamCpp] optParams, Map[ArrayXd] optInitial, PositionSettingsCpp pos) except +
-        
-

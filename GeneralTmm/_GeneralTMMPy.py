@@ -43,7 +43,6 @@ def Norm(vector: npt.NDArray[np.complex128]) -> npt.NDArray[np.float64] | np.flo
 
 
 class _AnisotropicLayer:
-
     def __init__(
         self,
         tmm: TmmPy,
@@ -76,9 +75,7 @@ class _AnisotropicLayer:
         self.psi = kwargs.pop("psi", self.psi)
         self.xi = kwargs.pop("xi", self.xi)
 
-    def _GetTangentialFields(
-        self, Ey: complex, Hz: complex, Ez: complex, Hy: complex
-    ) -> tuple[complex, complex]:
+    def _GetTangentialFields(self, Ey: complex, Hz: complex, Ez: complex, Hy: complex) -> tuple[complex, complex]:
         z0 = 119.9169832 * math.pi
 
         beta = self.tmm.beta
@@ -121,7 +118,6 @@ class _AnisotropicLayer:
         self._SolveFieldTransferMatrix()
 
     def _CalcEpsilonMatrix(self) -> None:
-
         self.epsTensorCrystal = np.array(
             [[self.n1**2.0, 0.0, 0.0], [0.0, self.n2**2.0, 0.0], [0.0, 0.0, self.n3**2.0]], dtype=complex
         )
@@ -187,7 +183,7 @@ class _AnisotropicLayer:
 
         if len(forward) != 2:
             raise Exception(
-                "Wrong number of forward moving waves: %d (ns=%s, beta=%s)" 
+                "Wrong number of forward moving waves: %d (ns=%s, beta=%s)"
                 % (len(forward), (self.n1, self.n2, self.n3), beta)
             )
 
@@ -227,7 +223,6 @@ class _AnisotropicLayer:
 
 
 class TmmPy:
-
     def __init__(self) -> None:
         self.wl: float | None = None
         self.beta: float | None = None
@@ -250,9 +245,7 @@ class TmmPy:
     def AddIsotropicLayer(self, d: float, n: complex) -> None:
         self.layers.append(_AnisotropicLayer(self, d, n, n, n, 0.0, 0.0))
 
-    def AddLayer(
-        self, d: float, n1: complex, n2: complex, n3: complex, psi: float, xi: float
-    ) -> None:
+    def AddLayer(self, d: float, n1: complex, n2: complex, n3: complex, psi: float, xi: float) -> None:
         self.layers.append(_AnisotropicLayer(self, d, n1, n2, n3, psi, xi))
 
     def GetConf(self) -> dict[str, Any]:
@@ -284,9 +277,9 @@ class TmmPy:
             if key.find("_") == -1:
                 continue
             kwargs.pop(key)
-            param, index = key.split("_")
-            index = int(index)
-            self.layers[index].SetConf(**{param: value})
+            param, index_str = key.split("_")
+            layer_index = int(index_str)
+            self.layers[layer_index].SetConf(**{param: value})
 
     def SolveFor(
         self,
@@ -481,7 +474,6 @@ class TmmPy:
         enhDist: float = 0.0,
     ) -> tuple[npt.NDArray[np.float64], float]:
         def FitFunc(x: npt.NDArray[np.float64]) -> float:
-
             for i in range(len(x)):
                 self.SetConf(**{optParams[i]: x[i]})
             self.Solve()
@@ -534,9 +526,7 @@ class TmmPy:
         coefsAll[-1, 1] = coefsAll[-1, 3] = 0.0
         return normCoef, coefsAll
 
-    def _LayerIndices(
-        self, xs: npt.NDArray[np.float64]
-    ) -> tuple[npt.NDArray[np.int_], npt.NDArray[np.float64]]:
+    def _LayerIndices(self, xs: npt.NDArray[np.float64]) -> tuple[npt.NDArray[np.int_], npt.NDArray[np.float64]]:
         resInd = np.zeros_like(xs, dtype=int)
         resD = np.zeros_like(xs, dtype=float)
 

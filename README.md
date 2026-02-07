@@ -67,7 +67,7 @@ uv run pytest -v
 ### Code formatting
 
 ```bash
-uv run black .
+uv run ruff format .
 uv run ruff check --fix .
 ```
 

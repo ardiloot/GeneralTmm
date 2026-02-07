@@ -8,9 +8,7 @@ import numpy.typing as npt
 class Material:
     """Material class for optical parameters."""
 
-    def __init__(
-        self, wls: npt.NDArray[np.float64], ns: npt.NDArray[np.complex128]
-    ) -> None: ...
+    def __init__(self, wls: npt.NDArray[np.floating[Any]], ns: npt.NDArray[np.complexfloating[Any, Any]]) -> None: ...
     def __call__(self, wl: float) -> complex: ...
     def GetN(self, wl: float) -> complex: ...
 
@@ -26,6 +24,7 @@ class Tmm:
     """Transfer matrix method solver."""
 
     def __init__(self, wl: float = ...) -> None: ...
+    def SetParams(self, **kwargs: float | int | complex) -> None: ...
     def AddIsotropicLayer(self, d: float, material: Material) -> None: ...
     def AddLayer(
         self,
@@ -39,7 +38,7 @@ class Tmm:
     def Sweep(
         self,
         paramName: str,
-        values: npt.NDArray[np.float64],
+        values: npt.NDArray[np.floating[Any]],
         enhPos: tuple[tuple[int, int], float, float] | None = ...,
         alphaLayer: int = ...,
     ) -> _SweepRes: ...
@@ -47,8 +46,8 @@ class Tmm:
     def GetAmplitudeMatrix(self) -> npt.NDArray[np.complex128]: ...
     def CalcFields1D(
         self,
-        xs: npt.NDArray[np.float64],
-        polarization: npt.NDArray[np.float64],
+        xs: npt.NDArray[np.floating[Any]],
+        polarization: npt.NDArray[np.floating[Any]],
         waveDirection: str = ...,
     ) -> tuple[npt.NDArray[np.complex128], npt.NDArray[np.complex128]]: ...
     @property
