@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+title: "GeneralTmm: General 4×4 Transfer-Matrix Method"
+message: "If you use this software, please cite it using the metadata from this file."
+type: software
+authors:
+  - given-names: Ardi
+    family-names: Loot
+    email: ardi.loot@outlook.com
+repository-code: "https://github.com/ardiloot/GeneralTmm"
+url: "https://pypi.org/project/GeneralTmm/"
+license: MIT
+keywords:
+  - transfer-matrix method
+  - optics
+  - thin film
+  - photonics
+  - anisotropic
+  - birefringence
+  - surface plasmon
+  - multilayer
