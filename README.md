@@ -87,10 +87,10 @@ Versioning is handled automatically by [setuptools-scm](https://github.com/pypa/
 1. **Ensure CI is green** on the `master` branch.
 2. **Create and push a git tag** following [PEP 440](https://peps.python.org/pep-0440/):
    ```bash
-   git tag v0.4.0
-   git push origin v0.4.0
+   git tag v1.2.0
+   git push origin v1.2.0
    ```
-   For testing, use a pre-release tag (e.g. `v0.4.0rc1`) — it will be marked as a pre-release and **not** published to PyPI.
+   For testing, use a pre-release tag (e.g. `v1.2.0rc1`) — it will be marked as a pre-release and **not** published to PyPI.
 3. A **draft GitHub Release** is created automatically with generated release notes.
 4. **Review the draft** on the [Releases](https://github.com/ardiloot/GeneralTmm/releases) page, edit if needed, then **publish** it.
 5. The publish workflow builds wheels for Linux (x86_64), Windows (x86_64), and macOS (x86_64 + ARM) and uploads to [PyPI](https://pypi.org/project/GeneralTmm/).
