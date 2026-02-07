@@ -110,7 +110,7 @@ Kretschmann configuration (glass | 50 nm Ag | air) with wavelength-dependent sil
 
 ### Dielectric Thin-Film Filters — [ExampleFilter.py](Examples/ExampleFilter.py)
 
-Quarter-wave stacks of TiO₂ / SiO₂ on BK7 glass at normal incidence. A Bragg mirror (HL)⁷H gives > 99.8 % reflectance across a ~200 nm stop band centered at 550 nm. Adding a half-wave SiO₂ cavity between two such mirrors creates a Fabry-Perot bandpass filter with a narrow transmission peak.
+Quarter-wave stacks of TiO₂ / SiO₂ on BK7 glass at normal incidence. A Bragg mirror (HL)⁷H gives > 99.8 % reflectance across a ~160 nm stop band centered at 550 nm. Adding a half-wave SiO₂ cavity between two such mirrors creates a Fabry-Perot bandpass filter with a narrow transmission peak.
 
 <p align="center">
   <img src="docs/images/filter_dielectric.png" alt="Dielectric Bragg mirror and Fabry-Perot bandpass filter" width="700">
@@ -144,7 +144,7 @@ A Kretschmann-coupled surface plasmon polariton at an Ag / KTP birefringent-crys
 
 > Hodgkinson, I. J., Kassam, S., & Wu, Q. H. (1997). Eigenequations and Compact Algorithms for Bulk and Layered Anisotropic Optical Media: Reflection and Refraction at a Crystal-Crystal Interface. *Journal of Computational Physics*, 133(1), 75–83.
 >
-> Johnson, P. B., & Christy, R. W. (1972). Optical constants of the noble metals. *Physical Review B*, 6(12), 4370–4379.
+> Johnson, P. B., & Christy, R. W. (1972). Optical Constants of the Noble Metals. *Physical Review B*, 6(12), 4370–4379.
 >
 > Loot, A., & Hizhnyakov, V. (2016). Leaky Dyakonov surface plasmon polaritons for birefringent crystals. *Applied Physics A*, 122, 327.
 
