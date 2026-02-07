@@ -42,7 +42,7 @@ class Material(_GeneralTmmCppExt.Material):
         1.5
 
         """
-        wls: npt.NDArray[np.float64] = np.array([-1.0, 1.0])
+        wls: npt.NDArray[np.float64] = np.array([-1.0,     1.0])
         ns: npt.NDArray[np.complex128] = np.array([n, n], dtype=complex)
         res = Material(wls, ns)
         return res
