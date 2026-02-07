@@ -70,11 +70,27 @@ jobs:
     permissions:
       id-token: write
     steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
       - name: Verify release is from master branch
-        if: ${{ github.event.release.target_commitish != 'master' }}
         run: |
-          echo "::error::Production releases must be published from the master branch, got '${{ github.event.release.target_commitish }}'."
-          exit 1
+          TARGET="${{ github.event.release.target_commitish }}"
+          # If target_commitish is a commit SHA, check if it's on master
+          if git rev-parse --verify "refs/heads/$TARGET" >/dev/null 2>&1; then
+            # It's a branch name
+            if [ "$TARGET" != "master" ]; then
+              echo "::error::Production releases must be published from the master branch, got '$TARGET'."
+              exit 1
+            fi
+          else
+            # It's a commit SHA, verify it's on master
+            if ! git branch --contains "$TARGET" | grep -q "^\s*master$\|^\s*origin/master$"; then
+              echo "::error::Production releases must be published from the master branch, commit '$TARGET' is not on master."
+              exit 1
+            fi
+          fi
 
       - uses: actions/download-artifact@v7
         with:

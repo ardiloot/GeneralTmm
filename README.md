@@ -76,7 +76,6 @@ uv run ruff check --fix .
 | Workflow | Trigger | What it does |
 |----------|---------|-------------|
 | [Pytest](.github/workflows/pytest.yml) | Push to `master` / PRs | Tests on {ubuntu, windows, macos} × Python {3.10 – 3.14} |
-| [Draft Release](.github/workflows/draft-release.yml) | Tag `v*` pushed | Creates a draft GitHub Release with auto-generated notes |
 | [Publish to PyPI](.github/workflows/publish-to-pypi.yml) | Release published | Builds wheels + sdist via cibuildwheel, uploads to PyPI |
 | [Dependabot](.github/dependabot.yml) | Weekly | Keeps GitHub Actions and pip dependencies up to date |
 
@@ -85,15 +84,13 @@ uv run ruff check --fix .
 Versioning is handled automatically by [setuptools-scm](https://github.com/pypa/setuptools-scm) from git tags.
 
 1. **Ensure CI is green** on the `master` branch.
-2. **Create and push a git tag** following [PEP 440](https://peps.python.org/pep-0440/):
-   ```bash
-   git tag v1.2.0
-   git push origin v1.2.0
-   ```
-   For testing, use a pre-release tag (e.g. `v1.2.0rc1`) — it will be marked as a pre-release and **not** published to PyPI.
-3. A **draft GitHub Release** is created automatically with generated release notes.
-4. **Review the draft** on the [Releases](https://github.com/ardiloot/GeneralTmm/releases) page, edit if needed, then **publish** it.
-5. The publish workflow builds wheels for Linux (x86_64 + aarch64), Windows (AMD64 + ARM64), and macOS (ARM64) and uploads to [PyPI](https://pypi.org/project/GeneralTmm/).
+2. **Create a new release** on GitHub:
+   - Go to [Releases](https://github.com/ardiloot/GeneralTmm/releases) → **Draft a new release**
+   - Create a new tag following [PEP 440](https://peps.python.org/pep-0440/) (e.g. `v1.2.0`)
+   - Target the `master` branch (or a specific commit on master)
+   - Click **Generate release notes** for auto-generated changelog
+   - For pre-releases (e.g. `v1.2.0rc1`), check **Set as a pre-release** — these upload to TestPyPI instead of PyPI
+3. **Publish the release** — the workflow builds wheels for Linux (x86_64 + aarch64), Windows (AMD64 + ARM64), and macOS (ARM64) and uploads to [PyPI](https://pypi.org/project/GeneralTmm/).
 
 ## License
 
