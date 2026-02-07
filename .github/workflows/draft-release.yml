@@ -1,0 +1,41 @@
+name: Create draft release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  draft-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify branch for non-prerelease tags
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ ! "$TAG_NAME" =~ (a|b|rc|dev|alpha|beta)[0-9] ]]; then
+            BRANCH=$(git branch -r --contains "$(git rev-list -n1 "$TAG_NAME")" | grep -w 'origin/master' || true)
+            if [[ -z "$BRANCH" ]]; then
+              echo "::error::Non-prerelease tags must be on the master branch."
+              exit 1
+            fi
+          fi
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          ARGS=(--draft --generate-notes --title "$TAG_NAME")
+          if [[ "$TAG_NAME" =~ (a|b|rc|dev|alpha|beta)[0-9] ]]; then
+            ARGS+=(--prerelease)
+          fi
+          gh release create "$TAG_NAME" "${ARGS[@]}" \
+            --target "$(git rev-list -n1 "$TAG_NAME")"

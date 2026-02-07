@@ -1,6 +1,27 @@
+# Build artifacts
 /build/
 /dist/
-/GeneralTmm.egg-info/
+*.egg-info/
+*.egg
+.eggs/
+
+# Virtual environments
+/venv/
+/.venv/
+
+# Compiled extensions
+*.so
+*.pyd
+
+# Byte-compiled / cached
+__pycache__/
+*.pyc
+*.pyo
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+
+# Legacy scripts
 /prepare_to_publish.bat
 /publish.bat
-/venv/

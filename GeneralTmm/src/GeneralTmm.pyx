@@ -127,16 +127,16 @@ cdef class _SweepRes:
         The X denotes measured field polarization (1..4) and Y incident
         polarization (1..4)
     ["enh"] : ndarray of floats
-        The the enhancement of electrical field norm in specified position in
+        The enhancement of electric field norm in specified position in
         comparison to the incident field norm in vacuum.
     ["enhEx"] : ndarray of floats
-        The the enhancement of electrical field x-component amplitude in
+        The enhancement of electric field x-component amplitude in
         specified position in comparison to the incident field norm in vacuum.
     ["enhEy"] : ndarray of floats
-        The the enhancement of electrical field y-component amplitude in
+        The enhancement of electric field y-component amplitude in
         specified position in comparison to the incident field norm in vacuum.
     ["enhEz"] : ndarray of floats
-        The the enhancement of electrical field z-component amplitude in
+        The enhancement of electric field z-component amplitude in
         specified position in comparison to the incident field norm in vacuum.
         
     """
@@ -169,7 +169,7 @@ cdef class Material:
     """Material(wls, ns)
     
     This class describes the optical parameters of medium. Default
-    contructor takes arrays of wavelengths and complex refractive indices and
+    constructor takes arrays of wavelengths and complex refractive indices and
     does linear interpolation. For shortcut __call__(wl) is defined as GetN(wl).
     
     Parameters
@@ -230,7 +230,7 @@ cdef class Tmm:
     This is main class for 4x4 matrix anisotropic transfer-matrix method (TMM).
     Allows to calculate both isotropic and anisotropic mediums. In case of
     anisotropic mediums the layer is specified by the thickness, by three
-    refractive indices (along each axis) and by to angles denoting the alignment
+    refractive indices (along each axis) and by two angles denoting the alignment
     of crystallographic axes with structure axes. This class is wrapper for the
     code written in C++. This implementation is based on the publication
     Hodgkinson, I. J., Kassam, S., & Wu, Q. H. (1997). Journal of Computational
@@ -276,7 +276,7 @@ cdef class Tmm:
         Parameters
         ----------
         **kwargs : dict
-            Param and value pais to set.
+            Param and value pairs to set.
         
         """
         cdef pair[ParamCpp, ParamDatatype] paramDef
@@ -300,9 +300,9 @@ cdef class Tmm:
         ----------
         d : float
             The thickness of the layer. First and last layers should have
-            thikness equal to float("inf").
+            thickness equal to float("inf").
         mat : :any:`Material`
-            Instance of the :any:`Material` class decribing the refractive
+            Instance of the :any:`Material` class describing the refractive
             index dispersion over wavelength. 
         
         """
@@ -318,15 +318,15 @@ cdef class Tmm:
         ----------
         d : float
             The thickness of the layer. First and last layers should have
-            thikness equal to float("inf").
+            thickness equal to float("inf").
         matx : :any:`Material`
-            Instance of the :any:`Material` class decribing the refractive
+            Instance of the :any:`Material` class describing the refractive
             index dispersion over wavelength in x-direction.
         maty : :any:`Material`
-            Instance of the :any:`Material` class decribing the refractive
+            Instance of the :any:`Material` class describing the refractive
             index dispersion over wavelength in y-direction.
         matz : :any:`Material`
-            Instance of the :any:`Material` class decribing the refractive
+            Instance of the :any:`Material` class describing the refractive
             index dispersion over wavelength in z-direction.
         psi : float
             The rotational angle around the z-axis for alignment of the material.
@@ -348,7 +348,7 @@ cdef class Tmm:
         
         """
         
-        self._materialsCache.clear()
+        self.materialsCache.clear()
         self._thisptr.ClearLayers()
 
     def GetIntensityMatrix(self):
@@ -395,12 +395,12 @@ cdef class Tmm:
             The list of values for parameter to solve for.
         enhPos : tuple
             Tuple structured like ((polCoef1, polCoef2), layerNr, distance).
-            If this parameter is not None, then the field enhancment will be
+            If this parameter is not None, then the field enhancement will be
             calculated in layer numbered by `layerNr` at distance `distance`
             from the interface. The variables (polCoef1, polCoef2) define the
             polarization for the field enhancement calculation (in comparison to
-            the excitation in vacuum) and (1.0, 0.0) corresonds to p-polarization
-            and (0.0, 1.0) corresond to s-polarization.
+            the excitation in vacuum) and (1.0, 0.0) corresponds to p-polarization
+            and (0.0, 1.0) corresponds to s-polarization.
         alphaLayer: int
             Computes the perpendicular component of the wavevectors in layer
             nr `alphaLayer`.
@@ -428,7 +428,7 @@ cdef class Tmm:
         
         Calculates the complex electric and magnetic fields along the x-axis.
         
-        Paramaters
+        Parameters
         ----------
         xs : ndarray of floats
             Position array where to calculate the fields.
@@ -440,7 +440,7 @@ cdef class Tmm:
         Returns
         -------
         tuple (E, H) of ndarrays of complex floats
-           Variable E contains the electrical fields and has shape (N, 3), 
+           Variable E contains the electric fields and has shape (N, 3), 
            where N is the length of `xs` array and 3 correspond to x-, y- and
            z-direction. Variable H contains magnetic fields in similar manner.  
         
@@ -459,7 +459,7 @@ cdef class Tmm:
         Calculates the complex electric and magnetic fields along in xy-plane in
         the rectangular grid following from `xs` and `ys`.
         
-        Paramaters
+        Parameters
         ----------
         xs : ndarray of floats
             Position array where to calculate the fields in x-direction.
@@ -473,8 +473,8 @@ cdef class Tmm:
         Returns
         -------
         tuple (E, H) of ndarrays of complex floats
-           Variable E contains the electrical fields and has shape (N, M, 3), 
-           where N is the length of `xs` array, M is the lenght of `ys`
+           Variable E contains the electric fields and has shape (N, M, 3), 
+           where N is the length of `xs` array, M is the length of `ys`
            array and 3 correspond to x-, y- and z-direction. Variable H
            contains magnetic fields in similar manner.  
         
@@ -494,19 +494,19 @@ cdef class Tmm:
     def CalcFieldsAtInterface(self, enhPos, str waveDirectionStr = "both"):
         """CalcFieldsAtInterface(enhPos, waveDirectionStr = "both")
         
-        Calculates electic and magnetic fields in one point defined by
+        Calculates electric and magnetic fields in one point defined by
         `enhPos`.
         
         Parameters
         ----------
         enhPos : tuple
             Tuple structured like ((polCoef1, polCoef2), layerNr, distance).
-            If this parameter is not None, then the field enhancment will be
+            If this parameter is not None, then the field enhancement will be
             calculated in layer numbered by `layerNr` at distance `distance`
             from the interface. The variables (polCoef1, polCoef2) define the
             polarization for the field enhancement calculation (in comparison to
-            the excitation in vacuum) and (1.0, 0.0) corresonds to p-polarization
-            and (0.0, 1.0) corresond to s-polarization.
+            the excitation in vacuum) and (1.0, 0.0) corresponds to p-polarization
+            and (0.0, 1.0) corresponds to s-polarization.
         waveDirection : str {"both", "forward", "backward"}
             Allows to select the output fields.
             
@@ -532,7 +532,7 @@ cdef class Tmm:
     def OptimizeEnhancement(self, list optParams, np.ndarray[double, ndim = 1] optInitials, enhpos):
         """OptimizeEnhancement(optParams, optInitials, enhpos)
         
-        Function for optimizing structure params for maximal field enhancment in
+        Function for optimizing structure params for maximal field enhancement in
         one point (defined by enhpos). See also parameters for optimization:
         `enhOptRel`, `enhOptMaxIters` and `enhInitialStep`.
         
@@ -541,20 +541,20 @@ cdef class Tmm:
         optParams: list of str
             List of parameter names to optimize.
         optInitials: ndarray of float
-            Contains initial quesses for parameters in `optParams`.
+            Contains initial guesses for parameters in `optParams`.
         enhPos : tuple
             Tuple structured like ((polCoef1, polCoef2), layerNr, distance).
-            The field enhancment will be calculated in layer numbered by
+            The field enhancement will be calculated in layer numbered by
             `layerNr` at distance `distance` from the interface. The variables 
             (polCoef1, polCoef2) define the polarization for the field
             enhancement calculation (in comparison to the excitation in vacuum):
-            (1.0, 0.0) corresonds to p-polarization and (0.0, 1.0) corresond to
+            (1.0, 0.0) corresponds to p-polarization and (0.0, 1.0) corresponds to
             s-polarization.
         
         Returns
         -------
         float
-            The optimized field enhancment. All the parameters will be assigned
+            The optimized field enhancement. All the parameters will be assigned
             their optimal values and could be thus accessed in usual way.
         
         """
