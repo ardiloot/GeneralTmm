@@ -157,6 +157,15 @@ cdef class _SweepRes:
     def __getitem__(self, index):
         return self._res[index]
     
+    def __contains__(self, key):
+        return key in self._res
+    
+    def __iter__(self):
+        return iter(self._res)
+    
+    def keys(self):
+        return self._res.keys()
+    
     def __repr__(self):
         return "%s(%r)" % (self.__class__, self._res)
 
