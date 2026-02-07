@@ -25,7 +25,7 @@ def main():
 
     # Plot
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
-    fig.suptitle("Total Internal Reflection", fontsize=13)
+    fig.suptitle("Total internal reflection", fontsize=13)
 
     ax1.set_title("(a)  Reflection")
     ax1.plot(np.degrees(angles), sr["R11"], label=r"R$_{pp}$")

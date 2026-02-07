@@ -48,6 +48,10 @@ def main():
     colors = ["#1f77b4", "#ff7f0e", "#d62728", "#9467bd"]
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
+    fig.suptitle(
+        r"Leaky Dyakonov SPP:  ZnSe / Ag (60 nm) / KTP  at  $\lambda$ = 900 nm",
+        fontsize=13,
+    )
 
     for phi_deg, c in zip(phi_sel, colors):
         sr = make_tmm(phi_deg).Sweep("beta", betas)
@@ -83,10 +87,6 @@ def main():
     ax2.set_ylim(-0.02, 1.02)
     ax2.legend(fontsize=8, loc="center right")
 
-    fig.suptitle(
-        "Leaky Dyakonov SPP:  ZnSe / Ag (60 nm) / KTP  at  λ = 900 nm",
-        fontsize=13,
-    )
     fig.tight_layout()
     plt.show()
 

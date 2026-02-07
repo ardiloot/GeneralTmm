@@ -63,7 +63,7 @@ def main():
     ax1.legend(loc="center left")
     ax1.set_title("(a)  Angular sweep")
     ax1r = ax1.twinx()
-    ax1r.plot(np.degrees(angles), sr["enh"], "--", color="red", label="enhancement")
+    ax1r.plot(np.degrees(angles), sr["enh"], "--", color="red", label="Enhancement")
     ax1r.set_ylabel("Enhancement")
     ax1r.legend(loc="center right")
 
