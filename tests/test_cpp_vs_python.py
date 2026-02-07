@@ -652,10 +652,17 @@ class TestEnergyConservation:
 
 
 class TestBrewsterAngle:
-    """Tests for Brewster angle physics."""
+    """Tests for Brewster angle physics.
+    
+    At Brewster's angle, p-polarized light has zero reflection when
+    passing from medium n1 to n2. The Brewster angle θ_B satisfies:
+    tan(θ_B) = n2/n1
+    
+    In terms of beta (= n1*sin(θ)): beta_B = n1*sin(arctan(n2/n1))
+    """
 
-    def test_brewster_angle_minimum(self):
-        """p-polarization reflection should have minimum near Brewster angle."""
+    def test_brewster_angle_zero_reflection(self):
+        """p-polarization reflection should be very small at Brewster angle."""
         wl = 532e-9
         n1, n2 = 1.0, 1.5
 
@@ -668,37 +675,63 @@ class TestBrewsterAngle:
         theta_brewster = np.arctan(n2 / n1)
         beta_brewster = n1 * np.sin(theta_brewster)
 
-        # Sweep around Brewster angle
-        betas = np.linspace(0.0, 0.99, 100)
+        # Sweep around Brewster angle with fine resolution
+        betas = np.linspace(0.0, 0.99, 200)
         res = tmm.Sweep("beta", betas)
 
         # Find minimum in p-polarization reflection
         min_idx = np.argmin(res["R11"])
         beta_at_min = betas[min_idx]
+        r_at_min = res["R11"][min_idx]
 
         # Minimum should be near Brewster angle
-        np.testing.assert_allclose(beta_at_min, beta_brewster, rtol=0.1)
+        np.testing.assert_allclose(beta_at_min, beta_brewster, rtol=0.05)
+        # p-polarization reflection should be very small at Brewster angle
+        assert r_at_min < 1e-5  # Numerical precision limits
 
-        # s-polarization should not have minimum at same location
-        assert np.argmin(res["R22"]) != min_idx or res["R22"][min_idx] > 0.01
-
-
-class TestTotalInternalReflectionPhysics:
-    """Tests for TIR physics."""
-
-    def test_tir_complete_reflection(self):
-        """Beyond critical angle, R should equal 1."""
+    def test_brewster_no_s_pol_minimum(self):
+        """s-polarization should NOT have zero reflection at Brewster angle."""
         wl = 532e-9
-        n1, n2 = 1.5, 1.0
-        critical_angle = np.arcsin(n2 / n1)
-        beta_critical = n1 * np.sin(critical_angle)
+        n1, n2 = 1.0, 1.5
 
         tmm = Tmm()
         tmm.SetParams(wl=wl)
         tmm.AddIsotropicLayer(float("inf"), Material.Static(n1))
         tmm.AddIsotropicLayer(float("inf"), Material.Static(n2))
 
-        # Sweep beyond critical angle
+        theta_brewster = np.arctan(n2 / n1)
+        beta_brewster = n1 * np.sin(theta_brewster)
+
+        # Set beta near Brewster angle
+        tmm.SetParams(beta=beta_brewster)
+        R = tmm.GetIntensityMatrix()
+
+        # s-polarization (R22) should have significant reflection
+        assert R[1, 1] > 0.01  # Should be around 7-8% for glass
+
+
+class TestTotalInternalReflectionPhysics:
+    """Tests for TIR physics.
+    
+    Total internal reflection occurs when light travels from higher to lower
+    refractive index medium at angle greater than critical angle.
+    Critical angle: sin(θ_c) = n2/n1 where n1 > n2
+    In terms of beta: beta_critical = n1 * sin(θ_c) = n2
+    """
+
+    def test_tir_complete_reflection(self):
+        """Beyond critical angle, R should equal 1."""
+        wl = 532e-9
+        n1, n2 = 1.5, 1.0
+        # Critical beta is simply n2 (the lower refractive index)
+        beta_critical = n2
+
+        tmm = Tmm()
+        tmm.SetParams(wl=wl)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n1))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n2))
+
+        # Sweep beyond critical angle (beta > n2)
         betas = np.linspace(beta_critical + 0.01, n1 - 0.01, 20)
         res = tmm.Sweep("beta", betas)
 
@@ -710,8 +743,7 @@ class TestTotalInternalReflectionPhysics:
         """Beyond critical angle, T should equal 0."""
         wl = 532e-9
         n1, n2 = 1.5, 1.0
-        critical_angle = np.arcsin(n2 / n1)
-        beta_critical = n1 * np.sin(critical_angle)
+        beta_critical = n2
 
         tmm = Tmm()
         tmm.SetParams(wl=wl)
@@ -723,6 +755,114 @@ class TestTotalInternalReflectionPhysics:
 
         np.testing.assert_allclose(res["T31"], 0.0, atol=1e-10)
         np.testing.assert_allclose(res["T42"], 0.0, atol=1e-10)
+
+    def test_tir_transition(self):
+        """Test behavior across critical angle transition."""
+        wl = 532e-9
+        n1, n2 = 1.5, 1.0
+        beta_critical = n2
+
+        tmm = Tmm()
+        tmm.SetParams(wl=wl)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n1))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n2))
+
+        # Sweep below and above critical angle (avoid exact critical point)
+        betas_below = np.linspace(0.5, beta_critical - 0.05, 20)
+        betas_above = np.linspace(beta_critical + 0.05, n1 - 0.1, 20)
+
+        res_below = tmm.Sweep("beta", betas_below)
+        res_above = tmm.Sweep("beta", betas_above)
+
+        # Below critical: R < 1 and T > 0
+        assert np.all(res_below["R11"] < 1.0)
+        assert np.all(res_below["T31"] > 0.0)
+
+        # Above critical: R = 1 and T = 0
+        np.testing.assert_allclose(res_above["R11"], 1.0, rtol=1e-10)
+        np.testing.assert_allclose(res_above["T31"], 0.0, atol=1e-10)
+
+
+class TestFresnelEquations:
+    """Tests verifying Fresnel equations at normal incidence.
+    
+    At normal incidence (θ=0), the Fresnel reflection coefficient is:
+    r = (n1 - n2) / (n1 + n2)
+    R = |r|² = ((n1 - n2) / (n1 + n2))²
+    """
+
+    @pytest.mark.parametrize("n1,n2", [(1.0, 1.5), (1.5, 1.0), (1.0, 2.0), (1.5, 2.5)])
+    def test_fresnel_normal_incidence(self, n1, n2):
+        """Verify Fresnel reflection at normal incidence matches analytic formula."""
+        wl = 532e-9
+        tmm = Tmm()
+        tmm.SetParams(wl=wl, beta=0.0)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n1))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n2))
+
+        R_matrix = tmm.GetIntensityMatrix()
+
+        # Analytic Fresnel reflection at normal incidence
+        R_expected = ((n1 - n2) / (n1 + n2)) ** 2
+
+        np.testing.assert_allclose(R_matrix[0, 0], R_expected, rtol=1e-10)
+        np.testing.assert_allclose(R_matrix[1, 1], R_expected, rtol=1e-10)
+
+
+class TestQuarterWaveCoating:
+    """Tests for quarter-wave antireflection coating.
+    
+    A quarter-wave layer of thickness d = λ/(4n) with n = sqrt(n1*n2)
+    gives zero reflection at normal incidence when placed between
+    media with refractive indices n1 and n2.
+    """
+
+    def test_quarter_wave_antireflection(self):
+        """Quarter-wave coating should give zero reflection at design wavelength."""
+        wl = 532e-9
+        n_air = 1.0
+        n_glass = 1.5
+
+        # Optimal coating: n_coating = sqrt(n_air * n_glass)
+        n_coating = np.sqrt(n_air * n_glass)
+        # Quarter-wave thickness
+        d_coating = wl / (4 * n_coating)
+
+        tmm = Tmm()
+        tmm.SetParams(wl=wl, beta=0.0)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n_air))
+        tmm.AddIsotropicLayer(d_coating, Material.Static(n_coating))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n_glass))
+
+        R = tmm.GetIntensityMatrix()
+
+        # Reflection should be zero at design wavelength
+        np.testing.assert_allclose(R[0, 0], 0.0, atol=1e-10)
+        np.testing.assert_allclose(R[1, 1], 0.0, atol=1e-10)
+
+    def test_quarter_wave_off_design(self):
+        """Quarter-wave coating should have higher reflection away from design wavelength."""
+        wl_design = 532e-9
+        n_air = 1.0
+        n_glass = 1.5
+        n_coating = np.sqrt(n_air * n_glass)
+        d_coating = wl_design / (4 * n_coating)
+
+        tmm = Tmm()
+        tmm.SetParams(beta=0.0)
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n_air))
+        tmm.AddIsotropicLayer(d_coating, Material.Static(n_coating))
+        tmm.AddIsotropicLayer(float("inf"), Material.Static(n_glass))
+
+        # Check at design wavelength vs off-design
+        wls = np.array([wl_design, 400e-9, 700e-9])
+        res = tmm.Sweep("wl", wls)
+
+        # At design wavelength, R should be ~0
+        assert res["R11"][0] < 1e-10
+        # Off design, R should be larger
+        assert res["R11"][1] > 0.001
+        assert res["R11"][2] > 0.001
 
 
 class TestNormalIncidenceSymmetry:
