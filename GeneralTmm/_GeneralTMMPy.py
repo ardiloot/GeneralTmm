@@ -35,11 +35,11 @@ def Norm(vector: npt.NDArray[np.complex128]) -> npt.NDArray[np.float64] | np.flo
             raise Exception("Only vectors with length 3 supported.")
         return np.sqrt(
             abs(vector[:, 0]) ** 2.0 + abs(vector[:, 1]) ** 2.0 + abs(vector[:, 2]) ** 2.0, dtype=complex
-        ).real
+        ).real  # type: ignore[union-attr]
     else:
         if len(vector) != 3:
             raise Exception("Only vectors with length 3 supported.")
-        return np.sqrt(abs(vector[0]) ** 2.0 + abs(vector[1]) ** 2.0 + abs(vector[2]) ** 2.0, dtype=complex).real
+        return np.sqrt(abs(vector[0]) ** 2.0 + abs(vector[1]) ** 2.0 + abs(vector[2]) ** 2.0, dtype=complex).real  # type: ignore[union-attr]
 
 
 class _AnisotropicLayer:
@@ -191,16 +191,16 @@ class _AnisotropicLayer:
                 % (len(forward), (self.n1, self.n2, self.n3), beta)
             )
 
-        if abs(values.real[forward[0]] - values.real[forward[1]]) < 1e-10:
+        if abs(values.real[forward[0]] - values.real[forward[1]]) < 1e-10:  # type: ignore[union-attr]
             # print "TODO", values[forward[0]], values[forward[1]]
             pass
-        elif values.real[forward[0]] < values.real[forward[1]]:
+        elif values.real[forward[0]] < values.real[forward[1]]:  # type: ignore[union-attr]
             forward[0], forward[1] = forward[1], forward[0]
 
-        if abs(values.real[backward[0]] - values.real[backward[1]]) < 1e-10:
+        if abs(values.real[backward[0]] - values.real[backward[1]]) < 1e-10:  # type: ignore[union-attr]
             # print "TODO BACK", values[backward[0]], values[backward[1]]
             pass
-        elif values.real[backward[0]] > values.real[backward[1]]:
+        elif values.real[backward[0]] > values.real[backward[1]]:  # type: ignore[union-attr]
             backward[0], backward[1] = backward[1], backward[0]
 
         option1 = [forward[0], backward[0], forward[1], backward[1]]
@@ -420,7 +420,7 @@ class TmmPy:
             if len(w) > 0:
                 warnings.warn("Calculation warning for beta=%s" % self.beta)
 
-        R = R.real
+        R = R.real  # type: ignore[union-attr]
         self.R = R
 
         return r, R
@@ -487,11 +487,11 @@ class TmmPy:
             self.Solve()
             enh, _ = self.CalcEnhAtInterface(enhInterface=enhInterface, enhDist=enhDist)
             # print x, enh
-            return -enh
+            return -enh  # type: ignore[return-value]
 
         if polarization is not None:
             self.polarization = polarization
-        optValues, maxEnh, _, __, ___ = optimize.fmin(FitFunc, optInitial, disp=False, full_output=True)
+        optValues, maxEnh, _, __, ___ = optimize.fmin(FitFunc, optInitial, disp=False, full_output=True)  # type: ignore[misc]
         maxEnh *= -1
         # print "optValues", optValues
         for i in range(len(optParams)):
