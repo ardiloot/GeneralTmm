@@ -9,7 +9,7 @@ namespace TmmModel {
 
 class Material {
 public:
-    Material() noexcept;
+    Material() noexcept = default;
     explicit Material(dcomplex staticN) noexcept;
     Material(ArrayXd wlsExp, ArrayXcd nsExp);
     void SetStatic(dcomplex staticN) noexcept;
@@ -17,8 +17,8 @@ public:
     [[nodiscard]] bool IsStatic() const noexcept;
 
 private:
-    bool isStatic_;
-    dcomplex staticN_;
+    bool isStatic_ = true;
+    dcomplex staticN_ = 1.0;
     ArrayXd wlsExp_;
     ArrayXcd nsExp_;
 };

@@ -3,12 +3,10 @@
 
 namespace TmmModel {
 
-Material::Material() noexcept : isStatic_(true), staticN_(1.0) {}
-
-Material::Material(dcomplex staticN) noexcept : isStatic_(true), staticN_(staticN) {}
+Material::Material(dcomplex staticN) noexcept : staticN_(staticN) {}
 
 Material::Material(ArrayXd wlsExp, ArrayXcd nsExp)
-    : isStatic_(false), staticN_(1.0), wlsExp_(std::move(wlsExp)), nsExp_(std::move(nsExp)) {
+    : isStatic_(false), wlsExp_(std::move(wlsExp)), nsExp_(std::move(nsExp)) {
     if (wlsExp_.size() != nsExp_.size()) {
         throw std::invalid_argument("wls and ns must have the same length");
     }
@@ -30,9 +28,7 @@ dcomplex Material::n(double wl) const {
         return staticN_;
     }
 
-    // Interpolate
-    dcomplex res = Interpolate(wl, wlsExp_, nsExp_);
-    return res;
+    return Interpolate(wl, wlsExp_, nsExp_);
 }
 
 bool Material::IsStatic() const noexcept {

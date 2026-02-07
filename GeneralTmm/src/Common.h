@@ -116,7 +116,7 @@ private:
 
 struct PositionSettings {
     PositionSettings();
-    PositionSettings(RowVector2d polarization, int interfaceId, double distFromInterface);
+    PositionSettings(const RowVector2d& polarization, int interfaceId, double distFromInterface);
     PositionSettings(double polCoef1, double polCoef2, int interfaceId, double distFromInterface);
     [[nodiscard]] RowVector2d GetPolarization() const noexcept;
     [[nodiscard]] int GetInterfaceId() const noexcept;

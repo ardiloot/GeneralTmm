@@ -1,5 +1,4 @@
 #include "Common.h"
-#include <utility>
 
 namespace TmmModel {
 
@@ -39,10 +38,9 @@ template <typename T> T Interpolate(double x, const ArrayXd& xs, const Eigen::Ar
         }
     }
     // Linear interpolation in range x[b]..x[b+1]
-    double dx = xs(b + 1) - xs(b);
-    T dy = ys(b + 1) - ys(b);
-    T res = ys(b) + dy / dx * (x - xs(b));
-    return res;
+    const double dx = xs(b + 1) - xs(b);
+    const T dy = ys(b + 1) - ys(b);
+    return ys(b) + dy / dx * (x - xs(b));
 }
 
 template dcomplex Interpolate<dcomplex>(double, const ArrayXd&, const ArrayXcd&);
@@ -71,14 +69,13 @@ ParamType Param::GetParamType() const noexcept {
 int Param::GetLayerID() const noexcept {
     return layerId_;
 }
-PositionSettings::PositionSettings(RowVector2d polarization, int interfaceId, double distFromInterface)
-    : enabled_(true), polarization_(std::move(polarization)), interfaceId_(interfaceId),
+PositionSettings::PositionSettings(const RowVector2d& polarization, int interfaceId, double distFromInterface)
+    : enabled_(true), polarization_(polarization), interfaceId_(interfaceId),
       distFromInterface_(distFromInterface) {}
 
 PositionSettings::PositionSettings(double polCoef1, double polCoef2, int interfaceId, double distFromInterface)
-    : enabled_(true), interfaceId_(interfaceId), distFromInterface_(distFromInterface) {
-    polarization_ << polCoef1, polCoef2;
-}
+    : enabled_(true), polarization_{polCoef1, polCoef2}, interfaceId_(interfaceId),
+      distFromInterface_(distFromInterface) {}
 
 PositionSettings::PositionSettings() = default;
 RowVector2d PositionSettings::GetPolarization() const noexcept {
