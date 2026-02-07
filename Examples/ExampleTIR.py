@@ -1,44 +1,49 @@
+"""Total Internal Reflection (TIR) at a prism/air interface.
+
+Sweeps over incidence angle to show the critical-angle transition
+for p- and s-polarizations. Critical angle ≈ 41.8° for glass/air.
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 from GeneralTmm import Material, Tmm
 
-if __name__ == "__main__":
-    # Prepare materials
+
+def main():
     prismN = Material.Static(1.5)
     substrateN = Material.Static(1.0)
 
-    # Parameters
-    wl = 532e-9
-    betas = np.linspace(0.0, 1.49, 100)
+    wl = 532e-9  # green laser
+    betas = np.linspace(0.0, 1.49, 100)  # beta = n*sin(theta)
     angles = np.arcsin(betas / prismN(wl).real)
 
-    # Init TMM
-    tmm = Tmm()
-    tmm.wl = wl
-
-    # Add layers
+    tmm = Tmm(wl=wl)
     tmm.AddIsotropicLayer(float("inf"), prismN)
     tmm.AddIsotropicLayer(float("inf"), substrateN)
-
-    # Do calculations
     sr = tmm.Sweep("beta", betas)
 
     # Plot
-    plt.figure(figsize=(8, 5))
-    plt.suptitle("Total internal reflection")
-    plt.subplot(121)
-    plt.title("Reflection")
-    plt.plot(np.degrees(angles), sr["R11"], label=r"p-pol")
-    plt.plot(np.degrees(angles), sr["R22"], label=r"s-pol")
-    plt.xlabel(r"$\theta$ ($\degree$)")
-    plt.legend()
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
+    fig.suptitle("Total Internal Reflection", fontsize=14)
 
-    plt.subplot(122)
-    plt.title("Transmission")
-    plt.plot(np.degrees(angles), sr["T31"], label=r"p-pol")
-    plt.plot(np.degrees(angles), sr["T42"], label=r"s-pol")
-    plt.xlabel(r"$\theta$ ($\degree$)")
-    plt.legend()
+    ax1.set_title("Reflection")
+    ax1.plot(np.degrees(angles), sr["R11"], label="p-pol")
+    ax1.plot(np.degrees(angles), sr["R22"], label="s-pol")
+    ax1.set_xlabel(r"$\theta$ ($\degree$)")
+    ax1.set_ylabel("Reflectance")
+    ax1.legend()
 
+    ax2.set_title("Transmission")
+    ax2.plot(np.degrees(angles), sr["T31"], label="p-pol")
+    ax2.plot(np.degrees(angles), sr["T42"], label="s-pol")
+    ax2.set_xlabel(r"$\theta$ ($\degree$)")
+    ax2.set_ylabel("Transmittance")
+    ax2.legend()
+
+    fig.tight_layout()
     plt.show()
+
+
+if __name__ == "__main__":
+    main()

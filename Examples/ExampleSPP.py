@@ -1,3 +1,11 @@
+"""Surface Plasmon Polariton (SPP) simulation in Kretschmann configuration.
+
+Glass prism | 50 nm Ag film | air.  At the SPP resonance angle the
+reflection dips and the E-field is strongly enhanced at the metal surface.
+
+Shows: angular sweeps, enhancement optimization, 1D/2D field maps.
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -76,94 +84,71 @@ nsAg = np.array(
     ]
 )
 
-if __name__ == "__main__":
-    # Prepare materials
+
+def main():
     prismN = Material.Static(1.5)
-    metalN = Material(wlsAg, nsAg)
+    metalN = Material(wlsAg, nsAg)  # Ag, wavelength-dependent
     substrateN = Material.Static(1.0)
 
-    # Parameters
-    wl = 950e-9  # wavelength
-    metalD = 50e-9  # metal layer thickness
-    betas = np.linspace(0.8, 1.2, 200)  # effective mode index
-    angles = np.arcsin(betas / prismN(wl).real)  # angle inside prism
-    xs = np.linspace(-0.5e-6, 2e-6, 300)  # for plotting fields
-    ys = np.linspace(-1e-6, 1e-6, 301)  # for plotting fields
+    wl = 950e-9  # near-IR
+    metalD = 50e-9
+    betas = np.linspace(0.8, 1.2, 200)
+    angles = np.arcsin(betas / prismN(wl).real)
+    xs = np.linspace(-0.5e-6, 2e-6, 300)
+    ys = np.linspace(-1e-6, 1e-6, 301)
 
-    # Enhancement measurement polarization ((1, 0) = p and (0, 1) = s), layerNr
-    # and distance from the interface
-    enhPol, enhLayer, enhDist = np.array([1.0, 0.0]), 2, 0.0
-    enhPos = (enhPol, enhLayer, enhDist)
+    # Measure p-polarized enhancement at the metal/air interface
+    enhPos = (np.array([1.0, 0.0]), 2, 0.0)  # (polarization, layer, distance)
 
-    # Init TMM
     tmm = Tmm(wl=wl)
-
-    # Add layers
     tmm.AddIsotropicLayer(float("inf"), prismN)
     tmm.AddIsotropicLayer(metalD, metalN)
     tmm.AddIsotropicLayer(float("inf"), substrateN)
 
-    # Reflection, transmission, enhancement
-    # ---------------------------------------------------------------------------
-
-    # Do calculations
+    # 1. Reflection, transmission, enhancement vs angle
     sr = tmm.Sweep("beta", betas, enhPos=enhPos)
 
-    # Plot
-    plt.figure(figsize=(8, 5))
-    plt.title("Reflection, transmission and enhancement of surface plasmons on Ag")
-    plt.plot(np.degrees(angles), sr["R11"], label=r"reflection")
-    plt.plot(np.degrees(angles), sr["T31"], label=r"transmission")
-    plt.xlabel(r"$\theta$ ($\degree$)")
-    plt.ylabel("reflection/transmission")
-    plt.legend()
-    plt.twinx()
-    plt.plot(np.degrees(angles), sr["enh"], "--", color="red", label=r"enhancement")
-    plt.ylabel("enhancement")
-    plt.legend()
+    fig1, ax1 = plt.subplots(figsize=(8, 5))
+    ax1.set_title("Reflection, transmission and enhancement of surface plasmons on Ag")
+    ax1.plot(np.degrees(angles), sr["R11"], label="reflection")
+    ax1.plot(np.degrees(angles), sr["T31"], label="transmission")
+    ax1.set_xlabel(r"$\theta$ ($\degree$)")
+    ax1.set_ylabel("Reflection / Transmission")
+    ax1.legend(loc="center left")
+    ax1r = ax1.twinx()
+    ax1r.plot(np.degrees(angles), sr["enh"], "--", color="red", label="enhancement")
+    ax1r.set_ylabel("Enhancement")
+    ax1r.legend(loc="center right")
+    fig1.tight_layout()
 
-    # Optimize enhancement to find maximal value (important in case of narrow resonances)
-    # ---------------------------------------------------------------------------
-
-    # Set simplex optimizer parameters
-    tmm.SetParams(enhOptMaxIters=100)
-    tmm.SetParams(enhOptRel=1e-5)
-    tmm.SetParams(enhInitialStep=1e-3)
-
-    # Initial guess from previous calculations
+    # 2. Optimize enhancement to find the exact SPP resonance
+    tmm.SetParams(enhOptMaxIters=100, enhOptRel=1e-5, enhInitialStep=1e-3)
     maxEnhBetaApprox = betas[np.argmax(sr["enh"])]
-
-    # Optimize
     maxEnhOpt = tmm.OptimizeEnhancement(["beta"], np.array([maxEnhBetaApprox]), enhPos)
     maxEnhOptBeta = tmm.beta
 
-    # Print result
     print("Initial enhancement %.2f" % (np.max(sr["enh"])))
     print(r"Optimized enhancement %.2f at β=%.4f" % (maxEnhOpt, maxEnhOptBeta))
 
-    # Calculate and plot 1D fields at the maximum enhancement angle of incidence
-    # ---------------------------------------------------------------------------
-
+    # 3. 1D field profile at the optimal angle
     tmm.beta = maxEnhOptBeta
-    E1D, H1D = tmm.CalcFields1D(xs, enhPol)
+    E1D, H1D = tmm.CalcFields1D(xs, enhPos[0])
 
-    plt.figure()
-    plt.title("1D fields of surface plasmons on Ag film")
-    plt.plot(1e6 * xs, abs(E1D[:, 0]), label=r"|$E_x$|")
-    plt.plot(1e6 * xs, abs(E1D[:, 1]), label=r"|$E_y$|")
-    plt.plot(1e6 * xs, abs(E1D[:, 2]), label=r"|$E_z$|")
-    plt.plot(1e6 * xs, np.linalg.norm(E1D, axis=1), "--", label=r"|$E$|")
-    plt.axvline(0.0, ls="--", color="black", lw=1.0)
-    plt.axvline(1e6 * metalD, ls="--", color="black", lw=1.0)
-    plt.xlabel(r"x ($\mu m$)")
-    plt.ylabel("Electrical field (V/m)")
-    plt.legend()
+    fig2, ax2 = plt.subplots(figsize=(8, 5))
+    ax2.set_title("1D field profile of surface plasmons on Ag film")
+    ax2.plot(1e6 * xs, abs(E1D[:, 0]), label=r"|$E_x$|")
+    ax2.plot(1e6 * xs, abs(E1D[:, 1]), label=r"|$E_y$|")
+    ax2.plot(1e6 * xs, abs(E1D[:, 2]), label=r"|$E_z$|")
+    ax2.plot(1e6 * xs, np.linalg.norm(E1D, axis=1), "--", label=r"|$E$|")
+    ax2.axvline(0.0, ls="--", color="black", lw=1.0)
+    ax2.axvline(1e6 * metalD, ls="--", color="black", lw=1.0)
+    ax2.set_xlabel(r"x ($\mu m$)")
+    ax2.set_ylabel("Electric field (V/m)")
+    ax2.legend()
+    fig2.tight_layout()
 
-    # Calculate and plot 2D fields at the maximum enhancement angle of incidence
-    # ---------------------------------------------------------------------------
-
-    tmm.beta = maxEnhOptBeta
-    E2D, H2D = tmm.CalcFields2D(xs, ys, enhPol)
+    # 4. 2D field map at the optimal angle
+    E2D, H2D = tmm.CalcFields2D(xs, ys, enhPos[0])
 
     toPlot = [
         (r"$E_x$ (V/m)", E2D[:, :, 0].real),
@@ -172,18 +157,22 @@ if __name__ == "__main__":
         (r"$|E|$ (V/m)", np.linalg.norm(E2D, axis=2)),
     ]
 
-    plt.figure()
-    plt.suptitle("2D fields of surface plasmons on Ag film")
+    fig3 = plt.figure(figsize=(10, 8))
+    fig3.suptitle("2D fields of surface plasmons on Ag film", fontsize=14)
     for i, (label, data) in enumerate(toPlot):
-        plt.subplot(221 + i)
-        plt.pcolormesh(1e6 * xs, 1e6 * ys, data.real.T)
-        plt.axvline(0.0, ls="--", color="white", lw=0.5)
-        plt.axvline(1e6 * metalD, ls="--", color="white", lw=0.5)
-        plt.xlabel(r"x ($\mu m$)")
-        plt.ylabel(r"y ($\mu m$)")
-        cbar = plt.colorbar()
+        ax = fig3.add_subplot(221 + i)
+        ax.pcolormesh(1e6 * xs, 1e6 * ys, data.real.T)
+        ax.axvline(0.0, ls="--", color="white", lw=0.5)
+        ax.axvline(1e6 * metalD, ls="--", color="white", lw=0.5)
+        ax.set_xlabel(r"x ($\mu m$)")
+        ax.set_ylabel(r"y ($\mu m$)")
+        cbar = plt.colorbar(ax.collections[0], ax=ax)
         cbar.set_label(label)
-    plt.tight_layout()
-    plt.subplots_adjust(top=0.92)
+    fig3.tight_layout()
+    fig3.subplots_adjust(top=0.92)
 
     plt.show()
+
+
+if __name__ == "__main__":
+    main()
