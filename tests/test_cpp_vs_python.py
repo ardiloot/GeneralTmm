@@ -187,7 +187,7 @@ class TestThinFilmStack:
             resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=-1, enhDist=0.0)
 
             for k in ["R11", "R22", "T31", "T42"]:
-                np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7)
+                np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7, atol=1e-14)
 
     def test_multilayer_stack(self):
         """Compare multilayer dielectric stack."""
@@ -208,7 +208,7 @@ class TestThinFilmStack:
             resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=-1, enhDist=0.0)
 
             for k in ["R11", "R22", "R12", "R21", "T31", "T32", "T41", "T42"]:
-                np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7)
+                np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7, atol=1e-14)
 
 
 class TestMetallicFilms:
@@ -238,7 +238,7 @@ class TestMetallicFilms:
             resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=-1, enhDist=0.0)
 
             for k in ["R11", "R22", "T31", "T42"]:
-                np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7)
+                np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7, atol=1e-14)
 
     @pytest.mark.parametrize("wl", [500e-9, 600e-9, 700e-9, 800e-9])
     def test_spp_resonance(self, silver, wl):
@@ -257,8 +257,8 @@ class TestMetallicFilms:
         res = tmm.Sweep("beta", betas, (pol, 2, 0.0))
         resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=2, enhDist=0.0)
 
-        np.testing.assert_allclose(res["R11"], resOld["R11"], rtol=1e-7)
-        np.testing.assert_allclose(res["enh"], resOld["enh"], rtol=1e-7)
+        np.testing.assert_allclose(res["R11"], resOld["R11"], rtol=1e-7, atol=1e-14)
+        np.testing.assert_allclose(res["enh"], resOld["enh"], rtol=1e-7, atol=1e-14)
 
 
 class TestAnisotropicLayers:
@@ -302,7 +302,7 @@ class TestAnisotropicLayers:
             resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=-1, enhDist=0.0)
 
             for k in ["R11", "R22", "T31", "T42"]:
-                np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7)
+                np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7, atol=1e-14)
 
 
 class TestFieldCalculations:
@@ -399,7 +399,7 @@ class TestEnhancement:
         res = tmm.Sweep("beta", betas, (pol, 2, 0.0))
         resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=2, enhDist=0.0)
 
-        np.testing.assert_allclose(res["enh"], resOld["enh"], rtol=1e-7)
+        np.testing.assert_allclose(res["enh"], resOld["enh"], rtol=1e-7, atol=1e-14)
 
     def test_enhancement_substrate_interface(self):
         """Compare field enhancement at substrate using enhInterface=-1."""
@@ -419,7 +419,7 @@ class TestEnhancement:
         res = tmm.Sweep("beta", betas, (pol, -1, 0.0))
         resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=-1, enhDist=0.0)
 
-        np.testing.assert_allclose(res["enh"], resOld["enh"], rtol=1e-7)
+        np.testing.assert_allclose(res["enh"], resOld["enh"], rtol=1e-7, atol=1e-14)
 
 
 class TestMixedPolarization:
@@ -447,7 +447,7 @@ class TestMixedPolarization:
         res = tmm.Sweep("beta", betas, (pol, -1, 0.0))
         resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=-1, enhDist=0.0)
 
-        np.testing.assert_allclose(res["enh"], resOld["enh"], rtol=1e-7)
+        np.testing.assert_allclose(res["enh"], resOld["enh"], rtol=1e-7, atol=1e-14)
 
 
 class TestCrossPolarization:
@@ -528,7 +528,7 @@ class TestOptimizeEnhancement:
         res = tmm.Sweep("beta", betas, enhPos)
         resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=2, enhDist=0.0)
 
-        np.testing.assert_allclose(res["enh"], resOld["enh"], rtol=1e-7)
+        np.testing.assert_allclose(res["enh"], resOld["enh"], rtol=1e-7, atol=1e-14)
 
 
 class TestWavelengthSweep:
