@@ -77,8 +77,9 @@ jobs:
       - name: Verify release is from master branch
         run: |
           TARGET="${{ github.event.release.target_commitish }}"
-          # If target_commitish is a commit SHA, check if it's on master
-          if git rev-parse --verify "refs/heads/$TARGET" >/dev/null 2>&1; then
+          # If target_commitish is a branch name (local or remote), check it's master
+          if git rev-parse --verify "refs/heads/$TARGET" >/dev/null 2>&1 || \
+             git rev-parse --verify "refs/remotes/origin/$TARGET" >/dev/null 2>&1; then
             # It's a branch name
             if [ "$TARGET" != "master" ]; then
               echo "::error::Production releases must be published from the master branch, got '$TARGET'."
@@ -86,7 +87,7 @@ jobs:
             fi
           else
             # It's a commit SHA, verify it's on master
-            if ! git branch --contains "$TARGET" | grep -q "^\s*master$\|^\s*origin/master$"; then
+            if ! git branch -a --contains "$TARGET" | grep -qE "(^|\s)(origin/)?master$"; then
               echo "::error::Production releases must be published from the master branch, commit '$TARGET' is not on master."
               exit 1
             fi
