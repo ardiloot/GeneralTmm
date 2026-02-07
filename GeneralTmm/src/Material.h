@@ -1,29 +1,27 @@
 #pragma once
 #include "Common.h"
 
-namespace TmmModel
-{
+namespace tmm {
 
-	//---------------------------------------------------------------------
-	// Material
-	//---------------------------------------------------------------------
+//---------------------------------------------------------------------
+// Material
+//---------------------------------------------------------------------
 
-	class Material {
-	public:
-		Material();
-		Material(dcomplex staticN_);
-		Material(ArrayXd wlsExp_, ArrayXcd nsExp_);
-		void SetStatic(dcomplex staticN_);
-		dcomplex n(double wl);
-		bool IsStatic();
+class Material {
+public:
+    Material() noexcept = default;
+    explicit Material(dcomplex staticN) noexcept;
+    Material(ArrayXd wlsExp, ArrayXcd nsExp);
+    void SetStatic(dcomplex staticN) noexcept;
+    [[nodiscard]] dcomplex n(double wl) const;
+    [[nodiscard]] bool IsStatic() const noexcept;
 
-	private:
-		bool isStatic;
-		dcomplex staticN;
-		ArrayXd wlsExp;
-		ArrayXcd nsExp;
-	};
-
+private:
+    bool isStatic_ = true;
+    dcomplex staticN_ = 1.0;
+    ArrayXd wlsExp_;
+    ArrayXcd nsExp_;
+};
 
 
-}
+} // namespace tmm
