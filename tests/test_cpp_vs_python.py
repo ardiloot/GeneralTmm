@@ -2,6 +2,16 @@
 
 These tests ensure that refactoring of C++ code does not break functionality
 by comparing results against the pure Python reference implementation (TmmPy).
+
+Test coverage includes:
+- Normal incidence Fresnel reflection
+- Thin film interference effects
+- Metallic (absorbing) layers and SPP resonances
+- Anisotropic (birefringent) crystals at various orientations
+- 1D electromagnetic field profiles
+- Field enhancement calculations
+- Total internal reflection (TIR)
+- Cross-polarization coupling in anisotropic media
 """
 
 import numpy as np
@@ -9,17 +19,23 @@ import pytest
 
 from GeneralTmm import Material, Tmm, TmmPy
 
-# Silver data from Johnson and Christy
-SILVER_WLS = np.array([400e-9, 500e-9, 600e-9, 700e-9, 800e-9])
-SILVER_NS = np.array(
-    [
-        0.050 + 2.104j,
-        0.050 + 3.131j,
-        0.055 + 4.010j,
-        0.041 + 4.803j,
-        0.037 + 5.570j,
-    ]
-)
+# Full silver data from Johnson and Christy (1972)
+SILVER_WLS_FULL = np.array([
+    4.0e-07, 4.2e-07, 4.4e-07, 4.6e-07, 4.8e-07, 5.0e-07, 5.2e-07, 5.4e-07,
+    5.6e-07, 5.8e-07, 6.0e-07, 6.2e-07, 6.4e-07, 6.6e-07, 6.8e-07, 7.0e-07,
+    7.2e-07, 7.4e-07, 7.6e-07, 7.8e-07, 8.0e-07, 8.2e-07, 8.4e-07, 8.6e-07,
+    8.8e-07, 9.0e-07, 9.2e-07, 9.4e-07, 9.6e-07, 9.8e-07,
+])
+SILVER_NS_FULL = np.array([
+    0.050 + 2.104j, 0.046 + 2.348j, 0.040 + 2.553j, 0.044 + 2.751j,
+    0.050 + 2.948j, 0.050 + 3.131j, 0.050 + 3.316j, 0.057 + 3.505j,
+    0.057 + 3.679j, 0.051 + 3.841j, 0.055 + 4.010j, 0.059 + 4.177j,
+    0.055 + 4.332j, 0.050 + 4.487j, 0.045 + 4.645j, 0.041 + 4.803j,
+    0.037 + 4.960j, 0.033 + 5.116j, 0.031 + 5.272j, 0.034 + 5.421j,
+    0.037 + 5.570j, 0.040 + 5.719j, 0.040 + 5.883j, 0.040 + 6.048j,
+    0.040 + 6.213j, 0.040 + 6.371j, 0.040 + 6.519j, 0.040 + 6.667j,
+    0.040 + 6.815j, 0.040 + 6.962j,
+])
 
 
 def prepare_tmm_pair(wl, layers):
@@ -142,8 +158,8 @@ class TestMetallicFilms:
 
     @pytest.fixture
     def silver(self):
-        """Silver material."""
-        return Material(SILVER_WLS, SILVER_NS)
+        """Silver material with full wavelength data."""
+        return Material(SILVER_WLS_FULL, SILVER_NS_FULL)
 
     @pytest.mark.parametrize("thickness", [20e-9, 50e-9, 100e-9])
     def test_metal_film_sweep(self, silver, thickness):
@@ -166,7 +182,7 @@ class TestMetallicFilms:
             for k in ["R11", "R22", "T31", "T42"]:
                 np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7)
 
-    @pytest.mark.parametrize("wl", [500e-9, 600e-9, 700e-9])
+    @pytest.mark.parametrize("wl", [500e-9, 600e-9, 700e-9, 800e-9])
     def test_spp_resonance(self, silver, wl):
         """Compare SPP resonance at different wavelengths."""
         n_ag = silver(wl)
@@ -310,7 +326,7 @@ class TestEnhancement:
     def test_enhancement_at_interface(self):
         """Compare field enhancement at interface."""
         wl = 600e-9
-        silver = Material(SILVER_WLS, SILVER_NS)
+        silver = Material(SILVER_WLS_FULL, SILVER_NS_FULL)
         n_ag = silver(wl)
         layers = [
             ("iso", float("inf"), 1.5),
@@ -330,7 +346,7 @@ class TestEnhancement:
     def test_enhancement_substrate_interface(self):
         """Compare field enhancement at substrate using enhInterface=-1."""
         wl = 600e-9
-        silver = Material(SILVER_WLS, SILVER_NS)
+        silver = Material(SILVER_WLS_FULL, SILVER_NS_FULL)
         n_ag = silver(wl)
         layers = [
             ("iso", float("inf"), 1.5),
@@ -374,3 +390,147 @@ class TestMixedPolarization:
         resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=-1, enhDist=0.0)
 
         np.testing.assert_allclose(res["enh"], resOld["enh"], rtol=1e-7)
+
+
+class TestTotalInternalReflection:
+    """Tests for total internal reflection scenarios."""
+
+    @pytest.mark.parametrize("n1,n2", [(1.5, 1.0), (1.8, 1.3), (2.0, 1.5)])
+    def test_tir_transition(self, n1, n2):
+        """Compare reflection coefficients across TIR transition."""
+        wl = 532e-9
+        layers = [("iso", float("inf"), n1), ("iso", float("inf"), n2)]
+        # Stay below n1 to avoid numerical issues
+        betas = np.linspace(0.0, n1 - 1e-3, 30)
+
+        tmm, oldTmm = prepare_tmm_pair(wl, layers)
+
+        for pol in [(1.0, 0.0), (0.0, 1.0)]:
+            res = tmm.Sweep("beta", betas, (pol, -1, 0.0))
+            resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=-1, enhDist=0.0)
+
+            for k in ["R11", "R22", "R12", "R21", "T31", "T32", "T41", "T42"]:
+                np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7)
+
+    @pytest.mark.parametrize("wl", [400e-9, 600e-9, 800e-9])
+    def test_tir_wavelength_dependence(self, wl):
+        """Compare TIR at different wavelengths."""
+        n1, n2 = 1.5, 1.0
+        layers = [("iso", float("inf"), n1), ("iso", float("inf"), n2)]
+        betas = np.linspace(0.0, n1 - 1e-3, 30)
+
+        tmm, oldTmm = prepare_tmm_pair(wl, layers)
+
+        for pol in [(1.0, 0.0), (0.0, 1.0)]:
+            res = tmm.Sweep("beta", betas, (pol, -1, 0.0))
+            resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=-1, enhDist=0.0)
+
+            np.testing.assert_allclose(res["R11"], resOld["R11"], rtol=1e-7)
+            np.testing.assert_allclose(res["T31"], resOld["T31"], rtol=1e-7)
+
+
+class TestCrossPolarization:
+    """Tests for cross-polarization coupling in anisotropic media."""
+
+    @pytest.mark.parametrize("psi", [np.pi/8, np.pi/4, 3*np.pi/8])
+    def test_cross_polarization_finite_layer(self, psi):
+        """Compare cross-polarization terms for finite anisotropic layer."""
+        wl = 532e-9
+        xi = np.pi / 6
+        layers = [
+            ("iso", float("inf"), 1.5),
+            ("aniso", 200e-9, 1.76, 1.8, 1.9, psi, xi),
+            ("iso", float("inf"), 1.5),
+        ]
+        betas = np.linspace(0.0, 1.4, 25)
+
+        tmm, oldTmm = prepare_tmm_pair(wl, layers)
+
+        for pol in [(1.0, 0.0), (0.0, 1.0)]:
+            res = tmm.Sweep("beta", betas, (pol, -1, 0.0))
+            resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=-1, enhDist=0.0)
+
+            # Cross-polarization terms are key for anisotropic layers
+            for k in ["R12", "R21", "T32", "T41"]:
+                np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7, atol=1e-14)
+
+    def test_cross_polarization_thick_crystal(self):
+        """Compare cross-polarization for thick anisotropic crystal."""
+        wl = 532e-9
+        psi, xi = np.pi / 3, np.pi / 5
+        layers = [
+            ("iso", float("inf"), 1.5),
+            ("aniso", 1000e-9, 1.55, 1.60, 1.65, psi, xi),
+            ("iso", float("inf"), 1.5),
+        ]
+        betas = np.linspace(0.0, 1.4, 30)
+
+        tmm, oldTmm = prepare_tmm_pair(wl, layers)
+
+        for pol in [(1.0, 0.0), (0.0, 1.0)]:
+            res = tmm.Sweep("beta", betas, (pol, -1, 0.0))
+            resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=-1, enhDist=0.0)
+
+            for k in ["R11", "R22", "R12", "R21", "T31", "T32", "T41", "T42"]:
+                np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7, atol=1e-14)
+
+
+class TestAnisotropicFiniteLayers:
+    """Tests for finite-thickness anisotropic layers (matching original test_tmm.py)."""
+
+    @pytest.mark.parametrize("psi", [0.0, np.pi/4, np.pi/2, 3*np.pi/4])
+    @pytest.mark.parametrize("xi", [0.0, np.pi/4, np.pi/2, 3*np.pi/4])
+    def test_aniso_sweep_finite_layer(self, psi, xi):
+        """Compare anisotropic finite layer at various orientations (matching testAnisoSweep2)."""
+        wl = 500e-9
+        layers = [
+            ("iso", float("inf"), 1.5),
+            ("aniso", 200e-9, 1.76, 1.8, 1.9, psi, xi),
+            ("iso", float("inf"), 1.5),
+        ]
+        betas = np.linspace(0.0, 1.5 - 1e-3, 30)
+
+        tmm, oldTmm = prepare_tmm_pair(wl, layers)
+
+        for pol in [(1.0, 0.0), (0.0, 1.0)]:
+            res = tmm.Sweep("beta", betas, (pol, -1, 0.0))
+            resOld = oldTmm.SolveFor("beta", betas, polarization=pol, enhInterface=-1, enhDist=0.0)
+
+            # Main reflection/transmission terms
+            for k in ["R11", "R22", "T31", "T42"]:
+                np.testing.assert_allclose(res[k], resOld[k], rtol=1e-7)
+
+            np.testing.assert_allclose(res["enh"], resOld["enh"], rtol=1e-7)
+
+
+class TestSPPFieldsAndEnhancement:
+    """Tests for SPP fields comparing to reference implementation."""
+
+    @pytest.fixture
+    def silver(self):
+        """Silver material with full wavelength data."""
+        return Material(SILVER_WLS_FULL, SILVER_NS_FULL)
+
+    @pytest.mark.parametrize("wl", [400e-9, 500e-9, 800e-9])
+    def test_spp_field_profile(self, silver, wl):
+        """Compare 1D field profiles for SPP structure."""
+        beta = 0.5
+        xs = np.linspace(-1e-6, 1e-6, 100)
+        n_ag = silver(wl)
+        layers = [
+            ("iso", float("inf"), 1.5),
+            ("iso", float("inf"), n_ag),
+            ("iso", float("inf"), 1.0),
+        ]
+
+        tmm, oldTmm = prepare_tmm_pair(wl, layers)
+
+        for pol in [(1.0, 0.0), (0.0, 1.0)]:
+            tmm.beta = beta
+            E, H = tmm.CalcFields1D(xs, np.array(pol))
+            oldTmm.Solve(wl, beta)
+            EOld, HOld = oldTmm.CalcFields1D(xs, pol)
+
+            for i in range(3):
+                np.testing.assert_allclose(abs(E[:, i]), abs(EOld[:, i]), rtol=1e-7, atol=1e-15)
+                np.testing.assert_allclose(abs(H[:, i]), abs(HOld[:, i]), rtol=1e-7, atol=1e-15)
