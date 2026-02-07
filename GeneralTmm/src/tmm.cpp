@@ -40,7 +40,7 @@ namespace TmmModel {
 		if (param.GetLayerID() < 0){
 			switch (param.GetParamType())
 			{
-			case ENH_OPT_MAX_ITERS:
+			case ParamType::ENH_OPT_MAX_ITERS:
 				enhOptMaxIters = value;
 				break;
 			default:
@@ -58,16 +58,16 @@ namespace TmmModel {
 		if (param.GetLayerID() < 0){
 			switch (param.GetParamType())
 			{
-			case WL:
+			case ParamType::WL:
 				wl = value;
 				break;
-			case BETA:
+			case ParamType::BETA:
 				beta = value;
 				break;
-			case ENH_OPT_REL:
+			case ParamType::ENH_OPT_REL:
 				enhOptMaxRelError = value;
 				break;
-			case ENH_INITIAL_STEP:
+			case ParamType::ENH_INITIAL_STEP:
 				enhOptInitialStep = value;
 				break;
 			default:
@@ -90,11 +90,11 @@ namespace TmmModel {
 		}
 	}
 
-	int Tmm::GetParamInt(Param param){
+	int Tmm::GetParamInt(Param param) const{
 		if (param.GetLayerID() < 0){
 			switch (param.GetParamType())
 			{
-			case ENH_OPT_MAX_ITERS:
+			case ParamType::ENH_OPT_MAX_ITERS:
 				return enhOptMaxIters;
 				break;
 			default:
@@ -107,20 +107,20 @@ namespace TmmModel {
 		}
 	}
 
-	double Tmm::GetParamDouble(Param param){
+	double Tmm::GetParamDouble(Param param) const{
 		if (param.GetLayerID() < 0){
 			switch (param.GetParamType())
 			{
-			case WL:
+			case ParamType::WL:
 				return wl;
 				break;
-			case BETA:
+			case ParamType::BETA:
 				return beta;
 				break;
-			case ENH_OPT_REL:
+			case ParamType::ENH_OPT_REL:
 				return enhOptMaxRelError;
 				break;
-			case ENH_INITIAL_STEP:
+			case ParamType::ENH_INITIAL_STEP:
 				return enhOptInitialStep;
 				break;
 			default:
@@ -133,7 +133,7 @@ namespace TmmModel {
 		}
 	}
 
-	dcomplex Tmm::GetParamComplex(Param param){
+	dcomplex Tmm::GetParamComplex(Param param) const{
 		if (param.GetLayerID() < 0){
 			throw std::invalid_argument("Get invalid param complex");
 		}
@@ -173,13 +173,13 @@ namespace TmmModel {
 		needToSolve = false;
 		needToCalcFieldCoefs = true;
 
-		for (int i = 0; i < layers.size(); i++){
+		for (size_t i = 0; i < layers.size(); i++){
 			layers[i].SolveLayer(wl, beta);
 		}
 
 		// System matrix
 		A = layers[0].invF;
-		for (int i = 1; i < layers.size() - 1; i++){
+		for (size_t i = 1; i + 1 < layers.size(); i++){
 			Layer &layer = layers[i];
 			A = A * layer.M;
 		}
@@ -286,7 +286,7 @@ namespace TmmModel {
 			}
 
 			if (enhpos.IsEnabled()){
-				EMFields fields = CalcFieldsAtInterface(enhpos, WD_BOTH);
+				EMFields fields = CalcFieldsAtInterface(enhpos, WaveDirection::WD_BOTH);
 				enhs->second(i) = fields.E.matrix().norm();
 				enhExs->second(i) = abs(fields.E(0));
 				enhEys->second(i) = abs(fields.E(1));
@@ -339,7 +339,7 @@ namespace TmmModel {
 	}
 
 	double Tmm::OptimizeEnhancement(std::vector<Param> optParams, Eigen::ArrayXd optInitial, PositionSettings pos){
-		EnhFitStuct fitFunc(this, optParams, pos);
+		EnhFitStruct fitFunc(this, optParams, pos);
 		auto criterion = Optimization::Local::make_and_criteria(Optimization::Local::IterationCriterion(enhOptMaxIters), Optimization::Local::RelativeValueCriterion<double>(enhOptMaxRelError));
 		auto optimizer = Optimization::Local::build_simplex(fitFunc, criterion);
 
@@ -353,7 +353,7 @@ namespace TmmModel {
 		int nIterations = optimizer.get_number_of_iterations();
 
 		if (nIterations >= enhOptMaxIters){
-			cerr << "Maximum number of iterations reached: " << nIterations << "/" << enhOptMaxIters << endl;
+			throw std::runtime_error("Maximum number of iterations reached: " + std::to_string(nIterations) + "/" + std::to_string(enhOptMaxIters));
 		}
 
 		return res;
@@ -369,7 +369,7 @@ namespace TmmModel {
 		//Calc normalization factor
 		Eigen::Vector4cd incCoefs;
 		incCoefs << polarization(0), 0.0, polarization(1), 0.0;
-		Eigen::Vector3cd Einc = layers[0].GetFields(wl, beta, 0.0, incCoefs, WD_BOTH).E;
+		Eigen::Vector3cd Einc = layers[0].GetFields(wl, beta, 0.0, incCoefs, WaveDirection::WD_BOTH).E;
 	
 		dcomplex n1 = sqrt(sqr(beta) + sqr(layers[0].alpha(0)));
 		dcomplex n2 = sqrt(sqr(beta) + sqr(layers[0].alpha(2)));
@@ -403,11 +403,11 @@ namespace TmmModel {
 		double curDist = 0.0;
 		double prevDist = 0.0;
 
-		for (int i = 0; i < xs.size(); i++){
+		for (Eigen::Index i = 0; i < xs.size(); i++){
 			while (xs[i] >= curDist){
 				curLayer++;
 				prevDist = curDist;
-				if (curLayer >= layers.size() - 1){
+				if (curLayer >= static_cast<int>(layers.size()) - 1){
 					curDist = INFINITY;
 					curLayer = layers.size() - 1;
 				}
@@ -418,13 +418,13 @@ namespace TmmModel {
 		}
 		return res;
 	}
-	EnhFitStuct::EnhFitStuct(Tmm * tmm_, std::vector<Param> optParams_, PositionSettings enhpos_) {
+	EnhFitStruct::EnhFitStruct(Tmm * tmm_, std::vector<Param> optParams_, PositionSettings enhpos_) {
 		tmm = tmm_;
 		optParams = optParams_;
 		enhPos = enhpos_;
 	}
 	
-	void EnhFitStuct::SetParams(const ParameterType & params) const
+	void EnhFitStruct::SetParams(const ParameterType & params) const
 	{
 		for (int i = 0; i < params.size(); i++) {
 			tmm->SetParam(optParams[i], params[i]);

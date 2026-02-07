@@ -1,5 +1,4 @@
 #include "Layer.h"
-#define PI 3.14159265358979323846
 
 namespace TmmModel{
 
@@ -41,14 +40,14 @@ namespace TmmModel{
 	void Layer::SetParam(Param param, double value){
 		switch (param.GetParamType())
 		{
-		case LAYER_D:
+		case ParamType::LAYER_D:
 			d = value;
 			break;
-		case LAYER_PSI:
+		case ParamType::LAYER_PSI:
 			psi = value;
 			epsilonRefractiveIndexChanged = true;
 			break;
-		case LAYER_XI:
+		case ParamType::LAYER_XI:
 			xi = value;
 			epsilonRefractiveIndexChanged = true;
 			break;
@@ -61,24 +60,24 @@ namespace TmmModel{
 	void Layer::SetParam(Param param, dcomplex value){
 		switch (param.GetParamType())
 		{
-		case LAYER_N:
+		case ParamType::LAYER_N:
 			nx->SetStatic(value);
 			ny->SetStatic(value);
 			nz->SetStatic(value);
 			epsilonRefractiveIndexChanged = true;
 			isotropicLayer = true;
 			break;
-		case LAYER_NX:
+		case ParamType::LAYER_NX:
 			nx->SetStatic(value);
 			epsilonRefractiveIndexChanged = true;
 			isotropicLayer = false;
 			break;
-		case LAYER_NY:
+		case ParamType::LAYER_NY:
 			ny->SetStatic(value);
 			epsilonRefractiveIndexChanged = true;
 			isotropicLayer = false;
 			break;
-		case LAYER_NZ:
+		case ParamType::LAYER_NZ:
 			nz->SetStatic(value);
 			epsilonRefractiveIndexChanged = true;
 			isotropicLayer = false;
@@ -89,7 +88,7 @@ namespace TmmModel{
 		}
 	}
 
-	int Layer::GetParamInt(Param param){
+	int Layer::GetParamInt(Param param) const{
 		switch (param.GetParamType())
 		{
 		default:
@@ -98,16 +97,16 @@ namespace TmmModel{
 		}
 	}
 
-	double Layer::GetParamDouble(Param param){
+	double Layer::GetParamDouble(Param param) const{
 		switch (param.GetParamType())
 		{
-		case LAYER_D:
+		case ParamType::LAYER_D:
 			return d;
 			break;
-		case LAYER_PSI:
+		case ParamType::LAYER_PSI:
 			return psi;
 			break;
-		case LAYER_XI:
+		case ParamType::LAYER_XI:
 			return xi;
 			break;
 		default:
@@ -116,10 +115,10 @@ namespace TmmModel{
 		}
 	}
 
-	dcomplex Layer::GetParamComplex(Param param){
+	dcomplex Layer::GetParamComplex(Param param) const{
 		switch (param.GetParamType())
 		{
-		case LAYER_N:
+		case ParamType::LAYER_N:
 			if (!isotropicLayer){
 				throw std::runtime_error("To get LAYER_N, the layer must be isotropic");
 			}
@@ -129,19 +128,19 @@ namespace TmmModel{
 			}
 			return nx->n(0.0);
 			break;
-		case LAYER_NX:
+		case ParamType::LAYER_NX:
 			if (!nx->IsStatic()){
 				throw std::runtime_error("To get LAYER_NX, the material must be static");
 			}
 			return nx->n(0.0);
 			break;
-		case LAYER_NY:
+		case ParamType::LAYER_NY:
 			if (!ny->IsStatic()){
 				throw std::runtime_error("To get LAYER_NY, the material must be static");
 			}
 			return ny->n(0.0);
 			break;
-		case LAYER_NZ:
+		case ParamType::LAYER_NZ:
 			if (!nz->IsStatic()){
 				throw std::runtime_error("To get LAYER_NZ, the material must be static");
 			}
@@ -154,19 +153,19 @@ namespace TmmModel{
 	}
 
 
-	double Layer::GetD(){
+	double Layer::GetD() const{
 		return d;
 	}
 
-	dcomplex Layer::GetNx(double wl){
+	dcomplex Layer::GetNx(double wl) const{
 		return nx->n(wl);
 	}
 
-	dcomplex Layer::GetNy(double wl){
+	dcomplex Layer::GetNy(double wl) const{
 		return ny->n(wl);
 	}
 
-	dcomplex Layer::GetNz(double wl){
+	dcomplex Layer::GetNz(double wl) const{
 		return nz->n(wl);
 	}
 
@@ -198,17 +197,17 @@ namespace TmmModel{
 		solved = true;
 	}
 
-	EMFields Layer::GetFields(double wl, double beta, double x, Vector4cd coefs, WaveDirection waveDirection){
+	EMFields Layer::GetFields(double wl, double beta, double x, Vector4cd coefs, WaveDirection waveDirection) const{
 		EMFields res;
 		res.E.setZero();
 		res.H.setZero();
-		double z0 = 119.9169832 * PI;
+		constexpr double z0 = Z0;
 		double k0 = 2.0 * PI / wl;
 
 		for (int mode = 0; mode < 4; mode++){
-			if (waveDirection == WD_BACKWARD && (mode == 0 || mode == 2)) {
+			if (waveDirection == WaveDirection::WD_BACKWARD && (mode == 0 || mode == 2)) {
 				continue;
-			} else if (waveDirection == WD_FORWARD && (mode == 1 || mode == 3)) {
+			} else if (waveDirection == WaveDirection::WD_FORWARD && (mode == 1 || mode == 3)) {
 				continue;
 			}
 
@@ -272,7 +271,7 @@ namespace TmmModel{
 
 
 	void Layer::SolveEigenFunction(double beta){
-		double z0 = 119.9169832 * PI;
+		constexpr double z0 = Z0;
 
 		Eigen::ComplexEigenSolver<Eigen::Matrix4cd>::EigenvalueType eigenvalues;
 		Eigen::ComplexEigenSolver<Eigen::Matrix4cd>::EigenvectorType eigenvectors;
@@ -347,11 +346,11 @@ namespace TmmModel{
 		}
 
 		if (countF != 2){
-			cerr << "eigenvalues" << endl;
-			cerr << eigenvalues << endl;
-			cerr << "eigenvectors" << endl;
-			cerr << eigenvectors << endl;
-			cerr << "Wrong number of forward moving waves: " << endl;
+			std::cerr << "eigenvalues" << std::endl;
+			std::cerr << eigenvalues << std::endl;
+			std::cerr << "eigenvectors" << std::endl;
+			std::cerr << eigenvectors << std::endl;
+			std::cerr << "Wrong number of forward moving waves: " << std::endl;
 			throw std::runtime_error("wrong number of forward waves");
 		}
 

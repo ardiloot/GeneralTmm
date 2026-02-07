@@ -11,29 +11,29 @@ from eigency.core cimport *
 cdef extern from "Common.h" namespace "TmmModel":
     
     cdef enum ParamTypeCpp "TmmModel::ParamType":
-        WL,
-        BETA,
-        ENH_OPT_REL,
-        ENH_OPT_MAX_ITERS,
-        ENH_INITIAL_STEP,
-        LAYER_D,
-        LAYER_N,
-        LAYER_NX,
-        LAYER_NY,
-        LAYER_NZ,
-        LAYER_PSI,
-        LAYER_XI,
-        LAYER_MAT_NX,
-        LAYER_MAT_NY,
-        LAYER_MAT_NZ,
-        NOT_DEFINED
+        WL "TmmModel::ParamType::WL",
+        BETA "TmmModel::ParamType::BETA",
+        ENH_OPT_REL "TmmModel::ParamType::ENH_OPT_REL",
+        ENH_OPT_MAX_ITERS "TmmModel::ParamType::ENH_OPT_MAX_ITERS",
+        ENH_INITIAL_STEP "TmmModel::ParamType::ENH_INITIAL_STEP",
+        LAYER_D "TmmModel::ParamType::LAYER_D",
+        LAYER_N "TmmModel::ParamType::LAYER_N",
+        LAYER_NX "TmmModel::ParamType::LAYER_NX",
+        LAYER_NY "TmmModel::ParamType::LAYER_NY",
+        LAYER_NZ "TmmModel::ParamType::LAYER_NZ",
+        LAYER_PSI "TmmModel::ParamType::LAYER_PSI",
+        LAYER_XI "TmmModel::ParamType::LAYER_XI",
+        LAYER_MAT_NX "TmmModel::ParamType::LAYER_MAT_NX",
+        LAYER_MAT_NY "TmmModel::ParamType::LAYER_MAT_NY",
+        LAYER_MAT_NZ "TmmModel::ParamType::LAYER_MAT_NZ",
+        NOT_DEFINED "TmmModel::ParamType::NOT_DEFINED"
     
     #---------------------------------------------------------------------------
         
     cdef enum WaveDirectionCpp "TmmModel::WaveDirection":
-        WD_FORWARD,
-        WD_BACKWARD,
-        WD_BOTH
+        WD_FORWARD "TmmModel::WaveDirection::WD_FORWARD",
+        WD_BACKWARD "TmmModel::WaveDirection::WD_BACKWARD",
+        WD_BOTH "TmmModel::WaveDirection::WD_BOTH"
     
     #---------------------------------------------------------------------------
     

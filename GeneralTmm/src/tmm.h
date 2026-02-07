@@ -19,9 +19,9 @@ namespace TmmModel
 		void SetParam(Param param, int value);
 		void SetParam(Param param, double value);
 		void SetParam(Param param, dcomplex value);
-		int GetParamInt(Param param);
-		double GetParamDouble(Param param); 
-		dcomplex GetParamComplex(Param param);
+		int GetParamInt(Param param) const;
+		double GetParamDouble(Param param) const; 
+		dcomplex GetParamComplex(Param param) const;
 		void AddIsotropicLayer(double d, Material *mat);
 		void AddLayer(double d, Material *matx, Material *maty, Material *matz, double psi, double xi);
 		void ClearLayers();
@@ -59,21 +59,21 @@ namespace TmmModel
 	};
 
 	//---------------------------------------------------------------------
-	// EnhFitStuct
+	// EnhFitStruct
 	//---------------------------------------------------------------------
 
-	class EnhFitStuct{
+	class EnhFitStruct{
 		friend Tmm;
 	public:
 		typedef double DataType;
 		typedef VectorXd ParameterType;
 
-		EnhFitStuct(Tmm *tmm_, std::vector<Param> optParams_, PositionSettings enhpos_);
+		EnhFitStruct(Tmm *tmm_, std::vector<Param> optParams_, PositionSettings enhpos_);
 
 		DataType operator()(const ParameterType &params) const
 		{
 			SetParams(params);
-			EMFields r = tmm->CalcFieldsAtInterface(enhPos, WD_BOTH);
+			EMFields r = tmm->CalcFieldsAtInterface(enhPos, WaveDirection::WD_BOTH);
 			double res = -r.E.matrix().norm();
 			return res;
 		}

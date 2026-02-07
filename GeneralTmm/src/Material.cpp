@@ -27,7 +27,7 @@ void TmmModel::Material::SetStatic(dcomplex staticN_) {
 	staticN = staticN_;
 }
 
-TmmModel::dcomplex TmmModel::Material::n(double wl) {
+TmmModel::dcomplex TmmModel::Material::n(double wl) const {
 	if (isStatic) {
 		return staticN;
 	}
@@ -37,6 +37,6 @@ TmmModel::dcomplex TmmModel::Material::n(double wl) {
 	return res;
 }
 
-bool TmmModel::Material::IsStatic() {
+bool TmmModel::Material::IsStatic() const {
 	return isStatic;
 }

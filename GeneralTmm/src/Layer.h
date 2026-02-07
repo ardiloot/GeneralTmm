@@ -17,15 +17,15 @@ namespace TmmModel {
 		void SetParam(Param param, int value);
 		void SetParam(Param param, double value);
 		void SetParam(Param param, dcomplex value);
-		int GetParamInt(Param param);
-		double GetParamDouble(Param param);
-		dcomplex GetParamComplex(Param param);
-		double GetD();
-		dcomplex GetNx(double wl);
-		dcomplex GetNy(double wl);
-		dcomplex GetNz(double wl);
+		int GetParamInt(Param param) const;
+		double GetParamDouble(Param param) const;
+		dcomplex GetParamComplex(Param param) const;
+		double GetD() const;
+		dcomplex GetNx(double wl) const;
+		dcomplex GetNy(double wl) const;
+		dcomplex GetNz(double wl) const;
 		void SolveLayer(double wl, double beta);
-		EMFields GetFields(double wl, double beta, double x, Vector4cd coefs, WaveDirection waveDirection);
+		EMFields GetFields(double wl, double beta, double x, Vector4cd coefs, WaveDirection waveDirection) const;
 
 	private:
 		bool solved;
