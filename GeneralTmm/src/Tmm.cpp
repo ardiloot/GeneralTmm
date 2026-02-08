@@ -142,6 +142,9 @@ void Tmm::Solve() {
     if (!needToSolve_) {
         return;
     }
+    if (layers_.size() < 2) {
+        throw std::invalid_argument("At least two layers are required to solve.");
+    }
     needToSolve_ = false;
     needToCalcFieldCoefs_ = true;
 
@@ -210,6 +213,9 @@ SweepRes Tmm::Sweep(Param sweepParam, const Eigen::Map<Eigen::ArrayXd>& sweepVal
     bool alphasEnabled = (alphasLayer >= 0);
 
     if (alphasEnabled) {
+        if (alphasLayer >= static_cast<int>(layers_.size())) {
+            throw std::invalid_argument("alphaLayer is out of range.");
+        }
         alphas0 = resComplex.try_emplace("alphas0", sweepValues.size()).first;
         alphas1 = resComplex.try_emplace("alphas1", sweepValues.size()).first;
         alphas2 = resComplex.try_emplace("alphas2", sweepValues.size()).first;
@@ -298,6 +304,9 @@ EMFields Tmm::CalcFieldsAtInterface(const PositionSettings& pos, WaveDirection w
         layerId = static_cast<int>(layers_.size()) + pos.GetInterfaceId();
     } else {
         layerId = pos.GetInterfaceId();
+    }
+    if (layerId < 0 || layerId >= static_cast<int>(layers_.size())) {
+        throw std::invalid_argument("Interface layer index is out of range.");
     }
 
     Solve();

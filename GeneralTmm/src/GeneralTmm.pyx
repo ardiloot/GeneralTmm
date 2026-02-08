@@ -365,7 +365,8 @@ cdef class Tmm:
 
         Solves the system and returns the intensity matrix defined by Eq. 20
         in I. J. Hodgkinson, et al (1997). Contains all intensity reflection and
-        transmission coefficients. See also :any:`_SweepRes`.
+        transmission coefficients. Non-physical entries are filled with NaN.
+        See also :any:`_SweepRes`.
 
         Returns
         -------

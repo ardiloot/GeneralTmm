@@ -51,9 +51,7 @@ jobs:
           python-version: ${{ matrix.python }}
           cache: 'pip'
       - name: Build and install via pip
-        run: pip install .
-      - name: Install pytest
-        run: pip install pytest
+        run: pip install ".[test]"
       - name: Test with pytest
         run: python -m pytest "${{ github.workspace }}/tests" -v
         working-directory: ${{ runner.temp }}
