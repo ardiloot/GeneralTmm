@@ -47,7 +47,7 @@ class _SweepRes:
     """Container for the results returned by :meth:`Tmm.Sweep`.
 
     Behaves like a read-only mapping.  Access individual result arrays by
-    name, e.g. ``res["Rpp"]``.
+    name, e.g. ``res["R11"]``.
     """
 
     def __getitem__(self, index: str) -> npt.NDArray[Any]: ...
@@ -145,7 +145,7 @@ class Tmm:
 
         The intensity matrix is defined by Eq. 20 in Hodgkinson *et al.*
         (1997) and contains all intensity reflection and transmission
-        coefficients.
+        coefficients. Non-physical entries are filled with NaN.
 
         Returns
         -------

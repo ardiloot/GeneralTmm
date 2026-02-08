@@ -265,19 +265,24 @@ dependencies = [
     { name = "eigency" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
 
 [package.optional-dependencies]
 examples = [
     { name = "matplotlib" },
 ]
+test = [
+    { name = "pytest" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
 
 [package.dev-dependencies]
 dev = [
     { name = "matplotlib" },
     { name = "pytest" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
 
 [package.metadata]
@@ -285,14 +290,16 @@ requires-dist = [
     { name = "eigency", specifier = ">=2.0.0" },
     { name = "matplotlib", marker = "extra == 'examples'" },
     { name = "numpy", specifier = ">=2.0" },
-    { name = "scipy" },
+    { name = "pytest", marker = "extra == 'test'" },
+    { name = "scipy", marker = "extra == 'test'" },
 ]
-provides-extras = ["examples"]
+provides-extras = ["examples", "test"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "matplotlib" },
     { name = "pytest" },
+    { name = "scipy" },
 ]
 
 [[package]]

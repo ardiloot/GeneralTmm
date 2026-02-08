@@ -6,8 +6,12 @@ template <typename T> T Interpolate(double x, const ArrayXd& xs, const Eigen::Ar
     // xs must be sorted
 
     // Check range
-    if (x < xs(0) || x >= xs(xs.size() - 1)) {
+    if (x < xs(0) || x > xs(xs.size() - 1)) {
         throw std::runtime_error("Interpolation out of range");
+    }
+
+    if (x == xs(xs.size() - 1)) {
+        return ys(ys.size() - 1);
     }
 
     if (xs(0) >= xs(xs.size() - 1)) {

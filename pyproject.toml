@@ -32,7 +32,6 @@ keywords = [
 dynamic = ["version"]
 dependencies = [
     "numpy>=2.0",
-    "scipy",
     "eigency>=2.0.0",
 ]
 classifiers = [
@@ -54,6 +53,7 @@ classifiers = [
 
 [project.optional-dependencies]
 examples = ["matplotlib"]
+test = ["pytest", "scipy"]
 
 [project.urls]
 Homepage = "https://github.com/ardiloot/GeneralTmm"
@@ -70,7 +70,10 @@ include = ["GeneralTmm*"]
 testpaths = ["tests"]
 
 [dependency-groups]
-dev = ["pytest", "matplotlib"]
+dev = ["pytest", "matplotlib", "scipy"]
+
+[tool.setuptools.package-data]
+"GeneralTmm" = ["*.pyi", "py.typed"]
 
 [tool.ruff]
 target-version = "py310"
