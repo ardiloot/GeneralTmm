@@ -148,10 +148,11 @@ void Layer::SolveLayer(double wl, double beta) {
     }
 
     // InvF
-
     if (isotropicLayer_) {
-        invF_ << 0.5 / F_(0, 0), 0.5, 0, 0, 0.5 / F_(0, 1), 0.5, 0, 0, 0, 0, 0.5 / F_(2, 2), 0.5, 0, 0, 0.5 / F_(2, 3),
-            0.5;
+        dcomplex invDetTop = 1.0 / (F_(0, 0) * F_(1, 1) - F_(0, 1) * F_(1, 0));
+        dcomplex invDetBot = 1.0 / (F_(2, 2) * F_(3, 3) - F_(2, 3) * F_(3, 2));
+        invF_ << F_(1, 1) * invDetTop, -F_(0, 1) * invDetTop, 0, 0, -F_(1, 0) * invDetTop, F_(0, 0) * invDetTop, 0, 0,
+            0, 0, F_(3, 3) * invDetBot, -F_(2, 3) * invDetBot, 0, 0, -F_(3, 2) * invDetBot, F_(2, 2) * invDetBot;
     } else {
         invF_ = F_.inverse();
     }
@@ -226,12 +227,26 @@ void Layer::SolveEpsilonMatrix(double wl) {
 void Layer::SolveEigenFunction(double beta) {
     Eigen::ComplexEigenSolver<Eigen::Matrix4cd>::EigenvalueType eigenvalues;
     Eigen::ComplexEigenSolver<Eigen::Matrix4cd>::EigenvectorType eigenvectors;
+
     if (isotropicLayer_) {
         dcomplex eps = epsTensor_(0, 0);
-        dcomplex a = sqrt(eps - sqr(beta));
-        dcomplex p1 = Z0 * a / eps, p2 = Z0 / a;
-        eigenvalues << a, -a, a, -a;
-        eigenvectors << p1, -p1, 0, 0, 1, 1, 0, 0, 0, 0, -p2, p2, 0, 0, 1, 1;
+
+        Eigen::Matrix2cd blockP;
+        blockP << 0.0, Z0 * (1.0 - sqr(beta) / eps), eps / Z0, 0.0;
+        ces2p_.compute(blockP);
+
+        Eigen::Matrix2cd blockS;
+        blockS << 0.0, -Z0, (sqr(beta) - eps) / Z0, 0.0;
+        ces2s_.compute(blockS);
+
+        eigenvalues(0) = ces2p_.eigenvalues()(0);
+        eigenvalues(1) = ces2p_.eigenvalues()(1);
+        eigenvalues(2) = ces2s_.eigenvalues()(0);
+        eigenvalues(3) = ces2s_.eigenvalues()(1);
+        eigenvectors.col(0) << ces2p_.eigenvectors()(0, 0), ces2p_.eigenvectors()(1, 0), 0.0, 0.0;
+        eigenvectors.col(1) << ces2p_.eigenvectors()(0, 1), ces2p_.eigenvectors()(1, 1), 0.0, 0.0;
+        eigenvectors.col(2) << 0.0, 0.0, ces2s_.eigenvectors()(0, 0), ces2s_.eigenvectors()(1, 0);
+        eigenvectors.col(3) << 0.0, 0.0, ces2s_.eigenvectors()(0, 1), ces2s_.eigenvectors()(1, 1);
     } else {
         dcomplex epsXX = epsTensor_(0, 0);
         dcomplex epsYY = epsTensor_(1, 1);
@@ -260,9 +275,9 @@ void Layer::SolveEigenFunction(double beta) {
         // mBeta(3, 3) = 0.0;
 
         // Calc eigenvalues
-        ces_.compute(mBeta, true);
-        eigenvalues = ces_.eigenvalues();
-        eigenvectors = ces_.eigenvectors();
+        ces4_.compute(mBeta, true);
+        eigenvalues = ces4_.eigenvalues();
+        eigenvectors = ces4_.eigenvectors();
     }
 
     // Sort eigenvalues

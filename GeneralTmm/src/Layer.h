@@ -53,7 +53,9 @@ private:
     double psi_ = 0.0;
     double xi_ = 0.0;
 
-    Eigen::ComplexEigenSolver<Matrix4cd> ces_;
+    Eigen::ComplexEigenSolver<Eigen::Matrix2cd> ces2p_{2};
+    Eigen::ComplexEigenSolver<Eigen::Matrix2cd> ces2s_{2};
+    Eigen::ComplexEigenSolver<Matrix4cd> ces4_{4};
     Matrix3cd epsTensor_ = Matrix3cd::Zero();
     Vector4cd alpha_ = Vector4cd::Zero();
     Vector4d poyntingX_ = Vector4d::Zero();

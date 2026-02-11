@@ -425,6 +425,9 @@ cdef class Tmm:
         cdef PositionSettingsCpp enhPosCpp
         cdef SweepResCpp resCpp
 
+        if alphaLayer >= 0 and alphaLayer >= len(self.materialsCache):
+            raise ValueError(f"alphaLayer ({alphaLayer}) is out of range for {len(self.materialsCache)} layers.")
+
         if enhPos is not None:
             enhPosCpp = PositionSettingsCpp(enhPos[0][0], enhPos[0][1], enhPos[1], enhPos[2])
 
