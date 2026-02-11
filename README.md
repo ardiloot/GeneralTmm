@@ -1,5 +1,8 @@
 [![PyPI version](https://badge.fury.io/py/GeneralTmm.svg)](https://badge.fury.io/py/GeneralTmm)
+[![Python](https://img.shields.io/pypi/pyversions/GeneralTmm)](https://pypi.org/project/GeneralTmm/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Pytest](https://github.com/ardiloot/GeneralTmm/actions/workflows/pytest.yml/badge.svg)](https://github.com/ardiloot/GeneralTmm/actions/workflows/pytest.yml)
+[![Pre-commit](https://github.com/ardiloot/GeneralTmm/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/ardiloot/GeneralTmm/actions/workflows/pre-commit.yml)
 [![Build and upload to PyPI](https://github.com/ardiloot/GeneralTmm/actions/workflows/publish-to-pypi.yml/badge.svg)](https://github.com/ardiloot/GeneralTmm/actions/workflows/publish-to-pypi.yml)
 
 # General 4×4 Transfer-Matrix Method (TMM)
@@ -9,6 +12,8 @@ A Python library for optical simulations of **isotropic and anisotropic multilay
 <p align="center">
   <img src="docs/images/spp_fields_2d.png" alt="2D electromagnetic field map of surface plasmons" width="700">
 </p>
+
+> **See also:** [NonlinearTMM](https://github.com/ardiloot/NonlinearTMM) — extends TMM to **nonlinear processes** (SHG, SFG, DFG) and **Gaussian beam propagation** in layered structures.
 
 ## Table of Contents
 
