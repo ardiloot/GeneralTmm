@@ -70,7 +70,7 @@ include = ["GeneralTmm*"]
 testpaths = ["tests"]
 
 [dependency-groups]
-dev = ["pytest", "matplotlib", "scipy"]
+dev = ["pytest", "matplotlib", "scipy", "pyright", "pre-commit", "pre-commit-uv"]
 
 [tool.setuptools.package-data]
 "GeneralTmm" = ["*.pyi", "py.typed"]
