@@ -35,7 +35,7 @@ jobs:
         with:
           enable-cache: true
       - name: Install dependencies and build
-        run: uv sync --python ${{ matrix.python }}
+        run: uv sync --python ${{ matrix.python }} --build-constraints build-constraints.txt
       - name: Test with pytest
         run: uv run pytest -v
 
@@ -58,7 +58,7 @@ jobs:
           python-version: ${{ matrix.python }}
           cache: 'pip'
       - name: Build and install via pip
-        run: pip install ".[test]"
+        run: pip install --build-constraint build-constraints.txt ".[test]"
       - name: Test with pytest
         run: python -m pytest "${{ github.workspace }}/tests" -v
         working-directory: ${{ runner.temp }}

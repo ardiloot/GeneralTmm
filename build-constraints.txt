@@ -1,0 +1,2 @@
+# This reaches eigency's isolated build, unlike GeneralTmm's build-system requirement.
+Cython<3.3

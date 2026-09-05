@@ -3,7 +3,7 @@ requires = [
     "setuptools>=69",
     "setuptools-scm[toml]>=8",
     "numpy>=2.0",
-    "Cython>=3,<3.3",
+    "Cython>=3",
     "eigency==3.4.0.7",  # must match [project] dependencies (ABI compatibility)
 ]
 build-backend = "setuptools.build_meta"
