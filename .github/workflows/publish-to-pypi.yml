@@ -41,6 +41,8 @@ jobs:
         env:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_BUILD: ${{ matrix.cibw_build || env.CIBW_BUILD }}
+          PIP_BUILD_CONSTRAINT: ${{ github.workspace }}/build-constraints.txt
+          CIBW_ENVIRONMENT_LINUX: PIP_BUILD_CONSTRAINT=/project/build-constraints.txt
 
       - uses: actions/upload-artifact@v7
         with:
