@@ -7,6 +7,9 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 
+[manifest]
+build-constraints = [{ name = "cython", specifier = "<3.3" }]
+
 [[package]]
 name = "cfgv"
 version = "3.5.0"

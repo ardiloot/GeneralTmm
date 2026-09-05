@@ -35,7 +35,7 @@ jobs:
         with:
           enable-cache: true
       - name: Install dependencies and build
-        run: uv sync --python ${{ matrix.python }} --build-constraints build-constraints.txt
+        run: uv sync --python ${{ matrix.python }}
       - name: Test with pytest
         run: uv run pytest -v
 
